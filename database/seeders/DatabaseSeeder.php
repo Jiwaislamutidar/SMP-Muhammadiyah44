@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
         // Account Guru
         User::create([
             'name' => 'pak guru',
-            'username' => 'gurbudi',
+            'username' => 'guru',
             'email' => 'guru@smpm44.sch.id',
             'role' => 'guru',
             'password' => Hash::make('guru123'),

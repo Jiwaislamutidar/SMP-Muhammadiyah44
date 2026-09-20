@@ -10,26 +10,31 @@ class AuthController extends Controller
 {
     public function showLogin()
     {
-        Auth::logout(); // Membersihkan session aktif secara otomatis
-        
+        Auth::logout();
         return view('auth.siswa.login');
     }
 
     public function login(Request $request)
     {
-        // Validasi input
         $credentials = $request->validate([
             'username' => 'required',
             'password' => 'required',
         ]);
 
-        // Cek login
         if (Auth::attempt($credentials, $request->has('remember'))) {
-            $request->session()->regenerate();
-            return redirect()->route('siswa.dashboard');
+            $user = Auth::user();
+
+            // KUNCI KEAMANAN: Cek apakah yang login benar-benar Siswa
+            if ($user->role === 'siswa') { // Sesuaikan nama kolom/role di databasemu (misal: 'siswa')
+                $request->session()->regenerate();
+                return redirect()->route('siswa.dashboard');
+            }
+
+            // Jika BUKAN siswa (misal Guru coba login di sini), paksa logout
+            Auth::logout();
+            return back()->with('error', 'Akses ditolak! Halaman ini khusus untuk Siswa.');
         }
 
-        // Jika salah, kirim notif error
         return back()->with('error', 'Username atau password salah!')->withInput();
     }
 

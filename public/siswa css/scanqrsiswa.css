@@ -485,3 +485,33 @@
   padding: 14px; display: flex; gap: 10px; align-items: flex-start;
 }
 .info-note-card p { font-size: 11px; color: #087443; margin: 0; line-height: 1.6; }
+
+/* ============ TAMBAHAN: Fade-in halaman saat pertama dibuka ============
+   Tempel ini di PALING BAWAH dashboardsiswa.css DAN scanqrsiswa.css
+   (dua-duanya pakai id="dashboardMurid", jadi snippet-nya sama) */
+
+#dashboardMurid {
+  opacity: 0;
+  transform: translateY(6px);
+}
+#dashboardMurid.loaded {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity .5s ease, transform .5s ease;
+}
+
+#dashboardMurid .content > * {
+  opacity: 0;
+  transform: translateY(14px);
+}
+#dashboardMurid.loaded .content > * {
+  animation: fadeSlideUp .5s ease forwards;
+}
+#dashboardMurid.loaded .content > *:nth-child(1) { animation-delay: .05s; }
+#dashboardMurid.loaded .content > *:nth-child(2) { animation-delay: .12s; }
+#dashboardMurid.loaded .content > *:nth-child(3) { animation-delay: .19s; }
+#dashboardMurid.loaded .content > *:nth-child(4) { animation-delay: .26s; }
+
+@keyframes fadeSlideUp {
+  to { opacity: 1; transform: translateY(0); }
+}

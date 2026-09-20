@@ -10,6 +10,8 @@ class AuthController extends Controller
 {
     public function showLogin()
     {
+        Auth::logout(); // Membersihkan session aktif secara otomatis
+        
         return view('auth.siswa.login');
     }
 

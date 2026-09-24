@@ -2,6 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Scan QR Presensi - SMP Muhammadiyah 44</title>
   <link rel="stylesheet" href="{{ asset('siswa css/scanqrsiswa.css') }}?v=3">
 </head>
@@ -25,7 +26,9 @@
     <div class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="sidebar-brand">
-          <div class="sidebar-logo">44</div>
+          <div class="sidebar-logo">
+            <img src="{{ asset('logo.jpg') }}" alt="Logo SMP Muhammadiyah 44">
+          </div>
           <div>
             <div class="sidebar-title">SMP Muhammadiyah 44</div>
             <div class="sidebar-subtitle">Portal Presensi Murid</div>
@@ -238,8 +241,10 @@
       const jam = String(now.getHours()).padStart(2, '0');
       const menit = String(now.getMinutes()).padStart(2, '0');
       const detik = String(now.getSeconds()).padStart(2, '0');
-      document.getElementById('liveDatetime').textContent =
-        `${hari}, ${tanggal} ${bulan} ${tahun} | ${jam}:${menit}:${detik} WIB`;
+      document.getElementById('liveDatetime').innerHTML =
+        `<span class="dt-date">${hari}, ${tanggal} ${bulan} ${tahun}</span>` +
+        `<span class="dt-sep"> | </span>` +
+        `<span class="dt-time">${jam}:${menit}:${detik} WIB</span>`;
     }
     updateLiveDatetime();
     setInterval(updateLiveDatetime, 1000);

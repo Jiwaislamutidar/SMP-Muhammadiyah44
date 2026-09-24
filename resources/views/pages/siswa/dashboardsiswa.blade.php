@@ -26,7 +26,9 @@
     <div class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="sidebar-brand">
-          <div class="sidebar-logo">44</div>
+          <div class="sidebar-logo">
+            <img src="{{ asset('logo.jpg') }}" alt="Logo SMP Muhammadiyah 44">
+          </div>
           <div>
             <div class="sidebar-title">SMP Muhammadiyah 44</div>
             <div class="sidebar-subtitle">Portal Presensi Murid</div>

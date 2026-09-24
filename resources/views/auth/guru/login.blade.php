@@ -18,7 +18,7 @@
         .academic-year-footer { position: absolute; bottom: 24px; left: 0; right: 0; text-align: center; color: rgba(255, 255, 255, 0.6); font-size: 12px; letter-spacing: 1px; text-transform: uppercase; z-index: 2; }
         .center-login-box { position: relative; z-index: 10; width: 100%; max-width: 440px; background: #ffffff; border-radius: 16px; padding: 36px 32px; box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.35); }
         .top-heading-section { text-align: center; margin-bottom: 24px; }
-        .school-emblem-icon { font-size: 44px; color: #087443; margin-bottom: 8px; display: inline-block; }
+        .school-logo-img { width: 54px; height: 54px; object-fit: contain; margin-bottom: 8px; display: block; margin-left: auto; margin-right: auto; border-radius: 12px; background: #f2faf5; padding: 6px; box-shadow: 0 8px 18px rgba(8, 116, 67, 0.12); }
         .text-sub { color: #16a66a; font-size: 12px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 4px; }
         .login-title { font-size: 24px; font-weight: 700; color: #17211c; }
         .login-desc { color: #6b756f; font-size: 13px; margin-top: 4px; }
@@ -55,9 +55,8 @@
 
     <div class="center-login-box">
         <div class="top-heading-section">
-            <i class="bi bi-building-fill-check school-emblem-icon"></i>
+            <img src="{{ asset('logo.jpg') }}" alt="Logo SMP Muhammadiyah 44" class="school-logo-img">
             <div class="text-sub">SMP MUHAMMADIYAH 44</div>
-            <!-- Ubah Teks Disini -->
             <h2 class="login-title">Login Presensi Guru</h2>
             <p class="login-desc">Masuk menggunakan Username & Password Anda.</p>
         </div>

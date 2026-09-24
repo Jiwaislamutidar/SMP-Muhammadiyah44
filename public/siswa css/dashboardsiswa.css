@@ -11,14 +11,15 @@
       position: fixed;
       top: 18px;
       left: 32px;
-      z-index: 30;
+      z-index: 100;
       width: calc(100% - 64px);
       margin: 0;
-      background: rgba(255, 255, 255, 0.88);
-      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border: 1px solid rgba(228, 234, 230, 0.9);
       border-radius: 26px;
-      box-shadow: 0 12px 30px rgba(17, 24, 39, 0.08);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
       padding: 0 22px;
       display: flex; align-items: center;
       justify-content: space-between; height: 72px;
@@ -209,17 +210,39 @@
       font-size: 11px; color: #6b756f;
     }
 
-/* Sidebar */
+/* Sidebar - Nempel ke sisi kiri layar (sama seperti di halaman riwayat) */
 .sidebar {
-  position: fixed; top: 0; left: 0; width: 270px; height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 270px;
+  height: 100vh;
   background: linear-gradient(180deg, #0b3b26 0%, #062318 100%);
   color: #fff;
   transform: translateX(-100%);
   transition: transform .35s cubic-bezier(.22,.9,.35,1);
-  z-index: 1000; display: flex; flex-direction: column;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
   box-shadow: 4px 0 24px rgba(0,0,0,.25);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, .35) transparent;
 }
 .sidebar.open { transform: translateX(0); }
+
+/* Scrollbar halus untuk sidebar di kiri */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, .35);
+  border-radius: 999px;
+}
 
 .sidebar-header {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -227,11 +250,23 @@
 }
 .sidebar-brand { display: flex; align-items: center; gap: 10px; }
 .sidebar-logo {
-  background: linear-gradient(135deg, #16a66a, #087443);
-  color: #fff; font-size: 13px; font-weight: 700;
-  border-radius: 10px; width: 36px; height: 36px;
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 2px 8px rgba(22,166,106,.35);
+  width: 38px;
+  height: 38px;
+  padding: 4px;
+  background: #ffffff;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.sidebar-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 .sidebar-title { font-size: 13px; font-weight: 700; line-height: 1.3; }
 .sidebar-subtitle { font-size: 10.5px; color: rgba(255,255,255,.5); }
@@ -436,12 +471,12 @@
 
 #dashboardMurid {
   opacity: 0;
-  transform: translateY(6px);
+  transform: none;
 }
 #dashboardMurid.loaded {
   opacity: 1;
-  transform: translateY(0);
-  transition: opacity .5s ease, transform .5s ease;
+  transform: none;
+  transition: opacity .5s ease;
 }
 
 /* Konten utama (page-header, top-row/scanner-container, second-row, dst)
@@ -457,6 +492,40 @@
 #dashboardMurid.loaded .content > *:nth-child(2) { animation-delay: .12s; }
 #dashboardMurid.loaded .content > *:nth-child(3) { animation-delay: .19s; }
 #dashboardMurid.loaded .content > *:nth-child(4) { animation-delay: .26s; }
+
+/* Scroll halaman */
+html, body {
+  min-height: 100%;
+  overflow-y: auto;
+  scrollbar-width: auto;
+  scrollbar-color: #087443 #e8f6ef;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 10px;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: #e8f6ef;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  background: #087443;
+  border-radius: 999px;
+  border: 2px solid #e8f6ef;
+}
+
+.dashboard-murid {
+  min-height: 100vh;
+  position: relative;
+}
 
 @keyframes fadeSlideUp {
   to { opacity: 1; transform: translateY(0); }

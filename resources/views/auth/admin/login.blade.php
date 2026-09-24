@@ -321,7 +321,7 @@
         @endif
 
         <!-- Form Elemen Laravel -->
-        <form action="{{ url('/login') }}" method="POST" class="form-elements">
+        <form action="{{ route('admin.login') }}" method="POST" class="form-elements">
             @csrf
 
             <!-- Username / NISN -->

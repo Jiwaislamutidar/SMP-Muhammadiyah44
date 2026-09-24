@@ -22,6 +22,14 @@ Route::domain('admin.' . $domain)->group(function () {
             return view('pages.admin.dashboardadmin');
         })->name('admin.dashboard');
 
+        Route::get('/data-guru', fn () => view('pages.admin.dataguru'))->name('admin.dataguru');
+        Route::get('/data-murid', fn () => view('pages.admin.datamurid'))->name('admin.datamurid');
+        Route::get('/data-kelas', fn () => view('pages.admin.datakelas'))->name('admin.datakelas');
+        Route::get('/mata-pelajaran', fn () => view('pages.admin.matapelajaran'))->name('admin.matapelajaran');
+        Route::get('/jadwal-pelajaran', fn () => view('pages.admin.jadwalpelajaran'))->name('admin.jadwalpelajaran');
+        Route::get('/rekap-absensi', fn () => view('pages.admin.rekapabsensi'))->name('admin.rekapabsensi');
+        Route::get('/profil', fn () => view('pages.admin.profil'))->name('admin.profil');
+
         Route::post('/logout', [AdminAuth::class, 'logout'])->name('admin.logout');
     });
 });

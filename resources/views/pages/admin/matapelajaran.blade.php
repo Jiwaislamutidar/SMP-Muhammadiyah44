@@ -1,0 +1,7 @@
+@extends('layouts.admin')
+@section('title', 'Mata Pelajaran')
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/matapelajaran.css') }}?v=1">@endsection
+@section('content')
+<div class="admin-page-header"><div><h1>Mata Pelajaran</h1><p>Kelola daftar mata pelajaran sekolah</p></div><button class="admin-action">+ Tambah Mata Pelajaran</button></div><div class="admin-toolbar"><input class="admin-search" placeholder="Cari mata pelajaran..."><span>Status:</span><select class="admin-select"><option>Semua Status</option><option>Aktif</option><option>Nonaktif</option></select><span class="admin-total">Total 8 Mata Pelajaran</span></div>
+<div class="admin-grid">@foreach ([['MTK','Matematika','MTK-SMP44','4 Guru','4 Jam/Minggu'],['IPA','IPA','IPA-SMP44','4 Guru','4 Jam/Minggu'],['BIN','Bahasa Indonesia','BIN-SMP44','3 Guru','4 Jam/Minggu'],['BIG','Bahasa Inggris','BIG-SMP44','3 Guru','3 Jam/Minggu'],['IPS','IPS','IPS-SMP44','3 Guru','3 Jam/Minggu'],['PAI','Pendidikan Agama Islam','PAI-SMP44','4 Guru','3 Jam/Minggu'],['PKN','PPKn','PKN-SMP44','2 Guru','2 Jam/Minggu'],['SBD','Seni Budaya','SBD-SMP44','2 Guru','2 Jam/Minggu']] as $mapel)<article class="subject-card"><div class="subject-top"><span class="subject-code">{{ $mapel[0] }}</span><span class="badge">Aktif</span></div><h3>{{ $mapel[1] }}</h3><p>Kode: {{ $mapel[2] }}</p><hr><small>Pengajar: <strong>{{ $mapel[3] }}</strong></small><a href="#">Lihat Detail &rarr;</a><div style="clear:both;padding-top:12px"><small>Beban: {{ $mapel[4] }}</small></div></article>@endforeach</div>
+@endsection

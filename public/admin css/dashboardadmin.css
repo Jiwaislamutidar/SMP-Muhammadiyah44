@@ -1,0 +1,417 @@
+/* =====================================================
+   DASHBOARD ADMIN – konten spesifik halaman dashboard
+   Shell (sidebar/topbar/base) ada di admin-shell.css
+   ===================================================== */
+
+/* ---------- Dot indicators ---------- */
+.dot {
+  flex-shrink: 0;
+  border-radius: 9999px;
+}
+.dot--green-light { width: 8px; height: 8px; background: #16a66a; }
+.dot--green       { width: 8px; height: 8px; background: #087443; }
+.dot--red         { width: 8px; height: 8px; background: #ef4444; }
+
+/* ---------- Page header row ---------- */
+.dash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.dash-title-group { display: flex; flex-direction: column; gap: 2px; }
+.dash-title {
+  margin: 0;
+  font-size: 29px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -.6px;
+  color: #17211c;
+}
+.dash-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: #6b756f;
+}
+
+/* Quick-action buttons */
+.dash-quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.dash-btn-outline,
+.dash-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(0,0,0,.05);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.dash-btn-outline {
+  background: #fff;
+  border: 1px solid #e4eae6;
+  color: #17211c;
+}
+.dash-btn-outline:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(22,43,30,.08); }
+.dash-btn-primary {
+  background: #087443;
+  border: 1px solid #087443;
+  color: #fff;
+  padding: 9px 16px;
+  box-shadow: 0 7px 16px rgba(8,116,67,.16);
+}
+.dash-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(8,116,67,.22); }
+
+/* ---------- Card ---------- */
+.dash-card {
+  background: #fff;
+  border: 1px solid #e4eae6;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 4px 16px rgba(22,43,30,.04);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.dash-card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(22,43,30,.07); }
+.dash-card-inner { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+
+/* Card header */
+.dash-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #e4eae6;
+  gap: 12px;
+}
+.dash-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dash-accent-bar {
+  display: block;
+  width: 8px;
+  height: 20px;
+  border-radius: 999px;
+  background: #087443;
+  flex-shrink: 0;
+}
+.dash-card-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+  color: #17211c;
+}
+
+/* Pill badge */
+.dash-pill-badge {
+  background: #f7f9f8;
+  border: 1px solid #e4eae6;
+  border-radius: 9999px;
+  padding: 4px 12px;
+  font-size: 11px;
+  color: #6b756f;
+  white-space: nowrap;
+}
+
+/* Card footer */
+.dash-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 12px;
+  margin-top: 4px;
+  border-top: 1px solid #e4eae6;
+  font-size: 11px;
+  color: #6b756f;
+}
+.dash-link-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #087443;
+  cursor: pointer;
+  text-decoration: none;
+}
+.dash-muted-text { font-size: 11px; color: #6b756f; }
+.dash-desc { margin: 0; font-size: 11px; color: #6b756f; }
+
+/* ---------- Section 1 – Attendance groups ---------- */
+.dash-attendance-groups {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.dash-group {
+  background: #f7f9f8;
+  border: 1px solid #e4eae6;
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.dash-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.dash-group-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dash-group-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #17211c;
+}
+.dash-group-total { font-size: 11px; color: #6b756f; }
+.dash-group-total strong { color: #17211c; font-weight: 600; }
+
+/* Metric cards */
+.dash-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.dash-metric {
+  background: #fff;
+  border: 1px solid #e4eae6;
+  border-radius: 10px;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transition: transform .18s ease;
+}
+.dash-metric:hover { transform: translateY(-2px); }
+.dash-metric-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b756f;
+  text-align: center;
+}
+.dash-metric-num {
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  margin: 4px 0;
+}
+.dash-metric-num--green { color: #087443; }
+.dash-metric-num--amber { color: #f59e0b; }
+.dash-metric-num--red   { color: #ef4444; }
+.dash-metric-sub {
+  font-size: 10px;
+  color: #6b756f;
+  text-align: center;
+  font-style: normal;
+}
+.dash-metric-sub--green { color: #16a66a; font-weight: 600; }
+.dash-metric-sub--red   { color: #ef4444; font-weight: 600; }
+
+/* ---------- Section 2+3 – 2-column grid ---------- */
+.dash-two-col {
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/* Both cards use flex column layout */
+.dash-absent-card,
+.dash-schedule-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 22px;
+  gap: 0;
+}
+
+/* Absence list */
+.dash-absence-list { display: flex; flex-direction: column; margin-top: 8px; }
+.dash-absence-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-top: 1px solid #e4eae6;
+  gap: 8px;
+}
+.dash-absence-item--first { border-top: 0; padding-top: 4px; }
+
+.dash-absence-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.dash-absence-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+/* Avatars */
+.dash-avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+.dash-avatar--green { background: #e8f6ef; color: #087443; border: 1px solid #e4eae6; }
+.dash-avatar--red   { background: #fee2e2; color: #ef4444; border: 1px solid #fee2e2; }
+.dash-avatar--blue  { background: #eff6ff; color: #3b82f6; border: 1px solid #dbeafe; }
+
+.dash-name {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #17211c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+.dash-role { display: block; font-size: 11px; color: #6b756f; }
+
+/* Status badges */
+.dash-status-badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.dash-status-badge--amber { background: #fffbeb; border-color: #fde68a; color: #b45309; }
+.dash-status-badge--red   { background: #fef2f2; border-color: #fecaca; color: #ef4444; }
+.dash-status-badge--blue  { background: #eff6ff; border-color: #bfdbfe; color: #3b82f6; }
+.dash-status-note { font-size: 10px; color: #6b756f; text-align: right; }
+
+/* ---------- Schedule table ---------- */
+.dash-table-wrap { overflow-x: auto; margin-top: 8px; }
+
+.dash-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.dash-table thead tr {
+  background: #f7f9f8;
+  border-bottom: 1px solid #e4eae6;
+}
+.dash-table th {
+  padding: 12px 14px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: #6b756f;
+  text-align: left;
+}
+.dash-table th:first-child { border-radius: 8px 0 0 8px; }
+.dash-table th:last-child  { border-radius: 0 8px 8px 0; }
+.dash-table td {
+  padding: 15px 14px;
+  border-bottom: 1px solid #e4eae6;
+  vertical-align: middle;
+  color: #17211c;
+  font-size: 12px;
+}
+.dash-table tbody tr:last-child td { border-bottom: 0; }
+
+/* Active row */
+.dash-row-active { background: #f0fdf4; box-shadow: inset 4px 0 #16a66a; }
+.dash-row-active td:first-child { padding-left: 18px; }
+
+.dash-td-time        { color: #17211c; font-size: 12px; white-space: nowrap; }
+.dash-td-time--green { color: #087443; font-weight: 700; }
+.dash-td-muted       { color: #6b756f; font-size: 12px; }
+.text-green          { color: #087443; }
+.text-right          { text-align: right; }
+
+/* Kelas badge */
+.dash-kelas-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  font-size: 10px;
+  font-weight: 700;
+  color: #17211c;
+  white-space: nowrap;
+}
+.dash-kelas-badge--green { background: #e8f6ef; color: #087443; }
+
+/* Row status pills */
+.dash-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.dash-status--done { color: #087443; background: #e8f6ef; }
+.dash-status--live { color: #087443; background: #e8f6ef; }
+.dash-status--live::before {
+  content: '';
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #16a66a;
+}
+.dash-status--next { background: #f3f4f6; color: #6b756f; }
+
+/* ========== Responsive ========== */
+@media (max-width: 1100px) {
+  .dash-two-col { grid-template-columns: 1fr; }
+}
+@media (max-width: 800px) {
+  .dash-attendance-groups { grid-template-columns: 1fr; }
+  .dash-metrics { gap: 8px; }
+  .dash-name { max-width: 120px; }
+}
+@media (max-width: 600px) {
+  .dash-header { flex-direction: column; align-items: flex-start; }
+  .dash-quick-actions { width: 100%; overflow-x: auto; flex-wrap: nowrap; }
+  .dash-btn-outline, .dash-btn-primary { white-space: nowrap; font-size: 12px; padding: 8px 12px; }
+  .dash-metrics { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .dash-metric-num { font-size: 20px; }
+  .dash-card, .dash-absent-card, .dash-schedule-card { padding: 16px; }
+  .dash-card-header { flex-wrap: wrap; }
+  .dash-pill-badge { display: none; }
+  .dash-table-wrap { min-width: 0; }
+  .dash-table { display: block; min-width: 560px; }
+}

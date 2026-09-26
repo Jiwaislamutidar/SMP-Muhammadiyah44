@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AuthController as AdminAuth;
 use App\Http\Controllers\Guru\AuthController as GuruAuth;
 use App\Http\Controllers\Siswa\AuthController as SiswaAuth;
+use App\Http\Controllers\SiswaController;
+use App\Http\Controllers\Admin\SiswaController as AdminSiswaController;
 
 // Kunci domain utama di sini agar subdomain tidak meleset di Laragon
 $domain = 'smpmuh44.test';
@@ -23,7 +25,8 @@ Route::domain('admin.' . $domain)->group(function () {
         })->name('admin.dashboard');
 
         Route::get('/data-guru', fn () => view('pages.admin.dataguru'))->name('admin.dataguru');
-        Route::get('/data-murid', fn () => view('pages.admin.datamurid'))->name('admin.datamurid');
+        Route::get('/data-murid', [AdminSiswaController::class, 'index'])->name('admin.datamurid');
+        Route::post('/data-murid/import', [AdminSiswaController::class, 'import'])->name('admin.siswa.import');
         Route::get('/data-kelas', fn () => view('pages.admin.datakelas'))->name('admin.datakelas');
         Route::get('/mata-pelajaran', fn () => view('pages.admin.matapelajaran'))->name('admin.matapelajaran');
         Route::get('/jadwal-pelajaran', fn () => view('pages.admin.jadwalpelajaran'))->name('admin.jadwalpelajaran');
@@ -82,21 +85,11 @@ Route::domain($domain)->group(function () {
     Route::post('/login', [SiswaAuth::class, 'login'])->middleware('throttle:5,1');
 
     Route::middleware(['auth', 'role:siswa', 'throttle:60,1'])->prefix('siswa')->group(function () {
-        Route::get('/dashboard', function () {
-            return view('pages.siswa.dashboardsiswa');
-        })->name('siswa.dashboard');
-
-        Route::get('/scan-qr', function () {
-            return view('pages.siswa.scanqrsiswa');
-        })->name('siswa.scan-qr');
-
-        Route::get('/riwayat', function () {
-            return view('pages.siswa.riwayatsiswa');
-        })->name('siswa.riwayat');
-
-        Route::get('/profil', function () {
-            return view('pages.siswa.profilsiswa');
-        })->name('siswa.profil');
+        Route::get('/dashboard', [SiswaController::class, 'dashboard'])->name('siswa.dashboard');
+        Route::get('/scan-qr', [SiswaController::class, 'scanQr'])->name('siswa.scan-qr');
+        Route::get('/riwayat', [SiswaController::class, 'riwayat'])->name('siswa.riwayat');
+        Route::get('/profil', [SiswaController::class, 'profil'])->name('siswa.profil');
+        Route::put('/profil/ubah-password', [SiswaController::class, 'updatePassword'])->name('siswa.profil.update-password');
 
         Route::post('/logout', [SiswaAuth::class, 'logout'])->name('siswa.logout');
     });

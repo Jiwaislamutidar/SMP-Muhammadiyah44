@@ -104,6 +104,13 @@
                 </div>
             </div>
 
+            @if(session('success'))
+                <div class="profile-alert success" role="status">{{ session('success') }}</div>
+            @endif
+            @if($errors->any())
+                <div class="profile-alert error" role="alert">{{ $errors->first() }}</div>
+            @endif
+
             <section class="profile-card">
                 <div class="profile-top">
                     <div class="profile-top-left">
@@ -122,7 +129,7 @@
                             </div>
                         </div>
                     </div>
-                    <button type="button" class="btn-outline">🔒 Ubah Kata Sandi</button>
+                    <button type="button" class="btn-outline" id="openPasswordModal">🔒 Ubah Kata Sandi</button>
                 </div>
 
                 <div class="account-info-section">
@@ -155,6 +162,41 @@
             </section>
         </main>
 
+        <div class="password-modal-backdrop" id="passwordModal" @if(!$errors->any()) hidden @endif>
+            <section class="password-modal" role="dialog" aria-modal="true" aria-labelledby="passwordModalTitle">
+                <div class="password-modal-heading">
+                    <div>
+                        <h2 id="passwordModalTitle">Ubah Kata Sandi</h2>
+                        <p>Masukkan kata sandi saat ini dan kata sandi baru.</p>
+                    </div>
+                    <button type="button" class="password-modal-close" id="closePasswordModal" aria-label="Tutup">&times;</button>
+                </div>
+                <form action="{{ route('siswa.profil.update-password') }}" method="POST" class="password-form">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="password-form-field">
+                        <label for="current_password">Kata sandi saat ini</label>
+                        <input id="current_password" name="current_password" type="password" autocomplete="current-password" required>
+                        @error('current_password')<span class="password-field-error">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="password-form-field">
+                        <label for="password">Kata sandi baru</label>
+                        <input id="password" name="password" type="password" autocomplete="new-password" minlength="6" required>
+                        @error('password')<span class="password-field-error">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="password-form-field">
+                        <label for="password_confirmation">Konfirmasi kata sandi baru</label>
+                        <input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" minlength="6" required>
+                    </div>
+                    <div class="password-modal-actions">
+                        <button type="button" class="password-modal-cancel" id="cancelPasswordModal">Batal</button>
+                        <button type="submit" class="password-modal-submit">Simpan Kata Sandi</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+
         <footer class="footer">
             <div class="footer-left">
                 <span>Sistem Presensi &amp; Manajemen Akademik SMP Muhammadiyah 44 Tangerang Selatan</span>
@@ -176,6 +218,29 @@
             document.getElementById('sidebarOverlay').classList.toggle('show');
             document.getElementById('burgerBtn').classList.toggle('active');
         }
+
+        const passwordModal = document.getElementById('passwordModal');
+        const openPasswordModal = document.getElementById('openPasswordModal');
+        const closePasswordModal = document.getElementById('closePasswordModal');
+        const cancelPasswordModal = document.getElementById('cancelPasswordModal');
+
+        function closePasswordDialog() {
+            passwordModal.hidden = true;
+            openPasswordModal.focus();
+        }
+
+        openPasswordModal.addEventListener('click', function () {
+            passwordModal.hidden = false;
+            document.getElementById('current_password').focus();
+        });
+        closePasswordModal.addEventListener('click', closePasswordDialog);
+        cancelPasswordModal.addEventListener('click', closePasswordDialog);
+        passwordModal.addEventListener('click', function (event) {
+            if (event.target === passwordModal) closePasswordDialog();
+        });
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && !passwordModal.hidden) closePasswordDialog();
+        });
     </script>
 
     {{-- Jam & tanggal hidup, update tiap detik --}}

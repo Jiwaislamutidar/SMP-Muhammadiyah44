@@ -54,34 +54,34 @@
             @csrf
 
             <!-- Username -->
-            <div>
-                <label class="label" for="username">Username / NISN</label>
+            <div class="floating-field">
                 <input 
                     type="text" 
                     id="username"
                     name="username" 
                     class="input-field" 
                     value="{{ old('username') }}"
-                    placeholder="Masukkan NISN atau Username"
+                    placeholder=" "
                     required
                 />
+                <label class="label" for="username">Username / NISN</label>
             </div>
 
             <!-- Password -->
             <div>
                 <div class="password-header">
-                    <label class="label" for="password" style="margin-bottom: 0;">Kata Sandi</label>
                     <a href="#" class="forgot-link">Lupa sandi?</a>
                 </div>
-                <div class="password-wrapper">
+                <div class="password-wrapper floating-field">
                     <input 
                         type="password" 
                         id="password"
                         name="password" 
                         class="input-field" 
-                        placeholder="••••••••••••"
+                        placeholder=" "
                         required
                     />
+                    <label class="label" for="password">Kata Sandi</label>
                     <button type="button" class="toggle-password-btn" onclick="togglePassword()">
                         <i class="bi bi-eye-slash" id="toggleIcon"></i>
                     </button>

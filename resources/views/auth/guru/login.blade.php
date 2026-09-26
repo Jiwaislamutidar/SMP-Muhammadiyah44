@@ -24,18 +24,22 @@
         .login-title { font-size: 24px; font-weight: 700; color: #17211c; }
         .login-desc { color: #6b756f; font-size: 13px; margin-top: 4px; }
         .form-elements { display: flex; flex-direction: column; gap: 16px; }
-        .label { font-size: 13px; font-weight: 600; color: #17211c; margin-bottom: 6px; display: block; }
-        .input-field { width: 100%; height: 44px; padding: 0 14px; background: #ffffff; border: 1px solid #e4eae6; border-radius: 8px; font-size: 14px; color: #17211c; outline: none; transition: border-color 0.2s; }
-        .input-field:focus { border-color: #087443; }
-        .password-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .floating-field { position: relative; }
+        .label { position: absolute; z-index: 1; top: 50%; left: 10px; padding: 0 4px; margin: 0; background: #ffffff; color: #89938d; font-size: 14px; font-weight: 400; line-height: 1; pointer-events: none; transform: translateY(-50%); transform-origin: left center; transition: top 0.3s ease, color 0.3s ease, transform 0.3s ease; }
+        .input-field { width: 100%; height: 44px; padding: 0 14px; background: #ffffff; border: 1px solid #e4eae6; border-radius: 8px; font-size: 14px; color: #17211c; outline: none; transition: border-color 0.3s ease, box-shadow 0.3s ease; }
+        .input-field:focus { border-color: #087443; box-shadow: 0 0 0 3px rgba(8, 116, 67, 0.1); }
+        .input-field:focus ~ .label, .input-field:not(:placeholder-shown) ~ .label { top: 0; color: #087443; transform: translateY(-50%) scale(0.86); }
+        .password-header { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 6px; }
         .forgot-link { color: #087443; font-size: 12px; text-decoration: none; font-weight: 500; }
         .password-wrapper { position: relative; }
         .toggle-password-btn { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #6b756f; font-size: 18px; display: flex; align-items: center; }
         .remember-me-checkbox { display: flex; align-items: center; gap: 8px; cursor: pointer; }
         .remember-me-checkbox input { accent-color: #087443; width: 16px; height: 16px; cursor: pointer; }
         .label-ingat-saya { font-size: 13px; color: #17211c; }
-        .primary-submit-button { width: 100%; height: 46px; background: #087443; color: #ffffff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; margin-top: 4px; }
-        .primary-submit-button:hover { background: #065f36; }
+        .primary-submit-button { width: 100%; height: 46px; background: #087443; color: #ffffff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease; margin-top: 4px; }
+        .primary-submit-button:hover { background: #066536; box-shadow: 0 7px 16px rgba(8, 116, 67, 0.24); transform: translateY(-2px); }
+        .primary-submit-button:focus-visible { outline: 3px solid rgba(8, 116, 67, 0.3); outline-offset: 3px; }
+        .primary-submit-button:active { box-shadow: 0 2px 6px rgba(8, 116, 67, 0.2); transform: translateY(0) scale(0.99); }
         .alert-error { background-color: #fde8e8; border-left: 4px solid #f05252; color: #9b1c1c; padding: 10px; border-radius: 6px; font-size: 13px; margin-bottom: 14px; }
         @media (max-width: 640px) { .header-top-branding { left: 20px; right: 20px; top: 20px; } }
     </style>
@@ -72,19 +76,19 @@
         <form action="{{ route('guru.login') }}" method="POST" class="form-elements">
             @csrf
 
-            <div>
+            <div class="floating-field">
                 <!-- Label Disesuaikan (Guru biasanya pakai Username/NIP) -->
+                <input type="text" id="username" name="username" class="input-field" placeholder=" " required />
                 <label class="label" for="username">Username / NIP</label>
-                <input type="text" id="username" name="username" class="input-field" placeholder="Masukkan Username atau NIP" required />
             </div>
 
             <div>
                 <div class="password-header">
-                    <label class="label" for="password" style="margin-bottom: 0;">Kata Sandi</label>
                     <a href="#" class="forgot-link">Lupa sandi?</a>
                 </div>
-                <div class="password-wrapper">
-                    <input type="password" id="password" name="password" class="input-field" placeholder="••••••••••••" required />
+                <div class="password-wrapper floating-field">
+                    <input type="password" id="password" name="password" class="input-field" placeholder=" " required />
+                    <label class="label" for="password">Kata Sandi</label>
                     <button type="button" class="toggle-password-btn" onclick="togglePassword()">
                         <i class="bi bi-eye-slash" id="toggleIcon"></i>
                     </button>

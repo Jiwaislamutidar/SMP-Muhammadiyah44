@@ -3,6 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
 	<title>Jadwal Mengajar Guru - SMP Muhammadiyah 44</title>
 	<link rel="stylesheet" href="{{ asset('guru css/jadwalngajar.css') }}?v=1">
 </head>

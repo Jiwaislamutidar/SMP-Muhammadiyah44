@@ -428,6 +428,10 @@
   .page-header { flex-direction: column; align-items: flex-start; }
   .page-header h1 { font-size: 20px; }
 
+  /* Kartu Scan QR ditaruh paling atas (di atas Kehadiran) khusus di HP,
+     tanpa ubah urutan HTML — cuma geser tampilan pakai order */
+  .scan-card { order: -1; }
+
   .key-details { flex-direction: column; gap: 8px; }
   .status-box { flex-wrap: wrap; }
 

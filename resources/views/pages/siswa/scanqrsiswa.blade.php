@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
   <title>Scan QR Presensi - SMP Muhammadiyah 44</title>
   <link rel="stylesheet" href="{{ asset('siswa css/scanqrsiswa.css') }}?v=3">
@@ -59,7 +60,7 @@
           <div class="avatar">AF</div>
           <div>
             <div class="name">Ahmad Fauzan</div>
-            <div class="role">7A • Murid</div>
+            <div class="role">{{ $siswa->kelas ?? '-' }} • Murid</div>
           </div>
         </div>
         <form action="{{ route('siswa.logout') }}" method="POST" style="margin:0;">
@@ -92,7 +93,7 @@
           <div class="avatar">AF</div>
           <div>
             <div class="name">Ahmad Fauzan</div>
-            <div class="role">7A • Murid</div>
+            <div class="role">{{ $siswa->kelas ?? '-' }} • Murid</div>
           </div>
         </div>
       </div>
@@ -109,7 +110,7 @@
           <div class="status-pill">
             <span class="dot"></span> Status Siswa: <strong>{{ $siswa->status ?? 'Aktif' }}</strong>
           </div>
-          <div class="class-pill">{{ $siswa->kelas ?? 'Kelas 7A' }} • {{ $semester ?? 'Semester Ganjil' }}</div>
+          <div class="class-pill">{{ $siswa->kelas ?? '-' }} • {{ $semester ?? '-' }}</div>
         </div>
       </div>
 
@@ -147,24 +148,24 @@
           <div class="session-card">
             <div class="session-card-header">
               <span class="session-title"><span class="dot-title"></span> Sesi Saat Ini</span>
-              <span class="session-status-badge">● {{ $sesi['status'] ?? 'Berlangsung' }}</span>
+              <span class="session-status-badge">● {{ $sesi['status'] ?? 'Tidak ada sesi aktif' }}</span>
             </div>
             <div class="session-rows">
               <div class="session-row">
                 <span class="row-label">Mata Pelajaran</span>
-                <span class="row-value">{{ $sesi['mapel'] ?? 'Matematika' }}</span>
+                <span class="row-value">{{ $sesi['mapel'] ?? '-' }}</span>
               </div>
               <div class="session-row">
                 <span class="row-label">Kelas / Ruang</span>
-                <span class="row-value">{{ $sesi['kelas_ruang'] ?? '7A (Ruang Kelas 03)' }}</span>
+                <span class="row-value">{{ $sesi['kelas_ruang'] ?? '-' }}</span>
               </div>
               <div class="session-row">
                 <span class="row-label">Jam Pelajaran</span>
-                <span class="row-value">{{ $sesi['jam'] ?? '08.20 – 09.40 WIB' }}</span>
+                <span class="row-value">{{ $sesi['jam'] ?? '-' }}</span>
               </div>
               <div class="session-row">
                 <span class="row-label">Guru Pengampu</span>
-                <span class="row-value">{{ $sesi['guru'] ?? 'Ustadz Ahmad Fauzi, M.Pd.' }}</span>
+                <span class="row-value">{{ $sesi['guru'] ?? '-' }}</span>
               </div>
             </div>
           </div>
@@ -255,6 +256,7 @@
   <script>
     let html5QrCode = null;
     let isCameraRunning = false;
+    let scanPending = false;
 
     function startCamera() {
       if (isCameraRunning) return;
@@ -305,9 +307,28 @@
       }
     }
 
-    function onScanSuccess(decodedText, decodedResult) {
-      // Sementara diletakkan alert dulu untuk ngetes kalau QR berhasil terbaca
-      alert("QR Code Berhasil Terbaca!\nIsi QR: " + decodedText);
+    async function onScanSuccess(decodedText) {
+      if (scanPending) return;
+      scanPending = true;
+      try {
+        const response = await fetch(@json(route('siswa.scan')), {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+          },
+          body: JSON.stringify({ token: decodedText })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'QR tidak valid atau sudah kedaluwarsa.');
+        alert(result.message);
+        stopCamera();
+      } catch (error) {
+        alert(error.message);
+      } finally {
+        scanPending = false;
+      }
     }
 
     function onScanError(errorMessage) {

@@ -55,7 +55,7 @@
                     <div class="avatar">{{ $siswa->inisial ?? 'AF' }}</div>
                     <div>
                         <div class="name">{{ $siswa->nama ?? 'Ahmad Fauzan' }}</div>
-                        <div class="role">{{ $siswa->kelas ?? '7A' }} • Murid</div>
+                        <div class="role">{{ $siswa->kelas ?? '-' }} • Murid</div>
                     </div>
                 </div>
                 <form action="{{ route('siswa.logout') }}" method="POST" style="margin:0;">
@@ -87,7 +87,7 @@
                     <div class="avatar">{{ $siswa->inisial ?? 'AF' }}</div>
                     <div>
                         <div class="name">{{ $siswa->nama ?? 'Ahmad Fauzan' }}</div>
-                        <div class="role">{{ $siswa->kelas ?? '7A' }} • Murid</div>
+                        <div class="role">{{ $siswa->kelas ?? '-' }} • Murid</div>
                     </div>
                 </div>
             </div>
@@ -123,7 +123,7 @@
                             <div class="profile-meta-row">
                                 <span><span class="meta-label">NISN:</span> {{ $siswa->nisn ?? '00654321' }}</span>
                                 <span class="meta-dot">•</span>
-                                <span><span class="meta-label">Kelas:</span> {{ $siswa->kelas ?? '7A' }}</span>
+                                <span><span class="meta-label">Kelas:</span> {{ $siswa->kelas ?? '-' }}</span>
                                 <span class="meta-dot">•</span>
                                 <span class="meta-school">{{ $siswa->sekolah ?? 'SMP Muhammadiyah 44 Tangerang Selatan' }}</span>
                             </div>

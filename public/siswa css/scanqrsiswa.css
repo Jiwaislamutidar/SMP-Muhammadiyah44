@@ -547,10 +547,7 @@ body::-webkit-scrollbar-thumb {
 @keyframes fadeSlideUp {
   to { opacity: 1; transform: translateY(0); }
 }
-/* =========================================================
-   RESPONSIF — ditaruh di PALING BAWAH biar override-nya
-   beneran menang lawan aturan dasar .scanner-container dkk
-   ========================================================= */
+
 @media (max-width: 1024px) {
   .topbar { left: 20px; width: calc(100% - 40px); padding: 0 16px; }
   .content { padding: 100px 24px 24px; }

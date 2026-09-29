@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Siswa;
+use App\Models\JadwalPelajaran;
+use App\Models\PresensiPelajaran;
+use App\Models\SesiPelajaran;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,7 +26,17 @@ class SiswaController extends Controller
 
     public function riwayat(): View
     {
-        return view('pages.siswa.riwayatsiswa', $this->pageData());
+        $data = $this->pageData();
+        $siswaId = Siswa::where('user_id', Auth::id())->value('id');
+        $data['riwayatPresensi'] = PresensiPelajaran::with([
+            'sesiPelajaran.jadwal.mapel',
+            'sesiPelajaran.jadwal.kelas',
+        ])
+            ->where('siswa_id', $siswaId)
+            ->latest('updated_at')
+            ->paginate(10);
+
+        return view('pages.siswa.riwayatsiswa', $data);
     }
 
     public function profil(): View
@@ -67,6 +80,79 @@ class SiswaController extends Controller
         $academicStartYear = $month >= 7 ? now()->year : now()->year - 1;
         $semesterName = $month >= 7 || $month <= 1 ? 'Ganjil' : 'Genap';
         $kelas = $siswaModel?->kelas?->nama_kelas ?? 'Belum Ada Kelas';
+        $jadwalRecords = collect();
+
+        if ($siswaModel?->kelas_id) {
+            $hari = now()->locale('id')->isoFormat('dddd');
+            $jadwalRecords = JadwalPelajaran::with([
+                'guru',
+                'kelas',
+                'mapel',
+                'sesiPelajarans' => fn ($query) => $query->whereDate('tanggal', today())
+                    ->with(['presensiPelajarans' => fn ($attendance) => $attendance->where('siswa_id', $siswaModel->id)]),
+            ])
+                ->where('kelas_id', $siswaModel->kelas_id)
+                ->whereRaw('LOWER(hari) = ?', [mb_strtolower($hari)])
+                ->orderBy('jam_mulai')
+                ->get();
+        }
+
+        $jadwalHariIni = $jadwalRecords->map(function (JadwalPelajaran $jadwal) {
+            $sesi = $jadwal->sesiPelajarans->first();
+            $status = match ($sesi?->status_sesi) {
+                'Selesai' => 'Selesai',
+                'Berlangsung' => 'Berlangsung',
+                default => $jadwal->jam_mulai > now()->format('H:i:s') ? 'Akan Datang' : 'Belum',
+            };
+
+            return [
+                'jam' => substr($jadwal->jam_mulai, 0, 5).' - '.substr($jadwal->jam_selesai, 0, 5),
+                'mapel' => $jadwal->mapel->nama_mapel,
+                'guru' => $jadwal->guru->nama_lengkap,
+                'kelas' => $jadwal->kelas->nama_kelas,
+                'status' => $status,
+            ];
+        })->all();
+
+        $presensiTerbaru = $siswaModel
+            ? PresensiPelajaran::with('sesiPelajaran.jadwal.mapel', 'sesiPelajaran.jadwal.guru')
+                ->where('siswa_id', $siswaModel->id)
+                ->whereHas('sesiPelajaran', fn ($query) => $query->whereDate('tanggal', today()))
+                ->latest('updated_at')
+                ->first()
+            : null;
+
+        $counts = $siswaModel
+            ? $siswaModel->presensiPelajarans()
+                ->selectRaw('status, COUNT(*) as total')
+                ->groupBy('status')
+                ->pluck('total', 'status')
+            : collect();
+
+        $absensiTerbaru = $siswaModel
+            ? PresensiPelajaran::with('sesiPelajaran.jadwal.mapel')
+                ->where('siswa_id', $siswaModel->id)
+                ->latest('updated_at')
+                ->take(5)
+                ->get()
+                ->map(fn (PresensiPelajaran $attendance) => [
+                    'mapel' => $attendance->sesiPelajaran->jadwal->mapel->nama_mapel,
+                    'tanggal' => $attendance->sesiPelajaran->tanggal->format('d/m/Y'),
+                    'waktu' => $attendance->waktu_scan ? $attendance->waktu_scan->format('H:i').' WIB' : '-',
+                    'status' => $attendance->status,
+                ])->all()
+            : [];
+
+        $sesiAktif = $siswaModel
+            ? SesiPelajaran::with(['jadwal.mapel', 'jadwal.kelas', 'jadwal.guru'])
+                ->whereDate('tanggal', today())
+                ->where('status_sesi', 'Berlangsung')
+                ->whereHas('jadwal', fn ($query) => $query->where('kelas_id', $siswaModel->kelas_id))
+                ->latest('updated_at')
+                ->first()
+            : null;
+
+        $sesiBerikutnya = $jadwalRecords->first(fn (JadwalPelajaran $jadwal) => $jadwal->jam_mulai > now()->format('H:i:s'));
 
         return [
             'siswa' => (object) [
@@ -82,34 +168,39 @@ class SiswaController extends Controller
             'semester' => 'Semester ' . $semesterName,
             'semesterInfo' => 'Semester ' . $semesterName . ' ' . $academicStartYear,
             'tahunAjaran' => $academicStartYear . '/' . ($academicStartYear + 1) . ' ' . $semesterName,
-            'ringkasan' => ['hadir' => 18, 'izin' => 2, 'alfa' => 1],
+            'ringkasan' => [
+                'hadir' => (int) $counts->get('Hadir', 0),
+                'izin' => (int) $counts->get('Izin', 0),
+                'alfa' => (int) $counts->get('Alfa', 0),
+            ],
             'presensi' => [
-                'status' => 'Hadir',
-                'verifikator' => 'Ustadz Pengampu',
-                'mapel' => 'Matematika',
-                'sesi' => 'Sesi 1 Selesai',
-                'ruang' => 'Ruang Kelas 03',
-                'jam' => '07.00 - 08.20',
-                'waktu_tercatat' => '07.02 WIB',
+                'status' => $presensiTerbaru?->status ?? 'Belum Absen',
+                'verifikator' => $presensiTerbaru?->sesiPelajaran?->jadwal?->guru?->nama_lengkap ?? '-',
+                'mapel' => $presensiTerbaru?->sesiPelajaran?->jadwal?->mapel?->nama_mapel ?? '-',
+                'sesi' => $presensiTerbaru?->sesiPelajaran?->status_sesi ?? '-',
+                'ruang' => $presensiTerbaru?->sesiPelajaran?->jadwal?->ruangan ?? '-',
+                'jam' => $presensiTerbaru
+                    ? substr($presensiTerbaru->sesiPelajaran->jadwal->jam_mulai, 0, 5).' - '.substr($presensiTerbaru->sesiPelajaran->jadwal->jam_selesai, 0, 5)
+                    : '-',
+                'waktu_tercatat' => $presensiTerbaru?->waktu_scan
+                    ? $presensiTerbaru->waktu_scan->format('H:i').' WIB'
+                    : '-',
             ],
-            'jadwalHariIni' => [
-                ['jam' => '07.00 - 08.20', 'mapel' => 'Matematika', 'guru' => 'Ustadz Ahmad Fauzi', 'kelas' => $kelas, 'status' => 'Selesai'],
-                ['jam' => '08.20 - 09.40', 'mapel' => 'IPA Terpadu', 'guru' => 'Ustadzah Nur Aini', 'kelas' => $kelas, 'status' => 'Berlangsung'],
-                ['jam' => '10.00 - 11.20', 'mapel' => 'Bahasa Indonesia', 'guru' => 'Ustadzah Siti Rahma', 'kelas' => $kelas, 'status' => 'Akan Datang'],
-                ['jam' => '11.20 - 12.00', 'mapel' => 'Bahasa Arab', 'guru' => 'Ustadz Hasan', 'kelas' => $kelas, 'status' => 'Akan Datang'],
-            ],
-            'absensiTerbaru' => [
-                ['mapel' => 'Matematika', 'tanggal' => now()->format('d/m/Y'), 'waktu' => '07.02 WIB', 'status' => 'Hadir'],
-                ['mapel' => 'Bahasa Indonesia', 'tanggal' => now()->subDay()->format('d/m/Y'), 'waktu' => '08.18 WIB', 'status' => 'Hadir'],
-                ['mapel' => 'IPA Terpadu', 'tanggal' => now()->subDays(2)->format('d/m/Y'), 'waktu' => '07.05 WIB', 'status' => 'Izin'],
-            ],
-            'sesiBerikutnya' => 'IPA Terpadu (08.20 WIB)',
+            'jadwalHariIni' => $jadwalHariIni,
+            'absensiTerbaru' => $absensiTerbaru,
+            'sesiBerikutnya' => $sesiBerikutnya
+                ? $sesiBerikutnya->mapel->nama_mapel.' ('.substr($sesiBerikutnya->jam_mulai, 0, 5).' WIB)'
+                : '-',
             'sesi' => [
-                'status' => 'Berlangsung',
-                'mapel' => 'Matematika',
-                'kelas_ruang' => $kelas . ' (Ruang Kelas 03)',
-                'jam' => '08.20 - 09.40 WIB',
-                'guru' => 'Ustadz Ahmad Fauzi, M.Pd.',
+                'status' => $sesiAktif?->status_sesi ?? 'Tidak ada sesi aktif',
+                'mapel' => $sesiAktif?->jadwal?->mapel?->nama_mapel ?? '-',
+                'kelas_ruang' => $sesiAktif
+                    ? $sesiAktif->jadwal->kelas->nama_kelas.' ('.($sesiAktif->jadwal->ruangan ?? '-').')'
+                    : '-',
+                'jam' => $sesiAktif
+                    ? substr($sesiAktif->jadwal->jam_mulai, 0, 5).' - '.substr($sesiAktif->jadwal->jam_selesai, 0, 5).' WIB'
+                    : '-',
+                'guru' => $sesiAktif?->jadwal?->guru?->nama_lengkap ?? '-',
             ],
         ];
     }

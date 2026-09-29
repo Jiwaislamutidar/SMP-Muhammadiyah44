@@ -23,11 +23,12 @@ class RoleMiddleware
             return redirect()->route($redirectRoute);
         }
 
-        $user = Auth::user();
-        $allowedRoles = array_map('strtolower', $roles);
+        $user = $request->user();
+        $userRole = strtolower(trim((string) $user->getAttribute('role')));
+        $allowedRoles = array_map(fn ($role) => strtolower(trim((string) $role)), $roles);
 
-        if (!in_array(strtolower((string) $user->role), $allowedRoles, true)) {
-            $target = match (strtolower((string) $user->role)) {
+        if (! in_array($userRole, $allowedRoles, true)) {
+            $target = match ($userRole) {
                 'admin' => 'admin.dashboard',
                 'guru' => 'guru.dashboard',
                 default => 'siswa.dashboard',

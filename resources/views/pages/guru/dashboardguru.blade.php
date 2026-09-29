@@ -101,7 +101,7 @@
           <div class="avatar">AF</div>
           <div class="profile-meta">
             <div class="name">Ust. Ahmad Fauzi, S.Pd.</div>
-            <div class="role">Guru IPA &amp; Matematika</div>
+            <div class="role">Guru Mata Pelajaran</div>
           </div>
         </div>
       </div>
@@ -109,7 +109,7 @@
 
     <main class="content">
       <div class="page-header">
-        <h1>Selamat Datang, Ustadz Ahmad</h1>
+        <h1>Selamat Datang, {{ $guru->nama_lengkap }}</h1>
         <p>Berikut informasi jadwal dan presensi Anda hari ini.</p>
       </div>
 
@@ -119,10 +119,10 @@
             <div class="icon-wrap">🏫</div>
             <div class="stat-meta">
               <div class="label">Masuk Sekolah</div>
-              <div class="value">06.45 WIB</div>
+              <div class="value">{{ $presensiHariIni?->jam_masuk ? substr($presensiHariIni->jam_masuk, 0, 5).' WIB' : '--:--' }}</div>
             </div>
           </div>
-          <div class="status-badge"><span class="dot"></span> Sudah Absen</div>
+          <div class="status-badge"><span class="dot"></span> {{ $presensiHariIni?->jam_masuk ? 'Sudah Absen' : 'Belum Absen' }}</div>
         </div>
 
         <div class="stat-card">
@@ -130,10 +130,10 @@
             <div class="icon-wrap alt">🏠</div>
             <div class="stat-meta">
               <div class="label">Pulang Sekolah</div>
-              <div class="value">— : —</div>
+              <div class="value">{{ $presensiHariIni?->jam_pulang ? substr($presensiHariIni->jam_pulang, 0, 5).' WIB' : '--:--' }}</div>
             </div>
           </div>
-          <div class="status-badge pending"><span class="dot"></span> Belum Absen</div>
+          <div class="status-badge pending"><span class="dot"></span> {{ $presensiHariIni?->jam_pulang ? 'Sudah Absen' : 'Belum Absen' }}</div>
         </div>
       </section>
 
@@ -141,7 +141,7 @@
         <div class="panel">
           <div class="panel-header">
             <div class="panel-title"><span class="bar"></span> Jadwal Mengajar Hari Ini</div>
-            <div class="mini-label">3 Sesi KBM</div>
+            <div class="mini-label">{{ $jadwals->count() }} Sesi KBM</div>
           </div>
 
           <table class="schedule-table">
@@ -154,29 +154,20 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>07.00–08.20</td>
-                <td>Matematika</td>
-                <td><span class="pill-soft">7A</span></td>
-                <td style="text-align: right;"><span class="pill-live"><span class="dot"></span> Selesai</span></td>
-              </tr>
-              <tr class="active-row">
-                <td>08.20–09.40</td>
-                <td>Matematika</td>
-                <td><span class="pill-soft">8A</span></td>
-                <td style="text-align: right;"><span class="pill-live"><span class="dot"></span> Sedang Berlangsung</span></td>
-              </tr>
-              <tr>
-                <td>10.00–11.20</td>
-                <td>Matematika</td>
-                <td><span class="pill-soft">9A</span></td>
-                <td style="text-align: right;"><span class="pill-soft">Belum</span></td>
-              </tr>
+              @forelse($jadwals as $jadwal)
+                @php($sesiJadwal = $jadwal->sesiPelajarans->first())
+                <tr class="{{ $sesiJadwal?->status_sesi === 'Berlangsung' ? 'active-row' : '' }}">
+                  <td>{{ substr($jadwal->jam_mulai, 0, 5) }}-{{ substr($jadwal->jam_selesai, 0, 5) }}</td>
+                  <td>{{ $jadwal->mapel->nama_mapel }}</td>
+                  <td><span class="pill-soft">{{ $jadwal->kelas->nama_kelas }}</span></td>
+                  <td style="text-align:right"><span class="pill-live"><span class="dot"></span>{{ $sesiJadwal?->status_sesi ?? 'Belum' }}</span></td>
+                </tr>
+              @empty<tr><td colspan="4">Tidak ada jadwal mengajar hari ini.</td></tr>@endforelse
             </tbody>
           </table>
 
           <div class="session-footer">
-            <span>Ruang kelas: Gedung K.H. Ahmad Dahlan Lt. 2</span>
+            <span>Ruang kelas: {{ $sesiAktif?->ruangan ?? '-' }}</span>
             <strong>Sesi aktif otomatis tersinkron</strong>
           </div>
         </div>
@@ -185,16 +176,16 @@
           <div class="active-session">
             <div class="session-header">
               <div class="session-label">Sesi Mengajar Saat Ini</div>
-              <div class="live-status"><span class="dot"></span> Sedang Berlangsung</div>
+              <div class="live-status"><span class="dot"></span> {{ $sesiAktif ? 'Sedang Berlangsung' : 'Tidak ada sesi aktif' }}</div>
             </div>
 
             <div class="session-main">
               <div>
-                <h3>Matematika</h3>
+                <h3>{{ $sesiAktif?->mapel?->nama_mapel ?? '-' }}</h3>
                 <div class="meta">
-                  <span>Kelas 8A</span>
+                  <span>{{ $sesiAktif?->kelas?->nama_kelas ?? '-' }}</span>
                   <span>•</span>
-                  <span>08.20–09.40 WIB</span>
+                  <span>{{ $sesiAktif ? substr($sesiAktif->jam_mulai, 0, 5).'-'.substr($sesiAktif->jam_selesai, 0, 5).' WIB' : '-' }}</span>
                 </div>
               </div>
               <div class="session-icon">📚</div>
@@ -206,12 +197,15 @@
           <div class="summary-panel">
             <div class="summary-top">
               <h4>Presensi Murid</h4>
-              <span class="green-badge">Matematika • 8A</span>
+              <span class="green-badge">{{ $sesiAktif ? $sesiAktif->mapel->nama_mapel.' • '.$sesiAktif->kelas->nama_kelas : '-' }}</span>
             </div>
 
             <div class="summary-body">
-              <div class="count"><strong>28</strong><span>dari 32 murid hadir</span></div>
-              <div class="progress"><span></span></div>
+              @php($activeSession = $sesiAktif?->sesiPelajarans->first())
+              @php($presentCount = $activeSession?->presensiPelajarans->where('status', 'Hadir')->count() ?? 0)
+              @php($totalCount = $activeSession?->presensiPelajarans->count() ?? 0)
+              <div class="count"><strong>{{ $presentCount }}</strong><span>dari {{ $totalCount }} murid hadir</span></div>
+              <div class="progress"><span style="width:{{ $totalCount ? round($presentCount / $totalCount * 100) : 0 }}%"></span></div>
             </div>
 
             <button class="secondary-btn" onclick="window.location.href='{{ route('guru.presensi-murid') }}'">Kelola Presensi Murid</button>

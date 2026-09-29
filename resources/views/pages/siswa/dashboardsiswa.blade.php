@@ -59,7 +59,7 @@
           <div class="avatar">{{ $siswa->inisial ?? 'AF' }}</div>
           <div>
             <div class="name">{{ $siswa->nama ?? 'Ahmad Fauzan' }}</div>
-            <div class="role">{{ $siswa->kelas ?? '7A' }} • Murid</div>
+            <div class="role">{{ $siswa->kelas ?? '-' }} • Murid</div>
           </div>
         </div>
         <form action="{{ route('siswa.logout') }}" method="POST" style="margin:0;">
@@ -92,7 +92,7 @@
           <div class="avatar">{{ $siswa->inisial ?? 'AF' }}</div>
           <div>
             <div class="name">{{ $siswa->nama ?? 'Ahmad Fauzan' }}</div>
-            <div class="role">{{ $siswa->kelas ?? '7A' }} • Murid</div>
+            <div class="role">{{ $siswa->kelas ?? '-' }} • Murid</div>
           </div>
         </div>
       </div>
@@ -110,7 +110,7 @@
           <div class="status-pill">
             <span class="dot"></span> Status Siswa: <strong>{{ $siswa->status ?? 'Aktif' }}</strong>
           </div>
-          <div class="class-pill">{{ $siswa->kelas ?? 'Kelas 7A' }} • {{ $semester ?? 'Semester Ganjil' }}</div>
+          <div class="class-pill">{{ $siswa->kelas ?? '-' }} • {{ $semester ?? '-' }}</div>
         </div>
       </div>
 
@@ -120,14 +120,14 @@
         <div class="card attendance-card">
           <div class="card-header">
             <div class="card-title"><span class="bar"></span><h2>Kehadiran Hari Ini</h2></div>
-            <div class="date-chip">{{ $tanggalHariIni ?? 'Senin, 8 September 2026' }}</div>
+            <div class="date-chip">{{ $tanggalHariIni ?? now()->locale('id')->translatedFormat('l, j F Y') }}</div>
           </div>
 
           <div class="status-box">
             <div>
               <div class="status-label">Status Presensi</div>
-              <div class="status-badge"><span class="dot"></span> {{ $presensi['status'] ?? 'Hadir' }}</div>
-              <div class="status-note">Terverifikasi {{ $presensi['verifikator'] ?? 'Ustadz Pengampu' }}</div>
+              <div class="status-badge"><span class="dot"></span> {{ $presensi['status'] ?? 'Belum Absen' }}</div>
+              <div class="status-note">Terverifikasi {{ $presensi['verifikator'] ?? '-' }}</div>
             </div>
             <div class="status-icon"></div>
           </div>
@@ -135,24 +135,24 @@
           <div class="key-details">
             <div class="box">
               <div class="label">Mata Pelajaran</div>
-              <div class="value">{{ $presensi['mapel'] ?? 'Matematika' }}</div>
-              <div class="sub">{{ $presensi['sesi'] ?? 'Sesi 1 Selesai' }}</div>
+              <div class="value">{{ $presensi['mapel'] ?? '-' }}</div>
+              <div class="sub">{{ $presensi['sesi'] ?? '-' }}</div>
             </div>
             <div class="box">
               <div class="label">Kelas</div>
-              <div class="value">{{ $siswa->kelas ?? '7A' }}</div>
-              <div class="sub">{{ $presensi['ruang'] ?? 'Ruang Kelas 03' }}</div>
+              <div class="value">{{ $siswa->kelas ?? '-' }}</div>
+              <div class="sub">{{ $presensi['ruang'] ?? '-' }}</div>
             </div>
             <div class="box">
               <div class="label">Jam Pelajaran</div>
-              <div class="value">{{ $presensi['jam'] ?? '07.00 – 08.20' }}</div>
-              <div class="sub">Tercatat: {{ $presensi['waktu_tercatat'] ?? '07.02 WIB' }}</div>
+              <div class="value">{{ $presensi['jam'] ?? '-' }}</div>
+              <div class="sub">Tercatat: {{ $presensi['waktu_tercatat'] ?? '-' }}</div>
             </div>
           </div>
 
           <div class="next-session">
-            <span>Sesi pembelajaran berikutnya: <strong>{{ $sesiBerikutnya ?? 'IPA Terpadu (08.20 WIB)' }}</strong></span>
-            <span class="live">Sesi Berlangsung</span>
+            <span>Sesi pembelajaran berikutnya: <strong>{{ $sesiBerikutnya ?? '-' }}</strong></span>
+            <span class="live">{{ $sesi['status'] ?? 'Tidak ada sesi aktif' }}</span>
           </div>
         </div>
 
@@ -199,17 +199,17 @@
             <div class="stat-cards">
               <div class="stat hadir">
                 <div class="label">Hadir</div>
-                <div class="num">{{ $ringkasan['hadir'] ?? 18 }}</div>
+                <div class="num">{{ $ringkasan['hadir'] ?? 0 }}</div>
                 <div class="sub">Presensi Sah</div>
               </div>
               <div class="stat izin">
                 <div class="label">Izin</div>
-                <div class="num">{{ $ringkasan['izin'] ?? 2 }}</div>
+                <div class="num">{{ $ringkasan['izin'] ?? 0 }}</div>
                 <div class="sub">Surat Masuk</div>
               </div>
               <div class="stat alfa">
                 <div class="label">Alfa</div>
-                <div class="num">{{ $ringkasan['alfa'] ?? 1 }}</div>
+                <div class="num">{{ $ringkasan['alfa'] ?? 0 }}</div>
                 <div class="sub">Tanpa Berita</div>
               </div>
             </div>
@@ -230,19 +230,7 @@
                   <span class="pill-{{ strtolower($absen['status']) }}">● {{ $absen['status'] }}</span>
                 </div>
               @empty
-                {{-- data contoh statis sesuai desain --}}
-                <div class="item">
-                  <div><div class="mapel">Matematika</div><div class="meta">08 Sep 2026 • 07.02 WIB</div></div>
-                  <span class="pill-hadir">● Hadir</span>
-                </div>
-                <div class="item">
-                  <div><div class="mapel">IPA Terpadu</div><div class="meta">07 Sep 2026 • 08.25 WIB</div></div>
-                  <span class="pill-hadir">● Hadir</span>
-                </div>
-                <div class="item">
-                  <div><div class="mapel">Bahasa Indonesia</div><div class="meta">06 Sep 2026 • Surat Sakit</div></div>
-                  <span class="pill-izin">● Izin</span>
-                </div>
+                <div class="item"><div class="mapel">Belum ada catatan presensi.</div></div>
               @endforelse
             </div>
           </div>
@@ -251,7 +239,7 @@
         <div class="card right-col">
           <div class="card-header">
             <div class="card-title"><span class="bar"></span><h2>Jadwal Hari Ini</h2></div>
-            <div class="date-chip">{{ $siswa->kelas ?? '7A' }} • {{ count($jadwalHariIni ?? []) ?: 4 }} Sesi Pembelajaran</div>
+            <div class="date-chip">{{ $siswa->kelas ?? '-' }} • {{ count($jadwalHariIni ?? []) }} Sesi Pembelajaran</div>
           </div>
 
           {{-- Dibungkus supaya tabel bisa discroll ke samping di layar kecil, bukan gepeng --}}
@@ -266,7 +254,7 @@
                     <td>{{ $j['jam'] }}</td>
                     <td>{{ $j['mapel'] }}</td>
                     <td>{{ $j['guru'] ?? '-' }}</td>
-                    <td><span class="kelas-chip">{{ $j['kelas'] ?? $siswa->kelas ?? '7A' }}</span></td>
+                    <td><span class="kelas-chip">{{ $j['kelas'] ?? $siswa->kelas ?? '-' }}</span></td>
                     <td>
                       @if($j['status'] === 'Selesai')
                         <span class="status-selesai">● Selesai</span>
@@ -278,31 +266,15 @@
                     </td>
                   </tr>
                 @empty
-                  {{-- data contoh statis sesuai desain --}}
-                  <tr>
-                    <td>07.00–08.20</td><td>Matematika</td><td>Ustadz Ahmad</td>
-                    <td><span class="kelas-chip">7A</span></td><td><span class="status-selesai">● Selesai</span></td>
-                  </tr>
-                  <tr class="berlangsung">
-                    <td>08.20–09.40</td><td>IPA</td><td>Ustadzah Siti</td>
-                    <td><span class="kelas-chip">7A</span></td><td><span class="status-berlangsung">Berlangsung</span></td>
-                  </tr>
-                  <tr>
-                    <td>09.40–10.00</td><td>Istirahat & Sholat Dhuha</td><td>-</td>
-                    <td></td><td><span class="status-netral">Istirahat</span></td>
-                  </tr>
-                  <tr>
-                    <td>10.00–11.20</td><td>Bahasa Indonesia</td><td>Ustadz Budi</td>
-                    <td><span class="kelas-chip">7A</span></td><td><span class="status-netral">Mendatang</span></td>
-                  </tr>
+                  <tr><td colspan="5">Tidak ada jadwal pembelajaran untuk kelas Anda hari ini.</td></tr>
                 @endforelse
               </tbody>
             </table>
           </div>
 
           <div class="jadwal-footer">
-            <span>Menampilkan jadwal aktif {{ $tanggalHariIni ?? 'Senin, 8 September 2026' }}</span>
-            <span>Jadwal {{ $siswa->kelas ?? 'Kelas 7A' }}</span>
+            <span>Menampilkan jadwal aktif {{ $tanggalHariIni ?? now()->locale('id')->translatedFormat('l, j F Y') }}</span>
+            <span>Jadwal {{ $siswa->kelas ?? '-' }}</span>
           </div>
         </div>
       </div>

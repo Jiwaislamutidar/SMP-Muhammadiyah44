@@ -17,11 +17,11 @@
 			<div class="avatar">AF</div>
 			<div class="profile-identity">
 				<div class="profile-name-row">
-					<h2>Ustadz Ahmad</h2>
+					<h2>{{ $guru->nama_lengkap }}</h2>
 					<span class="role-chip">Guru</span>
 					<span class="status-pill hadir"><i></i>Aktif</span>
 				</div>
-				<p><strong>NIP:</strong> 198501012010011001 <span class="identity-separator">•</span> SMP Muhammadiyah 44 Tangerang Selatan</p>
+				<p><strong>NIP:</strong> {{ $guru->nip ?? '-' }} <span class="identity-separator">•</span> SMP Muhammadiyah 44 Tangerang Selatan</p>
 			</div>
 			<button class="btn btn-primary profile-edit" type="button">Edit Profil</button>
 		</div>
@@ -33,13 +33,11 @@
 					<span>Data Induk Kepegawaian</span>
 				</div>
 				<dl class="details-grid">
-					<div><dt>Nama Lengkap</dt><dd>Ustadz Ahmad</dd></div>
-					<div><dt>Jenis Kelamin</dt><dd>Laki-laki</dd></div>
-					<div><dt>NIP (Nomor Induk Pegawai)</dt><dd class="mono">198501012010011001</dd></div>
-					<div><dt>NUPTK</dt><dd class="mono">1234567890123456</dd></div>
-					<div><dt>Nomor Telepon / WhatsApp</dt><dd>0812 3456 7890</dd></div>
-					<div><dt>Status Kepegawaian</dt><dd><span class="status-pill hadir"><i></i>Aktif</span></dd></div>
-					<div class="detail-wide"><dt>Email Resmi Sekolah</dt><dd>ustadz.ahmad@smpmuhammadiyah44.sch.id</dd></div>
+					<div><dt>Nama Lengkap</dt><dd>{{ $guru->nama_lengkap }}</dd></div>
+					<div><dt>NIP (Nomor Induk Pegawai)</dt><dd class="mono">{{ $guru->nip ?? '-' }}</dd></div>
+					<div><dt>Status Kepegawaian</dt><dd><span class="status-pill hadir"><i></i>{{ ucfirst($guru->status) }}</span></dd></div>
+					<div><dt>Username Akun</dt><dd class="mono">{{ $user->username }}</dd></div>
+					<div class="detail-wide"><dt>Email Akun</dt><dd>{{ $user->email ?? '-' }}</dd></div>
 				</dl>
 			</section>
 
@@ -49,8 +47,8 @@
 					<span class="read-only-chip">Read-only Akademik</span>
 				</div>
 				<div class="subject-details">
-					<div><span class="detail-label">Mata Pelajaran Utama</span><strong class="subject-name">Matematika</strong></div>
-					<div><span class="detail-label">Kelas yang Diampu</span><div class="class-tags"><span>7A</span><span>8A</span><span>9A</span></div></div>
+					<div><span class="detail-label">Mata Pelajaran</span><div class="class-tags">@forelse($mapelDiampu as $namaMapel)<span>{{ $namaMapel }}</span>@empty<span>Belum ada mata pelajaran</span>@endforelse</div></div>
+					<div><span class="detail-label">Kelas yang Diampu</span><div class="class-tags">@forelse($kelasDiampu as $namaKelas)<span>{{ $namaKelas }}</span>@empty<span>Belum ada kelas</span>@endforelse</div></div>
 				</div>
 				<p class="sync-note">Penetapan rombongan belajar disinkronisasikan langsung oleh Bagian Kurikulum Akademik SMP Muhammadiyah 44.</p>
 			</section>
@@ -63,7 +61,7 @@
 			</div>
 			<div class="account-field">
 				<span class="detail-label">Username Akun</span>
-				<div class="account-value mono">ahmad.guru</div>
+				<div class="account-value mono">{{ $user->username }}</div>
 			</div>
 			<div class="account-row"><span>Status Akun Portal</span><span class="status-pill hadir"><i></i>Aktif</span></div>
 			<div class="account-row"><span>Terakhir Masuk Sistem</span><strong>8 Sept 2026, 06.35 WIB</strong></div>

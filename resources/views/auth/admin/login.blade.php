@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
-    <title>Login Presensi - SMP Muhammadiyah 44</title>
+    <title>Login Admin - SMP Muhammadiyah 44</title>
     
     <!-- CDN Bootstrap Icons (Aset Online) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{{ asset('siswa css/login.css') }}">
 
     <style>
         *, *::before, *::after {
@@ -340,11 +341,11 @@
         
         <!-- Header & Emblem Logo -->
         <div class="top-heading-section">
-            <i class="bi bi-building-fill-check school-emblem-icon"></i>
+            <img src="{{ asset('logo.jpg') }}" alt="Logo SMP Muhammadiyah 44" class="school-logo-img">
             <div class="text-sub">SMP MUHAMMADIYAH 44</div>
-            <h2 class="login-title">Login Presensi</h2>
+            <h2 class="login-title">Login Presensi Admin</h2>
             <p class="login-desc">
-                Masuk menggunakan Username & Password Anda.
+                Masuk menggunakan akun administrator.
             </p>
         </div>
 
@@ -359,7 +360,7 @@
         <form action="{{ route('admin.login') }}" method="POST" class="form-elements">
             @csrf
 
-            <!-- Username / NISN -->
+            <!-- Username Admin -->
             <div class="floating-field">
                 <input 
                     type="text" 
@@ -369,7 +370,7 @@
                     placeholder=" "
                     required
                 />
-                <label class="label" for="username">Username / NISN</label>
+                <label class="label" for="username">Username Admin</label>
             </div>
 
             <!-- Password -->
@@ -401,7 +402,7 @@
 
             <!-- Submit Button -->
             <button type="submit" class="primary-submit-button">
-                Masuk Ke Portal
+                Masuk Ke Panel Admin
             </button>
         </form>
 

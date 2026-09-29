@@ -55,7 +55,7 @@
                     <div class="avatar">{{ $siswa->inisial ?? 'AF' }}</div>
                     <div>
                         <div class="name">{{ $siswa->nama ?? 'Ahmad Fauzan' }}</div>
-                        <div class="role">{{ $siswa->kelas ?? '7A' }} • Murid</div>
+                        <div class="role">{{ $siswa->kelas ?? '-' }} • Murid</div>
                     </div>
                 </div>
                 <form action="{{ route('siswa.logout') }}" method="POST" style="margin:0;">
@@ -87,7 +87,7 @@
                     <div class="avatar">{{ $siswa->inisial ?? 'AF' }}</div>
                     <div>
                         <div class="name">{{ $siswa->nama ?? 'Ahmad Fauzan' }}</div>
-                        <div class="role">{{ $siswa->kelas ?? '7A' }} • Murid</div>
+                        <div class="role">{{ $siswa->kelas ?? '-' }} • Murid</div>
                     </div>
                 </div>
             </div>
@@ -102,9 +102,9 @@
                 <div class="header-status">
                     <div class="status-pill">
                         <span class="dot"></span>
-                        <span>Status Siswa: Aktif</span>
+                        <span>Status Siswa: {{ $siswa->status }}</span>
                     </div>
-                    <div class="class-pill">Kelas 7A • Semester Ganjil</div>
+                    <div class="class-pill">{{ $siswa->kelas }} • {{ $semesterInfo }}</div>
                 </div>
             </div>
 
@@ -114,7 +114,7 @@
                         <div class="icon hadirt-icon">✓</div>
                         <div class="metric-text">
                             <div class="value-row">
-                                <span class="metric-number">18</span>
+                                <span class="metric-number">{{ $ringkasan['hadir'] }}</span>
                                 <span class="metric-name" style="color:#087443;">Hadir</span>
                             </div>
                             <div class="metric-sub">Presensi Terverifikasi</div>
@@ -125,7 +125,7 @@
                         <div class="icon izin-icon">!</div>
                         <div class="metric-text">
                             <div class="value-row">
-                                <span class="metric-number">2</span>
+                                <span class="metric-number">{{ $ringkasan['izin'] }}</span>
                                 <span class="metric-name" style="color:#b45309;">Izin</span>
                             </div>
                             <div class="metric-sub">Dengan Surat Keterangan</div>
@@ -136,14 +136,14 @@
                         <div class="icon alfa-icon">×</div>
                         <div class="metric-text">
                             <div class="value-row">
-                                <span class="metric-number">1</span>
+                                <span class="metric-number">{{ $ringkasan['alfa'] }}</span>
                                 <span class="metric-name" style="color:#dc2626;">Alfa</span>
                             </div>
                             <div class="metric-sub">Tanpa Keterangan</div>
                         </div>
                     </div>
 
-                    <div class="term-tag">Semester Ganjil 2026</div>
+                    <div class="term-tag">{{ $semesterInfo }}</div>
                 </div>
             </section>
 
@@ -151,7 +151,7 @@
                 <div class="filter-block">
                     <label class="filter-label">Periode</label>
                     <div class="select-box">
-                        <span>September 2026</span>
+                        <span>{{ now()->locale('id')->translatedFormat('F Y') }}</span>
                         <span class="chev">▾</span>
                     </div>
                 </div>
@@ -182,7 +182,7 @@
                 <div class="table-header">
                     <div class="table-title-wrap">
                         <h2>Riwayat Kehadiran</h2>
-                        <span>(21 Catatan Presensi)</span>
+                        <span>({{ $riwayatPresensi->total() }} Catatan Presensi)</span>
                     </div>
                     <button class="btn-export" type="button">Unduh Rekap (PDF)</button>
                 </div>
@@ -200,67 +200,24 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>08 Sep 2026</td>
-                                <td>Senin</td>
-                                <td>Matematika</td>
-                                <td>08.20 – 09.40 WIB</td>
-                                <td>7A</td>
-                                <td><span class="badge badge-hadir">Hadir</span></td>
-                            </tr>
-                            <tr>
-                                <td>07 Sep 2026</td>
-                                <td>Minggu</td>
-                                <td>IPA Terpadu</td>
-                                <td>08.20 – 09.40 WIB</td>
-                                <td>7A</td>
-                                <td><span class="badge badge-hadir">Hadir</span></td>
-                            </tr>
-                            <tr>
-                                <td>06 Sep 2026</td>
-                                <td>Sabtu</td>
-                                <td>Bahasa Indonesia</td>
-                                <td>10.00 – 11.20 WIB</td>
-                                <td>7A</td>
-                                <td><span class="badge badge-izin">Izin</span></td>
-                            </tr>
-                            <tr>
-                                <td>05 Sep 2026</td>
-                                <td>Jumat</td>
-                                <td>Matematika</td>
-                                <td>07.00 – 08.20 WIB</td>
-                                <td>7A</td>
-                                <td><span class="badge badge-hadir">Hadir</span></td>
-                            </tr>
-                            <tr>
-                                <td>04 Sep 2026</td>
-                                <td>Kamis</td>
-                                <td>IPA Terpadu</td>
-                                <td>08.20 – 09.40 WIB</td>
-                                <td>7A</td>
-                                <td><span class="badge badge-alfa">Alfa</span></td>
-                            </tr>
-                            <tr>
-                                <td>03 Sep 2026</td>
-                                <td>Rabu</td>
-                                <td>Bahasa Inggris</td>
-                                <td>08.20 – 09.40 WIB</td>
-                                <td>7A</td>
-                                <td><span class="badge badge-hadir">Hadir</span></td>
-                            </tr>
+                            @forelse($riwayatPresensi as $presensi)
+                                @php($jadwal = $presensi->sesiPelajaran->jadwal)
+                                <tr>
+                                    <td>{{ $presensi->sesiPelajaran->tanggal->format('d M Y') }}</td>
+                                    <td>{{ $presensi->sesiPelajaran->tanggal->locale('id')->translatedFormat('l') }}</td>
+                                    <td>{{ $jadwal->mapel->nama_mapel }}</td>
+                                    <td>{{ substr($jadwal->jam_mulai, 0, 5) }} - {{ substr($jadwal->jam_selesai, 0, 5) }} WIB</td>
+                                    <td>{{ $jadwal->kelas->nama_kelas }}</td>
+                                    <td><span class="badge badge-{{ str_replace(' ', '-', strtolower($presensi->status)) }}">{{ $presensi->status }}</span></td>
+                                </tr>
+                            @empty<tr><td colspan="6">Belum ada catatan presensi.</td></tr>@endforelse
                         </tbody>
                     </table>
                 </div>
 
                 <div class="table-footer">
-                    <div class="pagination-info">Menampilkan 1–6 dari 21 data</div>
-                    <div class="pagination">
-                        <button type="button" class="page-btn nav-btn" aria-label="Halaman sebelumnya">‹</button>
-                        <button type="button" class="page-btn active">1</button>
-                        <button type="button" class="page-btn">2</button>
-                        <button type="button" class="page-btn">3</button>
-                        <button type="button" class="page-btn nav-btn" aria-label="Halaman berikutnya">›</button>
-                    </div>
+                    <div class="pagination-info">Menampilkan {{ $riwayatPresensi->firstItem() ?? 0 }}-{{ $riwayatPresensi->lastItem() ?? 0 }} dari {{ $riwayatPresensi->total() }} data</div>
+                    {{ $riwayatPresensi->links() }}
                 </div>
             </section>
         </main>

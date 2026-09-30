@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Guru;
 use App\Models\JadwalPelajaran;
+use App\Models\PresensiPelajaran;
 use App\Models\SesiPelajaran;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -17,12 +18,20 @@ class PortalGuruController extends Controller
         abort_unless($guru, 403, 'Profil guru belum terhubung ke akun ini.');
 
         $jadwals = $this->jadwalsHariIni($guru);
+        $jadwalSaatIni = $jadwals->first(fn (JadwalPelajaran $jadwal) =>
+            $jadwal->jam_mulai <= now()->format('H:i:s') && $jadwal->jam_selesai >= now()->format('H:i:s')
+        );
+        $sesiAktif = $jadwals->first(fn (JadwalPelajaran $jadwal) => $jadwal->sesiPelajarans->first()?->status_sesi === 'Berlangsung');
+        $sesiBerlangsung = $sesiAktif?->sesiPelajarans->first();
 
         return view('pages.guru.dashboardguru', [
             'guru' => $guru,
             'jadwals' => $jadwals,
             'presensiHariIni' => $guru->presensiHarian()->whereDate('tanggal', today())->first(),
-            'sesiAktif' => $jadwals->first(fn (JadwalPelajaran $jadwal) => $jadwal->sesiPelajarans->first()?->status_sesi === 'Berlangsung'),
+            'sesiAktif' => $sesiAktif,
+            'sesiBerlangsung' => $sesiBerlangsung,
+            'jadwalSaatIni' => $jadwalSaatIni,
+            'belumAbsenCount' => $sesiBerlangsung?->presensiPelajarans->where('status', 'Belum Absen')->count() ?? 0,
         ]);
     }
 
@@ -65,6 +74,16 @@ class PortalGuruController extends Controller
             ->where('guru_id', $guru->id)
             ->latest('tanggal')
             ->get();
+        $jumlahSesiAktif = SesiPelajaran::where('guru_id', $guru->id)
+            ->whereDate('tanggal', today())
+            ->where('status_sesi', 'Berlangsung')
+            ->count();
+        $jumlahSiswaBelumAbsen = PresensiPelajaran::where('status', 'Belum Absen')
+            ->whereHas('sesiPelajaran', fn ($query) => $query
+                ->where('guru_id', $guru->id)
+                ->whereDate('tanggal', today())
+                ->where('status_sesi', 'Berlangsung'))
+            ->count();
         $aktivitas = $presensiSekolah->map(fn ($presensi) => [
             'tanggal' => $presensi->tanggal,
             'waktu' => $presensi->jam_masuk,
@@ -90,6 +109,8 @@ class PortalGuruController extends Controller
             'totalSesi' => $sesiMengajar->count(),
             'sesiSelesai' => $sesiMengajar->where('status_sesi', 'Selesai')->count(),
             'sesiBelum' => $sesiMengajar->where('status_sesi', '!=', 'Selesai')->count(),
+            'jumlahSesiAktif' => $jumlahSesiAktif,
+            'jumlahSiswaBelumAbsen' => $jumlahSiswaBelumAbsen,
         ]);
     }
 

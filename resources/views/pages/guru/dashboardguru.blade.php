@@ -191,7 +191,7 @@
               <div class="session-icon">📚</div>
             </div>
 
-            <button class="primary-btn" onclick="window.location.href='{{ route('guru.presensi-murid') }}'">▶ Mulai Presensi Mengajar</button>
+            <a class="primary-btn" href="{{ route('guru.presensi-murid', $sesiBerlangsung ? ['sesi' => $sesiBerlangsung->id] : []) }}">▶ {{ $sesiBerlangsung ? 'Buka Sesi Berlangsung' : ($jadwalSaatIni ? 'Mulai Sesi Jam Ini' : 'Lihat Jadwal Mengajar') }}</a>
           </div>
 
           <div class="summary-panel">
@@ -204,7 +204,7 @@
               @php($activeSession = $sesiAktif?->sesiPelajarans->first())
               @php($presentCount = $activeSession?->presensiPelajarans->where('status', 'Hadir')->count() ?? 0)
               @php($totalCount = $activeSession?->presensiPelajarans->count() ?? 0)
-              <div class="count"><strong>{{ $presentCount }}</strong><span>dari {{ $totalCount }} murid hadir</span></div>
+              <div class="attendance-counts"><div class="count"><strong>{{ $presentCount }}</strong><span>dari {{ $totalCount }} murid hadir</span></div><div class="count pending-count"><strong>{{ $belumAbsenCount }}</strong><span>murid belum absen</span></div></div>
               <div class="progress"><span style="width:{{ $totalCount ? round($presentCount / $totalCount * 100) : 0 }}%"></span></div>
             </div>
 

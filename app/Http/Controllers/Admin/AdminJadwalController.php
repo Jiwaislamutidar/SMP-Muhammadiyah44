@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Imports\JadwalImport;
+use App\Imports\JadwalImportException;
 use App\Models\Guru;
 use App\Models\JadwalPelajaran;
 use App\Models\Kelas;
@@ -59,6 +60,8 @@ class AdminJadwalController extends Controller
                     ? "Berhasil mengimpor {$import->importedCount} baris jadwal."
                     : 'Tidak ada baris jadwal valid pada file tersebut.'
             );
+        } catch (JadwalImportException $exception) {
+            return back()->with('error', '❌ '.$exception->getMessage());
         } catch (Throwable $exception) {
             report($exception);
 
@@ -68,10 +71,53 @@ class AdminJadwalController extends Controller
 
     public function template()
     {
-        return response()->streamDownload(function () {
+        $examples = $this->templateExamples();
+
+        return response()->streamDownload(function () use ($examples) {
             $output = fopen('php://output', 'w');
+            fwrite($output, "\xEF\xBB\xBF");
             fputcsv($output, ['Hari', 'Jam Mulai', 'Jam Selesai', 'Kode Mapel', 'Nama Guru', 'Nama Kelas', 'Ruangan']);
+            foreach ($examples as $example) {
+                fputcsv($output, $example);
+            }
             fclose($output);
         }, 'template-jadwal-pelajaran.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    private function templateExamples(): array
+    {
+        $assignments = DB::table('guru_mapel')
+            ->join('gurus', 'gurus.id', '=', 'guru_mapel.guru_id')
+            ->join('mapels', 'mapels.id', '=', 'guru_mapel.mapel_id')
+            ->select('mapels.kode', 'gurus.nama_lengkap')
+            ->orderBy('guru_mapel.id')
+            ->limit(2)
+            ->get();
+
+        if ($assignments->isEmpty()) {
+            $guru = Guru::orderBy('nama_lengkap')->first();
+            $mapel = Mapel::orderBy('nama_mapel')->first();
+            if ($guru && $mapel) {
+                $assignments = collect([(object) [
+                    'kode' => $mapel->kode,
+                    'nama_lengkap' => $guru->nama_lengkap,
+                ]]);
+            }
+        }
+
+        $kelasList = Kelas::orderBy('nama_kelas')->limit(2)->get();
+        if ($assignments->isEmpty() || $kelasList->isEmpty()) {
+            return [];
+        }
+
+        return $assignments->values()->map(fn ($assignment, $index) => [
+            $index === 0 ? 'Senin' : 'Selasa',
+            $index === 0 ? '07:00' : '08:00',
+            $index === 0 ? '08:00' : '09:00',
+            $assignment->kode,
+            $assignment->nama_lengkap,
+            $kelasList[$index % $kelasList->count()]->nama_kelas,
+            'Ruang Contoh '.($index + 1),
+        ])->all();
     }
 }

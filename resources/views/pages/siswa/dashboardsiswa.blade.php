@@ -287,7 +287,6 @@
     </div>
   </div>
 
-  {{-- Sembunyikan preloader & tampilkan konten setelah halaman siap --}}
   <script>
     window.addEventListener('load', function () {
       setTimeout(function () {
@@ -297,7 +296,6 @@
     });
   </script>
 
-  {{-- Toggle buka/tutup sidebar --}}
   <script>
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('open');

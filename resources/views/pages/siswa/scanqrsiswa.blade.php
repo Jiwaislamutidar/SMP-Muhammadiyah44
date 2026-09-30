@@ -137,9 +137,10 @@
           </div>
 
           <div class="scanner-actions">
-            <button class="btn-primary" onclick="startCamera()">Buka Kamera</button>
+            <button class="btn-primary" id="startCameraButton" onclick="startCamera()">Buka Kamera</button>
             <button class="btn-secondary" onclick="stopCamera()">Hentikan Scan</button>
           </div>
+          <div class="scan-feedback" id="scanFeedback" role="status" aria-live="assertive" hidden></div>
         </div>
 
         {{-- Kolom kanan: sesi saat ini, cara absensi, info --}}
@@ -257,9 +258,14 @@
     let html5QrCode = null;
     let isCameraRunning = false;
     let scanPending = false;
+    let lastScannedText = '';
 
     function startCamera() {
       if (isCameraRunning) return;
+      lastScannedText = '';
+      const feedback = document.getElementById('scanFeedback');
+      feedback.hidden = true;
+      feedback.textContent = '';
 
       html5QrCode = new Html5Qrcode("reader");
 
@@ -276,6 +282,7 @@
         onScanError
       ).then(() => {
         isCameraRunning = true;
+        document.getElementById('startCameraButton').disabled = true;
 
         // Sembunyikan placeholder dan ubah indikator status jadi merah (live)
         document.getElementById('cameraPlaceholder').style.display = 'none';
@@ -301,6 +308,7 @@
           document.getElementById('statusText').innerText = 'Kamera Nonaktif';
           
           html5QrCode.clear();
+          document.getElementById('startCameraButton').disabled = false;
         }).catch(err => {
           console.error("Gagal menghentikan kamera", err);
         });
@@ -308,8 +316,9 @@
     }
 
     async function onScanSuccess(decodedText) {
-      if (scanPending) return;
+      if (scanPending || decodedText === lastScannedText) return;
       scanPending = true;
+      lastScannedText = decodedText;
       try {
         const response = await fetch(@json(route('siswa.scan')), {
           method: 'POST',
@@ -321,13 +330,49 @@
           body: JSON.stringify({ token: decodedText })
         });
         const result = await response.json();
-        if (!response.ok) throw new Error(result.message || 'QR tidak valid atau sudah kedaluwarsa.');
-        alert(result.message);
+        if (!response.ok) {
+          const message = response.status === 422
+            ? 'QR Code sudah kadaluarsa. Minta Guru untuk klik Perbarui QR.'
+            : (result.message || 'QR Code tidak dapat digunakan. Pastikan QR sesuai dengan kelas Anda.');
+          showScanFeedback('error', message);
+          return;
+        }
+        showScanFeedback('success', result.message || 'Presensi berhasil dicatat.');
+        playSuccessFeedback();
         stopCamera();
       } catch (error) {
-        alert(error.message);
+        lastScannedText = '';
+        showScanFeedback('error', 'Koneksi bermasalah. Periksa internet lalu coba scan kembali.');
       } finally {
         scanPending = false;
+      }
+    }
+
+    function showScanFeedback(type, message) {
+      const feedback = document.getElementById('scanFeedback');
+      feedback.className = `scan-feedback ${type === 'success' ? 'is-success' : 'is-error'}`;
+      feedback.textContent = message;
+      feedback.hidden = false;
+    }
+
+    function playSuccessFeedback() {
+      if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const context = new AudioContextClass();
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.frequency.value = 880;
+        oscillator.type = 'sine';
+        gain.gain.value = 0.12;
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start();
+        oscillator.stop(context.currentTime + 0.14);
+        oscillator.onended = () => context.close();
+      } catch (error) {
+        console.debug('Audio feedback tidak tersedia.', error);
       }
     }
 

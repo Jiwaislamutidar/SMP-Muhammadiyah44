@@ -10,16 +10,16 @@
 	@if(session('success'))<div class="panel" role="status">{{ session('success') }}</div>@endif
 	@if($errors->any())<div class="panel" role="alert">{{ $errors->first() }}</div>@endif
 	<section class="panel"><div class="panel-head"><div class="panel-title">Kehadiran Sekolah</div></div>
-		<div class="cards-two" style="padding:20px">
-			<div class="attendance-card"><div class="card-top"><div><span class="muted">ABSEN DATANG</span><h3>Absen Masuk Sekolah</h3><small>{{ $presensi?->jam_masuk ? 'Tercatat hari ini' : 'Belum ada catatan masuk' }}</small></div><span class="status-pill {{ $presensi?->jam_masuk ? 'hadir' : 'izin' }}">{{ $presensi?->jam_masuk ? 'Sudah Absen' : 'Belum Absen' }}</span></div>
+		<div class="cards-two attendance-cards">
+			<div class="attendance-card"><div class="card-top"><div><span class="muted">ABSEN DATANG</span><h3>Absen Masuk Sekolah</h3><small>{{ $presensi?->jam_masuk ? 'Presensi tersimpan hari ini.' : 'Ambil foto sebagai bukti kehadiran.' }}</small></div><span class="status-pill {{ $presensi?->jam_masuk ? 'hadir' : 'izin' }}">{{ $presensi?->jam_masuk ? 'Tercatat' : 'Belum Absen' }}</span></div>
 				<div class="big-time">{{ $presensi?->jam_masuk ? substr($presensi->jam_masuk, 0, 5) : '--:--' }} <small>WIB</small></div>
-				@if($presensi?->foto_masuk)<p><a href="{{ asset('storage/'.$presensi->foto_masuk) }}" target="_blank" rel="noopener">Lihat foto masuk</a></p>@endif
-				@if(! $presensi?->jam_masuk)<form class="card-foot" action="{{ route('guru.presensi.masuk') }}" method="POST" enctype="multipart/form-data">@csrf<label>Foto selfie/bukti<input type="file" name="foto" accept="image/jpeg,image/png,image/webp" capture="environment" required></label><button class="btn btn-primary" type="submit">Absen Masuk</button></form>@endif
+				@if($presensi?->foto_masuk)<p><a href="{{ asset('storage/'.$presensi->foto_masuk) }}" target="_blank" rel="noopener">Lihat foto bukti</a></p>@endif
+				@if($presensi?->jam_masuk)<button class="attendance-action attendance-done" type="button" disabled>✓ Sudah Absen ({{ substr($presensi->jam_masuk, 0, 5) }} WIB)</button>@else<button class="attendance-action" type="button" data-title="Absen Masuk Sekolah" data-url="{{ route('guru.presensi.masuk') }}">📸 Absen Masuk Sekolah</button>@endif
 			</div>
-			<div class="attendance-card"><div class="card-top"><div><span class="muted">ABSEN KEPULANGAN</span><h3>Absen Pulang Sekolah</h3><small>{{ $presensi?->jam_pulang ? 'Tercatat hari ini' : 'Absen masuk harus tercatat lebih dahulu.' }}</small></div><span class="status-pill {{ $presensi?->jam_pulang ? 'hadir' : 'izin' }}">{{ $presensi?->jam_pulang ? 'Sudah Absen' : 'Belum Absen' }}</span></div>
+			<div class="attendance-card"><div class="card-top"><div><span class="muted">ABSEN KEPULANGAN</span><h3>Absen Pulang Sekolah</h3><small>{{ $presensi?->jam_pulang ? 'Presensi tersimpan hari ini.' : ($presensi?->jam_masuk ? 'Ambil foto sebagai bukti kepulangan.' : 'Absen masuk lebih dahulu.') }}</small></div><span class="status-pill {{ $presensi?->jam_pulang ? 'hadir' : 'izin' }}">{{ $presensi?->jam_pulang ? 'Tercatat' : 'Belum Absen' }}</span></div>
 				<div class="big-time">{{ $presensi?->jam_pulang ? substr($presensi->jam_pulang, 0, 5) : '--:--' }} <small>WIB</small></div>
-				@if($presensi?->foto_pulang)<p><a href="{{ asset('storage/'.$presensi->foto_pulang) }}" target="_blank" rel="noopener">Lihat foto pulang</a></p>@endif
-				@if(! $presensi?->jam_pulang && $presensi?->jam_masuk)<form class="card-foot" action="{{ route('guru.presensi.pulang') }}" method="POST" enctype="multipart/form-data">@csrf<label>Foto selfie/bukti<input type="file" name="foto" accept="image/jpeg,image/png,image/webp" capture="environment" required></label><button class="btn btn-primary" type="submit">Absen Pulang</button></form>@endif
+				@if($presensi?->foto_pulang)<p><a href="{{ asset('storage/'.$presensi->foto_pulang) }}" target="_blank" rel="noopener">Lihat foto bukti</a></p>@endif
+				@if($presensi?->jam_pulang)<button class="attendance-action attendance-done" type="button" disabled>✓ Sudah Absen ({{ substr($presensi->jam_pulang, 0, 5) }} WIB)</button>@else<button class="attendance-action" type="button" data-title="Absen Pulang Sekolah" data-url="{{ route('guru.presensi.pulang') }}" {{ $presensi?->jam_masuk ? '' : 'disabled' }}>📸 Absen Pulang Sekolah</button>@endif
 			</div>
 		</div>
 	</section>
@@ -28,5 +28,31 @@
 	</tbody></table></div></section>
 	<footer class="footer"><span>Sistem Presensi &amp; Manajemen Akademik SMP Muhammadiyah 44 Tangerang Selatan</span><span>© {{ date('Y') }} SMP Muhammadiyah 44 Tangerang Selatan</span></footer>
 </main></div>
-<script>window.addEventListener('load',()=>setTimeout(()=>{pageLoader.classList.add('hide');guruPage.classList.add('loaded')},500));function toggleSidebar(){sidebar.classList.toggle('open');sidebarOverlay.classList.toggle('show');burgerBtn.classList.toggle('active')}function updateLiveDatetime(){let n=new Date(),d=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'],m=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'],p=x=>String(x).padStart(2,'0');liveDatetime.innerHTML=`<span class="date-html">${d[n.getDay()]}, ${n.getDate()} ${m[n.getMonth()]} ${n.getFullYear()}</span><span class="sep"> | </span><span class="time-html">${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())} WIB</span>`}updateLiveDatetime();setInterval(updateLiveDatetime,1000)</script>
+<dialog class="photo-modal" id="photoModal" aria-labelledby="photoModalTitle">
+	<form id="attendanceForm" method="POST" enctype="multipart/form-data">
+		@csrf
+		<div class="photo-modal-head"><div><h2 id="photoModalTitle">Absen</h2><p>Ambil foto atau pilih gambar dari perangkat.</p></div><button class="modal-close" type="button" id="closePhotoModal" aria-label="Tutup">×</button></div>
+		<div class="camera-preview"><video id="cameraPreview" autoplay playsinline hidden></video><img id="photoPreview" alt="Pratinjau foto" hidden><div id="cameraPlaceholder">Pratinjau foto akan muncul di sini.</div></div>
+		<div class="photo-controls"><button class="btn" id="startCamera" type="button">Buka Kamera</button><button class="btn" id="takePhoto" type="button" disabled>Ambil Foto</button><label class="btn upload-label" for="photoInput">Pilih Foto</label><input id="photoInput" type="file" name="foto" accept="image/jpeg,image/png,image/webp" capture="environment" required></div>
+		<p class="photo-error" id="photoError" role="alert"></p>
+		<div class="photo-modal-actions"><button class="btn" type="button" id="cancelPhoto">Batal</button><button class="btn btn-primary attendance-submit" id="submitAttendance" type="submit" disabled>Kirim Presensi</button></div>
+	</form>
+</dialog>
+<script>
+window.addEventListener('load',()=>setTimeout(()=>{pageLoader.classList.add('hide');guruPage.classList.add('loaded')},500));
+function toggleSidebar(){sidebar.classList.toggle('open');sidebarOverlay.classList.toggle('show');burgerBtn.classList.toggle('active')}
+function updateLiveDatetime(){const n=new Date(),days=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'],months=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'],pad=value=>String(value).padStart(2,'0');liveDatetime.textContent=days[n.getDay()]+', '+n.getDate()+' '+months[n.getMonth()]+' '+n.getFullYear()+' | '+pad(n.getHours())+':'+pad(n.getMinutes())+':'+pad(n.getSeconds())+' WIB'}
+updateLiveDatetime();setInterval(updateLiveDatetime,1000);
+const photoModal=document.getElementById('photoModal'),attendanceForm=document.getElementById('attendanceForm'),photoInput=document.getElementById('photoInput'),photoPreview=document.getElementById('photoPreview'),cameraPreview=document.getElementById('cameraPreview'),cameraPlaceholder=document.getElementById('cameraPlaceholder'),photoError=document.getElementById('photoError'),submitAttendance=document.getElementById('submitAttendance');
+let cameraStream=null,previewUrl=null;
+function showPhoto(file){if(!file)return;if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl=URL.createObjectURL(file);photoPreview.src=previewUrl;photoPreview.hidden=false;cameraPlaceholder.hidden=true;submitAttendance.disabled=false;photoError.textContent=''}
+function stopPreviewCamera(){cameraStream?.getTracks().forEach(track=>track.stop());cameraStream=null;cameraPreview.srcObject=null;cameraPreview.hidden=true;document.getElementById('takePhoto').disabled=true}
+document.querySelectorAll('.attendance-action:not(.attendance-done)').forEach(button=>button.addEventListener('click',()=>{attendanceForm.action=button.dataset.url;document.getElementById('photoModalTitle').textContent=button.dataset.title;photoModal.showModal()}));
+document.getElementById('startCamera').addEventListener('click',async()=>{try{if(!navigator.mediaDevices?.getUserMedia)throw new Error('Kamera tidak tersedia. Pilih foto dari perangkat.');cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});cameraPreview.srcObject=cameraStream;cameraPreview.hidden=false;cameraPlaceholder.hidden=true;document.getElementById('takePhoto').disabled=true;cameraPreview.onloadedmetadata=()=>document.getElementById('takePhoto').disabled=false;await cameraPreview.play();photoError.textContent=''}catch(error){photoError.textContent=error.message||'Kamera tidak dapat dibuka. Pilih foto dari perangkat.'}});
+document.getElementById('takePhoto').addEventListener('click',()=>{const canvas=document.createElement('canvas');canvas.width=cameraPreview.videoWidth;canvas.height=cameraPreview.videoHeight;canvas.getContext('2d').drawImage(cameraPreview,0,0);canvas.toBlob(blob=>{if(!blob)return;const transfer=new DataTransfer();transfer.items.add(new File([blob],'presensi-guru.jpg',{type:'image/jpeg'}));photoInput.files=transfer.files;showPhoto(photoInput.files[0]);stopPreviewCamera()},'image/jpeg',.9)});
+photoInput.addEventListener('change',()=>{if(photoInput.files[0]){stopPreviewCamera();showPhoto(photoInput.files[0])}});
+function closePhotoModal(){stopPreviewCamera();photoModal.close();attendanceForm.reset();photoPreview.hidden=true;cameraPlaceholder.hidden=false;submitAttendance.disabled=true;if(previewUrl){URL.revokeObjectURL(previewUrl);previewUrl=null}}
+document.getElementById('closePhotoModal').addEventListener('click',closePhotoModal);document.getElementById('cancelPhoto').addEventListener('click',closePhotoModal);photoModal.addEventListener('click',event=>{if(event.target===photoModal)closePhotoModal()});photoModal.addEventListener('close',stopPreviewCamera);
+attendanceForm.addEventListener('submit',event=>{if(!photoInput.files.length){event.preventDefault();photoError.textContent='Pilih atau ambil foto sebelum mengirim.';return}submitAttendance.disabled=true;submitAttendance.textContent='Mengirim...'});
+</script>
 </body></html>

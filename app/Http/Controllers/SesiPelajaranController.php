@@ -140,7 +140,7 @@ class SesiPelajaranController extends Controller
             'id' => $sesi->id,
             'status_sesi' => $sesi->status_sesi,
             'qr_expires_at' => $sesi->qr_expires_at->toIso8601String(),
-            'qr_svg' => (string) QrCode::format('svg')->size(220)->margin(1)->generate($sesi->qr_token),
+            'qr_svg' => (string) QrCode::format('svg')->size(360)->margin(2)->generate($sesi->qr_token),
             'jadwal' => [
                 'mapel' => $sesi->jadwal->mapel->nama_mapel,
                 'kelas' => $sesi->jadwal->kelas->nama_kelas,

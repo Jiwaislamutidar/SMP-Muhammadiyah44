@@ -590,3 +590,11 @@ body::-webkit-scrollbar-thumb {
   .scanner-actions { flex-direction: column; gap: 8px; }
   .session-card-header { align-items: flex-start; gap: 8px; flex-wrap: wrap; }
 }
+
+.scan-feedback { margin-top:14px; padding:16px; border:1px solid transparent; border-radius:12px; font-size:15px; font-weight:700; line-height:1.5; text-align:center; }
+.scan-feedback[hidden] { display:none; }
+.scan-feedback.is-success { border-color:#86d4a3; background:#e8f6ef; color:#087443; }
+.scan-feedback.is-error { border-color:#f2a7a2; background:#fff1f0; color:#b42318; }
+.scanner-actions button { min-height:48px; font-size:14px; }
+.scanner-actions button:disabled { opacity:.65; cursor:not-allowed; }
+@media (max-width:480px) { .scan-feedback { padding:14px 12px; font-size:14px; } }

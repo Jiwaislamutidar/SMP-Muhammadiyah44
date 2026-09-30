@@ -39,6 +39,7 @@ Route::domain('admin.'.$domain)->group(function () {
         Route::delete('/admin/guru/{id}', [AdminGuruController::class, 'destroy'])->name('admin.guru.destroy');
         Route::get('/data-murid', [AdminSiswaController::class, 'index'])->name('admin.datamurid');
         Route::post('/data-murid/import', [AdminSiswaController::class, 'import'])->name('admin.siswa.import');
+        Route::post('/data-murid/import-manual', [AdminSiswaController::class, 'manualImport'])->name('admin.siswa.manual-import');
         Route::get('/data-kelas', fn () => view('pages.admin.datakelas'))->name('admin.datakelas');
         Route::get('/mata-pelajaran', fn () => view('pages.admin.matapelajaran'))->name('admin.matapelajaran');
         Route::get('/jadwal-pelajaran', [AdminJadwalController::class, 'index'])->name('admin.jadwalpelajaran');

@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('title', 'Data Murid')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/datamurid.css') }}?v=2">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/datamurid.css') }}?v=3">@endsection
 @section('content')
 <div class="admin-page-header">
 	<div>
@@ -8,8 +8,8 @@
 		<p>Kelola data murid SMP Muhammadiyah 44 Tangerang Selatan</p>
 	</div>
 	<div class="admin-header-actions">
+		<button class="admin-action admin-manual-trigger" type="button" id="openManualImportModal">+ Tambah Manual</button>
 		<button class="admin-action admin-import-trigger" type="button" id="openImportModal">Import Excel</button>
-		<button class="admin-action" type="button">+ Tambah Murid</button>
 	</div>
 </div>
 
@@ -32,7 +32,7 @@
 	</div>
 @endif
 @if($errors->any())
-	<div class="admin-import-alert error" role="alert">{{ $errors->first('file') }}</div>
+	<div class="admin-import-alert error" role="alert">{{ $errors->first() }}</div>
 @endif
 
 <form class="admin-toolbar" method="GET" action="{{ route('admin.datamurid') }}">
@@ -106,6 +106,54 @@
 	</section>
 </div>
 
+<div class="admin-modal-backdrop" id="manualImportModal" data-reopen="{{ old('students') !== null || $errors->has('students') ? 'true' : 'false' }}" hidden>
+	<section class="admin-import-modal admin-manual-modal" role="dialog" aria-modal="true" aria-labelledby="manualImportModalTitle">
+		<div class="admin-modal-heading">
+			<div>
+				<h2 id="manualImportModalTitle">Input Siswa Manual</h2>
+				<p>Tambahkan hingga 50 siswa sekaligus. Nama dan NIS/NISN wajib diisi; kelas boleh ditentukan nanti.</p>
+			</div>
+			<button type="button" class="admin-modal-close" id="closeManualImportModal" aria-label="Tutup">&times;</button>
+		</div>
+		<div class="admin-manual-account-note"><strong>Akun login dibuat otomatis.</strong> NIS/NISN menjadi username sekaligus password awal siswa.</div>
+		<form action="{{ route('admin.siswa.manual-import') }}" method="POST">
+			@csrf
+			<div class="admin-manual-rows" id="manualStudentRows">
+				@foreach(old('students', [['nama_lengkap' => '', 'nisn' => '', 'kelas_id' => '']]) as $index => $student)
+					<div class="admin-manual-row">
+						<div class="admin-manual-row-heading"><strong>Data siswa</strong><button type="button" class="admin-row-remove" aria-label="Hapus baris siswa">Hapus</button></div>
+						<div class="admin-manual-fields">
+							<label>Nama lengkap
+								<input type="text" name="students[{{ $index }}][nama_lengkap]" value="{{ $student['nama_lengkap'] ?? '' }}" maxlength="255" placeholder="Contoh: Alya Putri" required>
+								@error("students.{$index}.nama_lengkap")<small class="admin-field-error">{{ $message }}</small>@enderror
+							</label>
+							<label>NIS / NISN
+								<input type="text" name="students[{{ $index }}][nisn]" value="{{ $student['nisn'] ?? '' }}" maxlength="255" placeholder="Nomor induk siswa" required>
+								@error("students.{$index}.nisn")<small class="admin-field-error">{{ $message }}</small>@enderror
+							</label>
+							<label>Kelas <span>(opsional)</span>
+								<select name="students[{{ $index }}][kelas_id]">
+									<option value="">Tentukan nanti</option>
+									@foreach($kelasList as $kelas)
+										<option value="{{ $kelas->id }}" @selected((string) ($student['kelas_id'] ?? '') === (string) $kelas->id)>{{ $kelas->nama_kelas }}</option>
+									@endforeach
+								</select>
+								@error("students.{$index}.kelas_id")<small class="admin-field-error">{{ $message }}</small>@enderror
+							</label>
+						</div>
+					</div>
+				@endforeach
+			</div>
+			<button class="admin-add-student-row" id="addStudentRow" type="button">+ Tambah baris siswa</button>
+			<p class="admin-manual-limit" id="manualStudentCount" aria-live="polite">1 dari 50 siswa</p>
+			<div class="admin-modal-actions">
+				<button class="admin-modal-cancel" type="button" id="cancelManualImportModal">Batal</button>
+				<button class="admin-action admin-import-submit" type="submit">Simpan Data Siswa</button>
+			</div>
+		</form>
+	</section>
+</div>
+
 <script>
 	(() => {
 		const modal = document.getElementById('importModal');
@@ -115,6 +163,12 @@
 		const fileInput = document.getElementById('studentImportFile');
 		const dropzone = document.getElementById('studentImportDropzone');
 		const fileName = document.getElementById('studentImportFileName');
+		const manualModal = document.getElementById('manualImportModal');
+		const manualOpenButton = document.getElementById('openManualImportModal');
+		const manualRows = document.getElementById('manualStudentRows');
+		const addStudentButton = document.getElementById('addStudentRow');
+		const studentCount = document.getElementById('manualStudentCount');
+		const classOptions = @json($kelasList->map(fn ($kelas) => ['id' => $kelas->id, 'nama' => $kelas->nama_kelas])->values());
 
 		const showSelectedFile = () => {
 			fileName.textContent = fileInput.files[0]
@@ -155,6 +209,65 @@
 		document.addEventListener('keydown', (event) => {
 			if (event.key === 'Escape' && !modal.hidden) closeModal();
 		});
+
+		const updateManualRows = () => {
+			const rows = [...manualRows.querySelectorAll('.admin-manual-row')];
+			rows.forEach((row, index) => {
+				row.querySelector('.admin-manual-row-heading strong').textContent = `Siswa ${index + 1}`;
+				row.querySelector('.admin-row-remove').disabled = rows.length === 1;
+			});
+			studentCount.textContent = `${rows.length} dari 50 siswa`;
+			addStudentButton.disabled = rows.length >= 50;
+		};
+
+		const closeManualModal = () => {
+			manualModal.hidden = true;
+			manualOpenButton.focus();
+		};
+
+		const addManualRow = () => {
+			const index = Math.max(-1, ...[...manualRows.querySelectorAll('[name^="students["]')].map((input) => {
+				const match = input.name.match(/^students\[(\d+)\]/);
+				return match ? Number(match[1]) : -1;
+			})) + 1;
+			const row = document.createElement('div');
+			row.className = 'admin-manual-row';
+			const options = classOptions.map((kelas) => {
+				const option = new Option(kelas.nama, kelas.id);
+				return option.outerHTML;
+			}).join('');
+			row.innerHTML = `<div class="admin-manual-row-heading"><strong>Siswa</strong><button type="button" class="admin-row-remove" aria-label="Hapus baris siswa">Hapus</button></div>
+				<div class="admin-manual-fields">
+					<label>Nama lengkap<input type="text" name="students[${index}][nama_lengkap]" maxlength="255" placeholder="Contoh: Alya Putri" required></label>
+					<label>NIS / NISN<input type="text" name="students[${index}][nisn]" maxlength="255" placeholder="Nomor induk siswa" required></label>
+					<label>Kelas <span>(opsional)</span><select name="students[${index}][kelas_id]"><option value="">Tentukan nanti</option>${options}</select></label>
+				</div>`;
+			manualRows.append(row);
+			updateManualRows();
+			row.querySelector('input').focus();
+		};
+
+		manualOpenButton.addEventListener('click', () => {
+			manualModal.hidden = false;
+			manualRows.querySelector('input').focus();
+		});
+		addStudentButton.addEventListener('click', addManualRow);
+		manualRows.addEventListener('click', (event) => {
+			if (event.target.matches('.admin-row-remove') && manualRows.querySelectorAll('.admin-manual-row').length > 1) {
+				event.target.closest('.admin-manual-row').remove();
+				updateManualRows();
+			}
+		});
+		document.getElementById('closeManualImportModal').addEventListener('click', closeManualModal);
+		document.getElementById('cancelManualImportModal').addEventListener('click', closeManualModal);
+		manualModal.addEventListener('click', (event) => {
+			if (event.target === manualModal) closeManualModal();
+		});
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape' && !manualModal.hidden) closeManualModal();
+		});
+		updateManualRows();
+		if (manualModal.dataset.reopen === 'true') manualModal.hidden = false;
 	})();
 </script>
 @endsection

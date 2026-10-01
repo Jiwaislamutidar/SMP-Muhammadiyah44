@@ -2,10 +2,11 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#087443">
     <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
     <title>Riwayat Absensi - SMP Muhammadiyah 44</title>
-    <link rel="stylesheet" href="{{ asset('siswa css/riwayatsiswa.css') }}?v=2">
+    <link rel="stylesheet" href="{{ asset('siswa css/riwayatsiswa.css') }}?v=3">
 </head>
 <body>
     <div class="page-loader" id="pageLoader">
@@ -20,7 +21,7 @@
     </div>
 
     <div class="riwayat-murid" id="riwayatMurid">
-        <aside class="sidebar" id="sidebar">
+        <aside class="sidebar" id="sidebar" aria-label="Menu utama">
             <div class="sidebar-header">
                 <div class="sidebar-brand">
                     <div class="sidebar-logo">
@@ -31,7 +32,7 @@
                         <div class="sidebar-subtitle">Portal Presensi Murid</div>
                     </div>
                 </div>
-                <button class="sidebar-close-btn" onclick="toggleSidebar()" aria-label="Tutup menu">✕</button>
+                <button type="button" class="sidebar-close-btn" onclick="toggleSidebar()" aria-label="Tutup menu">✕</button>
             </div>
 
             <div class="sidebar-section-label">Menu</div>
@@ -58,9 +59,9 @@
                         <div class="role">{{ $siswa->kelas ?? '-' }} • Murid</div>
                     </div>
                 </div>
-                <form action="{{ route('siswa.logout') }}" method="POST" style="margin:0;">
+                <form action="{{ route('siswa.logout') }}" method="POST">
                     @csrf
-                    <button type="submit" class="nav-item logout-item" style="width:100%; border:none; background:transparent; text-align:left; cursor:pointer;">
+                    <button type="submit" class="nav-item logout-item">
                         <span class="nav-icon-box">🚪</span> Keluar
                     </button>
                 </form>
@@ -71,7 +72,7 @@
 
         <header class="topbar">
             <div class="topbar-left">
-                <button class="burger-btn" id="burgerBtn" onclick="toggleSidebar()" aria-label="Buka menu">
+                <button type="button" class="burger-btn" id="burgerBtn" onclick="toggleSidebar()" aria-label="Buka menu" aria-controls="sidebar" aria-expanded="false">
                     <span></span><span></span><span></span>
                 </button>
                 <div class="portal-tag">Portal Murid • SMP Muhammadiyah 44</div>
@@ -79,7 +80,7 @@
 
             <div class="topbar-right">
                 <div class="ta-badge" id="liveDatetime">Memuat waktu...</div>
-                <div class="icon-btn">
+                <div class="icon-btn" aria-label="Notifikasi">
                     🔔
                     <span class="badge-dot"></span>
                 </div>
@@ -115,7 +116,7 @@
                         <div class="metric-text">
                             <div class="value-row">
                                 <span class="metric-number">{{ $ringkasan['hadir'] }}</span>
-                                <span class="metric-name" style="color:#087443;">Hadir</span>
+                                <span class="metric-name c-hadir">Hadir</span>
                             </div>
                             <div class="metric-sub">Presensi Terverifikasi</div>
                         </div>
@@ -126,7 +127,7 @@
                         <div class="metric-text">
                             <div class="value-row">
                                 <span class="metric-number">{{ $ringkasan['izin'] }}</span>
-                                <span class="metric-name" style="color:#b45309;">Izin</span>
+                                <span class="metric-name c-izin">Izin</span>
                             </div>
                             <div class="metric-sub">Dengan Surat Keterangan</div>
                         </div>
@@ -137,7 +138,7 @@
                         <div class="metric-text">
                             <div class="value-row">
                                 <span class="metric-number">{{ $ringkasan['alfa'] }}</span>
-                                <span class="metric-name" style="color:#dc2626;">Alfa</span>
+                                <span class="metric-name c-alfa">Alfa</span>
                             </div>
                             <div class="metric-sub">Tanpa Keterangan</div>
                         </div>
@@ -203,14 +204,16 @@
                             @forelse($riwayatPresensi as $presensi)
                                 @php($jadwal = $presensi->sesiPelajaran->jadwal)
                                 <tr>
-                                    <td>{{ $presensi->sesiPelajaran->tanggal->format('d M Y') }}</td>
-                                    <td>{{ $presensi->sesiPelajaran->tanggal->locale('id')->translatedFormat('l') }}</td>
-                                    <td>{{ $jadwal->mapel->nama_mapel }}</td>
-                                    <td>{{ substr($jadwal->jam_mulai, 0, 5) }} - {{ substr($jadwal->jam_selesai, 0, 5) }} WIB</td>
-                                    <td>{{ $jadwal->kelas->nama_kelas }}</td>
-                                    <td><span class="badge badge-{{ str_replace(' ', '-', strtolower($presensi->status)) }}">{{ $presensi->status }}</span></td>
+                                    <td class="nowrap" data-label="Tanggal">{{ $presensi->sesiPelajaran->tanggal->format('d M Y') }}</td>
+                                    <td data-label="Hari">{{ $presensi->sesiPelajaran->tanggal->locale('id')->translatedFormat('l') }}</td>
+                                    <td data-label="Mata Pelajaran">{{ $jadwal->mapel->nama_mapel }}</td>
+                                    <td class="nowrap" data-label="Jam">{{ substr($jadwal->jam_mulai, 0, 5) }} - {{ substr($jadwal->jam_selesai, 0, 5) }} WIB</td>
+                                    <td data-label="Kelas">{{ $jadwal->kelas->nama_kelas }}</td>
+                                    <td data-label="Status"><span class="badge badge-{{ str_replace(' ', '-', strtolower($presensi->status)) }}">{{ $presensi->status }}</span></td>
                                 </tr>
-                            @empty<tr><td colspan="6">Belum ada catatan presensi.</td></tr>@endforelse
+                            @empty
+                                <tr><td class="empty" colspan="6">Belum ada catatan presensi.</td></tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -232,37 +235,36 @@
     </div>
 
     <script>
-        window.addEventListener('load', function () {
-            setTimeout(function () {
-                document.getElementById('pageLoader').classList.add('hide');
-                document.getElementById('riwayatMurid').classList.add('loaded');
-            }, 1000);
-        });
-
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.getElementById('sidebarOverlay').classList.toggle('show');
-            document.getElementById('burgerBtn').classList.toggle('active');
+        function showPage() {
+            document.getElementById('pageLoader').classList.add('hide');
+            document.getElementById('riwayatMurid').classList.add('loaded');
         }
-    </script>
+        window.addEventListener('load', function () { setTimeout(showPage, 700); });
+        setTimeout(showPage, 4000);
 
-    {{-- Jam & tanggal hidup, update tiap detik --}}
-    <script>
+        function toggleSidebar(force) {
+            var sidebar = document.getElementById('sidebar');
+            var open = typeof force === 'boolean' ? force : !sidebar.classList.contains('open');
+            sidebar.classList.toggle('open', open);
+            document.getElementById('sidebarOverlay').classList.toggle('show', open);
+            var burger = document.getElementById('burgerBtn');
+            burger.classList.toggle('active', open);
+            burger.setAttribute('aria-expanded', open);
+            document.body.classList.toggle('no-scroll', open);
+        }
+
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') toggleSidebar(false); });
+        window.addEventListener('resize', function () { if (window.innerWidth > 1024) toggleSidebar(false); });
+
         function updateLiveDatetime() {
-            const hariList = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-            const bulanList = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-            const now = new Date();
-            const hari = hariList[now.getDay()];
-            const tanggal = now.getDate();
-            const bulan = bulanList[now.getMonth()];
-            const tahun = now.getFullYear();
-            const jam = String(now.getHours()).padStart(2, '0');
-            const menit = String(now.getMinutes()).padStart(2, '0');
-            const detik = String(now.getSeconds()).padStart(2, '0');
+            var hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            var bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            var n = new Date();
+            var p = function (v) { return String(v).padStart(2, '0'); };
             document.getElementById('liveDatetime').innerHTML =
-                `<span class="dt-date">${hari}, ${tanggal} ${bulan} ${tahun}</span>` +
-                `<span class="dt-sep"> | </span>` +
-                `<span class="dt-time">${jam}:${menit}:${detik} WIB</span>`;
+                '<span class="dt-date">' + hari[n.getDay()] + ', ' + n.getDate() + ' ' + bulan[n.getMonth()] + ' ' + n.getFullYear() + '</span>' +
+                '<span class="dt-sep"> | </span>' +
+                '<span class="dt-time">' + p(n.getHours()) + ':' + p(n.getMinutes()) + ':' + p(n.getSeconds()) + ' WIB</span>';
         }
         updateLiveDatetime();
         setInterval(updateLiveDatetime, 1000);

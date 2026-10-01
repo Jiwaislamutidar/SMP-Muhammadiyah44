@@ -11,6 +11,7 @@ use App\Models\PresensiPelajaran;
 use App\Models\SesiPelajaran;
 use App\Models\Siswa;
 use App\Models\User;
+use Database\Seeders\GuruSeeder;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
@@ -31,6 +32,10 @@ class AttendancePortalTest extends TestCase
             ->postJson(route('guru.sesi.open', $jadwal->id))
             ->assertOk()
             ->assertJsonPath('status_sesi', 'Berlangsung')
+            ->assertJsonPath('jadwal_id', $jadwal->id)
+            ->assertJsonPath('jadwal.id', $jadwal->id)
+            ->assertJsonPath('jadwal.mapel', $jadwal->mapel->nama_mapel)
+            ->assertJsonPath('jadwal.kelas', $kelas->nama_kelas)
             ->assertJsonStructure(['qr_svg', 'qr_expires_at']);
 
         $sesi = SesiPelajaran::where('jadwal_id', $jadwal->id)->firstOrFail();
@@ -78,7 +83,19 @@ class AttendancePortalTest extends TestCase
 
     public function test_guru_portal_pages_render_schedule_data(): void
     {
-        [$guruUser, , $jadwal] = $this->makeSchedule();
+        [$guruUser, $guru, $jadwal] = $this->makeSchedule();
+        [, $guruLain] = $this->makeTeacher();
+        $kelasLain = Kelas::create(['nama_kelas' => 'Kelas Lain QA '.bin2hex(random_bytes(3))]);
+        $mapelLain = Mapel::create(['kode' => 'QA-'.bin2hex(random_bytes(4)), 'nama_mapel' => 'Mapel Guru Lain QA']);
+        JadwalPelajaran::create([
+            'guru_id' => $guruLain->id,
+            'kelas_id' => $kelasLain->id,
+            'mapel_id' => $mapelLain->id,
+            'hari' => now()->locale('id')->isoFormat('dddd'),
+            'jam_mulai' => '08:00:00',
+            'jam_selesai' => '09:00:00',
+            'ruangan' => 'Ruang Lain QA',
+        ]);
         $routeNames = [
             'guru.dashboard',
             'guru.jadwal',
@@ -95,9 +112,12 @@ class AttendancePortalTest extends TestCase
         }
 
         $this->actingAs($guruUser)
-            ->get(route('guru.jadwal'))
+            ->get(route('guru.presensi-murid'))
             ->assertSee($jadwal->mapel->nama_mapel)
-            ->assertSee($jadwal->kelas->nama_kelas);
+            ->assertSee($jadwal->kelas->nama_kelas)
+            ->assertSee($guru->nama_lengkap)
+            ->assertDontSee($mapelLain->nama_mapel)
+            ->assertDontSee('Ust. Ahmad Fauzi');
     }
 
     public function test_guru_role_can_open_dashboard_without_prelinked_profile(): void
@@ -119,6 +139,47 @@ class AttendancePortalTest extends TestCase
             'user_id' => $guruUser->id,
             'nama_lengkap' => $guruUser->name,
         ]);
+    }
+
+    public function test_guru_seeder_creates_deterministic_login_and_preserves_schedule_assignment(): void
+    {
+        $suffix = bin2hex(random_bytes(4));
+        $guru = Guru::create([
+            'nama_lengkap' => 'Guru Seeder QA '.$suffix,
+            'status' => 'aktif',
+        ]);
+        $kelas = Kelas::create(['nama_kelas' => 'Seeder QA '.$suffix]);
+        $mapel = Mapel::create(['kode' => 'SEED-'.$suffix, 'nama_mapel' => 'Mapel Seeder QA']);
+        $jadwal = JadwalPelajaran::create([
+            'guru_id' => $guru->id,
+            'kelas_id' => $kelas->id,
+            'mapel_id' => $mapel->id,
+            'hari' => now()->locale('id')->isoFormat('dddd'),
+            'jam_mulai' => '07:00:00',
+            'jam_selesai' => '08:00:00',
+            'ruangan' => 'Ruang Seeder QA',
+        ]);
+
+        (new GuruSeeder())->run();
+
+        $username = 'GURU'.str_pad((string) $guru->id, 3, '0', STR_PAD_LEFT);
+        $guru->refresh();
+        $user = $guru->user;
+
+        $this->assertNotNull($user);
+        $this->assertSame($username, $user->username);
+        $this->assertSame('guru', $user->role);
+        $this->assertTrue(Hash::check($username, $user->password));
+        $this->assertSame($guru->id, $jadwal->fresh()->guru_id);
+
+        (new GuruSeeder())->run();
+        $this->assertSame(1, User::where('username', $username)->count());
+        $this->assertSame($user->id, $guru->fresh()->user_id);
+
+        $this->post(route('guru.login'), [
+            'username' => $username,
+            'password' => $username,
+        ])->assertRedirect(route('guru.dashboard'));
     }
 
     private function makeSchedule(): array

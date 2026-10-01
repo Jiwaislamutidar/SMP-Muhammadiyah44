@@ -28,16 +28,8 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 3. Akun Guru
-        User::firstOrCreate(
-            ['username' => 'guru'],
-            [
-                'name'     => 'guru',
-                'email'    => 'guru@smpm44.sch.id',
-                'role'     => 'guru',
-                'password' => Hash::make('guru'),
-            ]
-        );
+        // 3. Akun login untuk seluruh data guru
+        $this->call(GuruSeeder::class);
 
         // 4. Akun Siswa Dummy (Untuk Uji Coba Quick Login)
         User::firstOrCreate(

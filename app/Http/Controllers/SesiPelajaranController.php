@@ -21,6 +21,7 @@ class SesiPelajaranController extends Controller
     {
         $guru = Guru::forUser(Auth::user());
         abort_unless($guru, 403, 'Profil guru belum terhubung ke akun ini.');
+        $guru->loadMissing('mapels');
         $hari = Carbon::now()->locale('id')->isoFormat('dddd');
         $jadwals = JadwalPelajaran::with([
             'kelas',
@@ -38,11 +39,20 @@ class SesiPelajaranController extends Controller
             : $jadwals->first(fn (JadwalPelajaran $jadwal) => $jadwal->sesiPelajarans->first()?->status_sesi === 'Berlangsung')
                 ?->sesiPelajarans->first();
 
-        return view('pages.guru.presensimurid', compact('guru', 'jadwals', 'sesi'));
+        $mapelGuru = $guru->mapels->pluck('nama_mapel')
+            ->merge($jadwals->pluck('mapel.nama_mapel'))
+            ->filter()
+            ->unique()
+            ->implode(' • ');
+
+        return view('pages.guru.presensimurid', compact('guru', 'jadwals', 'sesi', 'mapelGuru'));
     }
 
     public function open(Request $request, JadwalPelajaran $jadwal): JsonResponse
     {
+        $request->validate([
+            'jadwal_pelajaran_id' => ['sometimes', 'integer', 'in:'.$jadwal->id],
+        ]);
         $guru = $this->guru();
         $this->assertTodaysSchedule($jadwal, $guru);
 
@@ -119,6 +129,7 @@ class SesiPelajaranController extends Controller
 
         return response()->json([
             'id' => $sesi->id,
+            'jadwal_id' => $sesi->jadwal_id,
             'status_sesi' => $sesi->status_sesi,
             'qr_expires_at' => $sesi->qr_expires_at?->toIso8601String(),
             'expired' => ! $sesi->qr_expires_at || $sesi->qr_expires_at->isPast(),
@@ -138,10 +149,12 @@ class SesiPelajaranController extends Controller
     {
         return response()->json([
             'id' => $sesi->id,
+            'jadwal_id' => $sesi->jadwal_id,
             'status_sesi' => $sesi->status_sesi,
             'qr_expires_at' => $sesi->qr_expires_at->toIso8601String(),
             'qr_svg' => (string) QrCode::format('svg')->size(360)->margin(2)->generate($sesi->qr_token),
             'jadwal' => [
+                'id' => $sesi->jadwal->id,
                 'mapel' => $sesi->jadwal->mapel->nama_mapel,
                 'kelas' => $sesi->jadwal->kelas->nama_kelas,
                 'jam_mulai' => $sesi->jadwal->jam_mulai,

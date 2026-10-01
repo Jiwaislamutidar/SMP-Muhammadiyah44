@@ -60,6 +60,68 @@ class AttendancePortalTest extends TestCase
         $this->assertSame('Alfa', PresensiPelajaran::where('siswa_id', $unscannedSiswa->id)->value('status'));
     }
 
+    public function test_guru_can_cancel_a_session_and_cascade_delete_student_attendance(): void
+    {
+        [$guruUser, , $jadwal, $kelas] = $this->makeSchedule();
+        $this->makeStudent($kelas);
+
+        $this->actingAs($guruUser)->postJson(route('guru.sesi.open', $jadwal->id))->assertOk();
+        $sesi = SesiPelajaran::where('jadwal_id', $jadwal->id)->firstOrFail();
+        $presensiId = $sesi->presensiPelajarans()->value('id');
+
+        $this->deleteJson(route('guru.sesi.destroy', $sesi->id))
+            ->assertOk()
+            ->assertJsonPath('id', $sesi->id)
+            ->assertJsonPath('status_sesi', 'Dibatalkan');
+
+        $this->assertDatabaseMissing('sesi_pelajarans', ['id' => $sesi->id]);
+        $this->assertDatabaseMissing('presensi_pelajarans', ['id' => $presensiId]);
+    }
+
+    public function test_guru_cannot_delete_another_teachers_session(): void
+    {
+        [$owner, , $jadwal, $kelas] = $this->makeSchedule();
+        [$otherTeacher] = $this->makeTeacher();
+        $this->makeStudent($kelas);
+        $this->actingAs($owner)->postJson(route('guru.sesi.open', $jadwal->id))->assertOk();
+        $sesi = SesiPelajaran::where('jadwal_id', $jadwal->id)->firstOrFail();
+
+        $this->actingAs($otherTeacher)
+            ->deleteJson(route('guru.sesi.destroy', $sesi->id))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('sesi_pelajarans', ['id' => $sesi->id]);
+        $this->assertSame(1, $sesi->presensiPelajarans()->count());
+    }
+
+    public function test_riwayat_can_delete_session_logs_without_deleting_teacher_daily_attendance(): void
+    {
+        [$guruUser, $guru, $jadwal, $kelas] = $this->makeSchedule();
+        $this->makeStudent($kelas);
+        $this->actingAs($guruUser)->postJson(route('guru.sesi.open', $jadwal->id))->assertOk();
+        $sesi = SesiPelajaran::where('jadwal_id', $jadwal->id)->firstOrFail();
+        $presensiId = $sesi->presensiPelajarans()->value('id');
+        $this->actingAs($guruUser)->postJson(route('guru.sesi.close', $sesi->id))->assertOk();
+        $presensiHarian = PresensiGuru::create([
+            'guru_id' => $guru->id,
+            'tanggal' => today(),
+            'status' => 'Hadir',
+        ]);
+
+        $this->actingAs($guruUser)
+            ->get(route('guru.riwayat-presensi'))
+            ->assertOk()
+            ->assertSee('Hapus Log');
+
+        $this->actingAs($guruUser)
+            ->deleteJson(route('guru.sesi.destroy', $sesi->id))
+            ->assertOk();
+
+        $this->assertDatabaseMissing('sesi_pelajarans', ['id' => $sesi->id]);
+        $this->assertDatabaseMissing('presensi_pelajarans', ['id' => $presensiId]);
+        $this->assertDatabaseHas('presensi_gurus', ['id' => $presensiHarian->id]);
+    }
+
     public function test_teacher_attendance_photos_are_saved_to_public_storage(): void
     {
         [$guruUser, $guru] = $this->makeTeacher();
@@ -116,6 +178,9 @@ class AttendancePortalTest extends TestCase
             ->assertSee($jadwal->mapel->nama_mapel)
             ->assertSee($jadwal->kelas->nama_kelas)
             ->assertSee($guru->nama_lengkap)
+            ->assertSee('Mulai presensi?')
+            ->assertSee('Ya, Mulai')
+            ->assertSee('Batalkan Presensi')
             ->assertDontSee($mapelLain->nama_mapel)
             ->assertDontSee('Ust. Ahmad Fauzi');
     }

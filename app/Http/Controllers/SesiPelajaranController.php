@@ -122,6 +122,22 @@ class SesiPelajaranController extends Controller
         return $this->status($sesi->fresh(['jadwal.mapel', 'jadwal.kelas', 'presensiPelajarans.siswa']));
     }
 
+    public function destroy(SesiPelajaran $sesi): JsonResponse
+    {
+        $this->authorizeSesi($sesi);
+        $sesiId = $sesi->id;
+        $jadwalId = $sesi->jadwal_id;
+
+        DB::transaction(fn () => $sesi->delete());
+
+        return response()->json([
+            'id' => $sesiId,
+            'jadwal_id' => $jadwalId,
+            'status_sesi' => 'Dibatalkan',
+            'message' => 'Sesi presensi dan seluruh data kehadiran murid berhasil dihapus.',
+        ]);
+    }
+
     public function status(SesiPelajaran $sesi): JsonResponse
     {
         $this->authorizeSesi($sesi);

@@ -85,6 +85,7 @@ class PortalGuruController extends Controller
                 ->where('status_sesi', 'Berlangsung'))
             ->count();
         $aktivitas = $presensiSekolah->map(fn ($presensi) => [
+            'sesi_id' => null,
             'tanggal' => $presensi->tanggal,
             'waktu' => $presensi->jam_masuk,
             'jenis' => 'Kehadiran Sekolah',
@@ -93,6 +94,7 @@ class PortalGuruController extends Controller
             'status' => $presensi->status,
             'urutan' => $presensi->tanggal->copy()->setTimeFromTimeString($presensi->jam_masuk ?? '00:00:00'),
         ])->concat($sesiMengajar->map(fn ($sesi) => [
+            'sesi_id' => $sesi->id,
             'tanggal' => $sesi->tanggal,
             'waktu' => $sesi->jadwal->jam_mulai,
             'jenis' => 'Presensi Mengajar',

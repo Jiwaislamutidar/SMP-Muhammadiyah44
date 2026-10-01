@@ -6,6 +6,7 @@
   <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
   <title>Dashboard Guru - SMP Muhammadiyah 44</title>
   <link rel="stylesheet" href="{{ asset('guru css/dashboard.css') }}?v=2">
+  <link rel="stylesheet" href="{{ asset('guru css/portal-responsive.css') }}?v=1">
 </head>
 <body>
   <div class="page-loader" id="pageLoader">
@@ -58,9 +59,9 @@
 
       <div class="sidebar-footer">
         <div class="sidebar-footer-user">
-          <div class="avatar">AF</div>
+          <div class="avatar">{{ mb_strtoupper(mb_substr($guru->nama_lengkap, 0, 1)) }}</div>
           <div>
-            <div class="name">Ust. Ahmad Fauzi</div>
+            <div class="name">{{ $guru->nama_lengkap }}</div>
             <div class="role">Guru Mata Pelajaran</div>
           </div>
         </div>
@@ -98,9 +99,9 @@
         </div>
 
         <div class="profile-pill">
-          <div class="avatar">AF</div>
+          <div class="avatar">{{ mb_strtoupper(mb_substr($guru->nama_lengkap, 0, 1)) }}</div>
           <div class="profile-meta">
-            <div class="name">Ust. Ahmad Fauzi, S.Pd.</div>
+            <div class="name">{{ $guru->nama_lengkap }}</div>
             <div class="role">Guru Mata Pelajaran</div>
           </div>
         </div>
@@ -215,7 +216,7 @@
 
       <footer class="footer">
         <div>Sistem Presensi &amp; Manajemen Akademik SMP Muhammadiyah 44 Tangerang Selatan</div>
-        <div>© 2026 SMP Muhammadiyah 44 Tangerang Selatan. Seluruh hak cipta dilindungi.</div>
+        <div>© {{ date('Y') }} SMP Muhammadiyah 44 Tangerang Selatan. Seluruh hak cipta dilindungi.</div>
       </footer>
     </main>
   </div>

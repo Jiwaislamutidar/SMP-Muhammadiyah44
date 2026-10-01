@@ -71,6 +71,7 @@ Route::domain('guru.'.$domain)->group(function () {
         Route::post('/sesi/{jadwal}/buka', [SesiPelajaranController::class, 'open'])->name('guru.sesi.open');
         Route::post('/sesi/{sesi}/qr', [SesiPelajaranController::class, 'regenerate'])->name('guru.sesi.qr');
         Route::post('/sesi/{sesi}/tutup', [SesiPelajaranController::class, 'close'])->name('guru.sesi.close');
+        Route::delete('/sesi/{sesi}', [SesiPelajaranController::class, 'destroy'])->name('guru.sesi.destroy');
         Route::get('/sesi/{sesi}/status', [SesiPelajaranController::class, 'status'])->name('guru.sesi.status');
         Route::put('/presensi-murid/{presensi}', [PresensiPelajaranController::class, 'updateManual'])->name('guru.presensi-murid.update');
 

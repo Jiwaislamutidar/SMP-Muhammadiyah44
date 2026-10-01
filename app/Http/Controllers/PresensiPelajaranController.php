@@ -20,7 +20,7 @@ class PresensiPelajaranController extends Controller
         ]);
         $sesi = SesiPelajaran::with('jadwal')->where('qr_token', $validated['token'])->first();
 
-        if (! $sesi || $sesi->status_sesi !== 'Berlangsung' || ! $sesi->qr_expires_at || now()->greaterThan($sesi->qr_expires_at)) {
+        if (! $sesi || $sesi->status_sesi !== 'Berlangsung' || ! $sesi->qr_expires_at || now()->greaterThanOrEqualTo($sesi->qr_expires_at)) {
             return response()->json(['message' => 'QR Code tidak valid atau telah kedaluwarsa.'], 422);
         }
 

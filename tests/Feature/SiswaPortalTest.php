@@ -21,8 +21,12 @@ class SiswaPortalTest extends TestCase
         foreach (['siswa.dashboard', 'siswa.scan-qr', 'siswa.riwayat', 'siswa.profil'] as $routeName) {
             $this->get(route($routeName))
                 ->assertOk()
-                ->assertSee('Ahmad Fauzan');
+                ->assertSee('Nadia Rahma QA');
         }
+
+        $this->get(route('siswa.scan-qr'))
+            ->assertDontSee('Ahmad Fauzan')
+            ->assertSee('NR');
     }
 
     public function test_student_can_change_password_with_the_current_password(): void
@@ -39,6 +43,25 @@ class SiswaPortalTest extends TestCase
             ->assertSessionHas('success', 'Kata sandi berhasil diperbarui!');
 
         $this->assertTrue(Hash::check('new-secret', $user->fresh()->password));
+    }
+
+    public function test_student_login_rejects_non_string_credentials(): void
+    {
+        $this->postJson(route('login'), [
+            'username' => ['malformed'],
+            'password' => ['malformed'],
+        ])->assertUnprocessable()->assertJsonValidationErrors(['username', 'password']);
+    }
+
+    public function test_opening_student_login_does_not_log_out_authenticated_student(): void
+    {
+        [$user] = $this->makeStudent();
+
+        $this->actingAs($user)
+            ->get(route('login'))
+            ->assertRedirect(route('siswa.dashboard'));
+
+        $this->assertAuthenticatedAs($user);
     }
 
     public function test_student_cannot_change_password_with_an_incorrect_current_password(): void
@@ -63,7 +86,7 @@ class SiswaPortalTest extends TestCase
     {
         $suffix = bin2hex(random_bytes(5));
         $user = User::create([
-            'name' => 'Ahmad Fauzan',
+            'name' => 'Nadia Rahma QA',
             'username' => 'qa-siswa-' . $suffix,
             'email' => null,
             'role' => 'siswa',
@@ -73,7 +96,7 @@ class SiswaPortalTest extends TestCase
         $siswa = Siswa::create([
             'user_id' => $user->id,
             'nisn' => 'qa-' . $suffix,
-            'nama_lengkap' => 'Ahmad Fauzan',
+            'nama_lengkap' => 'Nadia Rahma QA',
             'kelas_id' => $kelas->id,
             'status' => 'aktif',
         ]);

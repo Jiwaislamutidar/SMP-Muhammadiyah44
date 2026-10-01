@@ -57,9 +57,9 @@
 
       <div class="sidebar-footer">
         <div class="sidebar-footer-user">
-          <div class="avatar">AF</div>
+          <div class="avatar">{{ $siswa->inisial ?? 'AF' }}</div>
           <div>
-            <div class="name">Ahmad Fauzan</div>
+            <div class="name">{{ $siswa->nama ?? auth()->user()->name }}</div>
             <div class="role">{{ $siswa->kelas ?? '-' }} • Murid</div>
           </div>
         </div>
@@ -90,9 +90,9 @@
           <span class="badge-dot"></span>
         </div>
         <div class="user-mini">
-          <div class="avatar">AF</div>
+          <div class="avatar">{{ $siswa->inisial ?? 'AF' }}</div>
           <div>
-            <div class="name">Ahmad Fauzan</div>
+            <div class="name">{{ $siswa->nama ?? auth()->user()->name }}</div>
             <div class="role">{{ $siswa->kelas ?? '-' }} • Murid</div>
           </div>
         </div>
@@ -274,7 +274,6 @@
         qrbox: { width: 220, height: 220 }
       };
 
-      // Membuka kamera (mengutamakan kamera belakang HP / facingMode environment)
       html5QrCode.start(
         { facingMode: "environment" },
         config,
@@ -284,7 +283,6 @@
         isCameraRunning = true;
         document.getElementById('startCameraButton').disabled = true;
 
-        // Sembunyikan placeholder dan ubah indikator status jadi merah (live)
         document.getElementById('cameraPlaceholder').style.display = 'none';
         const dot = document.getElementById('statusDot');
         dot.style.backgroundColor = '#ef4444';
@@ -300,7 +298,6 @@
         html5QrCode.stop().then(() => {
           isCameraRunning = false;
           
-          // Kembalikan ke tampilan placeholder awal
           document.getElementById('cameraPlaceholder').style.display = 'flex';
           const dot = document.getElementById('statusDot');
           dot.style.backgroundColor = '#94a3b8';
@@ -377,7 +374,7 @@
     }
 
     function onScanError(errorMessage) {
-      // Mengabaikan error pemindaian per-frame saat kamera lagi mencari QR
+
     }
   </script>
 </body>

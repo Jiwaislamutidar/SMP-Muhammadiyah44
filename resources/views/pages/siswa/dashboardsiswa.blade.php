@@ -18,7 +18,7 @@
       </div>
     </div>
     <div class="loader-text">SMP Muhammadiyah 44</div>
-    <div class="loader-subtext">Memuat data presensi...</div>
+    <div class="loader-subtext">Memuat Halaman...</div>
   </div>
 
   <div class="dashboard-murid" id="dashboardMurid">
@@ -129,7 +129,17 @@
               <div class="status-badge"><span class="dot"></span> {{ $presensi['status'] ?? 'Belum Absen' }}</div>
               <div class="status-note">Terverifikasi {{ $presensi['verifikator'] ?? '-' }}</div>
             </div>
-            <div class="status-icon"></div>
+            <div class="status-icon">
+              @php
+                $statusIcon = match($presensi['status'] ?? 'Belum Absen') {
+                  'Hadir' => '✓',
+                  'Izin' => '✉',
+                  'Alfa' => '✕',
+                  default => '⏱',
+                };
+              @endphp
+              <span>{{ $statusIcon }}</span>
+            </div>
           </div>
 
           <div class="key-details">

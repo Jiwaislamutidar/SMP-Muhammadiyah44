@@ -10,15 +10,18 @@ class AuthController extends Controller
 {
     public function showLogin()
     {
-        Auth::logout();
+        if (Auth::check() && Auth::user()->role === 'siswa') {
+            return redirect()->route('siswa.dashboard');
+        }
+
         return view('auth.siswa.login');
     }
 
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'username' => 'required',
-            'password' => 'required',
+            'username' => ['required', 'string', 'max:255'],
+            'password' => ['required', 'string', 'max:255'],
         ]);
 
         if (Auth::attempt($credentials, $request->has('remember'))) {

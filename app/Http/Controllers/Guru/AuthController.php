@@ -10,8 +10,10 @@ class AuthController extends Controller
 {
     public function showLogin()
     {
-        Auth::logout();
-        // Pastikan ini mengarah ke file view login khusus untuk guru
+        if (Auth::check() && Auth::user()->role === 'guru') {
+            return redirect()->route('guru.dashboard');
+        }
+
         return view('auth.guru.login'); 
     }
 
@@ -19,8 +21,8 @@ class AuthController extends Controller
     {
         // Validasi input
         $credentials = $request->validate([
-            'username' => 'required',
-            'password' => 'required',
+            'username' => ['required', 'string', 'max:255'],
+            'password' => ['required', 'string', 'max:255'],
         ]);
 
         // Proses pengecekan ke database

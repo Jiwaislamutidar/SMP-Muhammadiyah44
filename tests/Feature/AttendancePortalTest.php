@@ -46,6 +46,13 @@ class AttendancePortalTest extends TestCase
             ->assertOk()
             ->assertJsonPath('status', 'Hadir');
 
+        $sesi->update(['qr_expires_at' => now()->addMinute()]);
+        $this->travelTo($sesi->fresh()->qr_expires_at);
+        $this->actingAs($studentUser)
+            ->postJson(route('siswa.scan'), ['token' => $sesi->qr_token])
+            ->assertUnprocessable();
+        $this->travelBack();
+
         $sesi->update(['qr_expires_at' => now()->subSecond()]);
         $this->actingAs($studentUser)
             ->postJson(route('siswa.scan'), ['token' => $sesi->qr_token])
@@ -204,6 +211,25 @@ class AttendancePortalTest extends TestCase
             'user_id' => $guruUser->id,
             'nama_lengkap' => $guruUser->name,
         ]);
+    }
+
+    public function test_guru_login_rejects_non_string_credentials(): void
+    {
+        $this->postJson(route('guru.login'), [
+            'username' => ['malformed'],
+            'password' => ['malformed'],
+        ])->assertUnprocessable()->assertJsonValidationErrors(['username', 'password']);
+    }
+
+    public function test_opening_guru_login_does_not_log_out_authenticated_guru(): void
+    {
+        [$guruUser] = $this->makeTeacher();
+
+        $this->actingAs($guruUser)
+            ->get(route('guru.login'))
+            ->assertRedirect(route('guru.dashboard'));
+
+        $this->assertAuthenticatedAs($guruUser);
     }
 
     public function test_guru_seeder_creates_deterministic_login_and_preserves_schedule_assignment(): void

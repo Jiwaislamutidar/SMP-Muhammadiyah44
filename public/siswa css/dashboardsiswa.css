@@ -29,7 +29,9 @@
       border-radius: 8px; border: 1px solid #e4eae6;
       width: 36px; height: 36px; display: flex;
       align-items: center; justify-content: center; position: relative;
+      transition: background .2s ease, border-color .2s ease;
     }
+    .icon-btn:hover { background: #f7f9f8; border-color: #087443; }
     .badge-dot {
       background: #ef4444; border-radius: 9999px; width: 8px; height: 8px;
       position: absolute; right: 9px; top: 9px;
@@ -82,7 +84,9 @@
     .card {
       background: #fff; border: 1px solid #e4eae6; border-radius: 16px;
       padding: 20px; box-shadow: 0 1px 2px rgba(0,0,0,.05);
+      transition: box-shadow .25s ease, transform .25s ease;
     }
+    .card:hover { box-shadow: 0 6px 18px rgba(17,24,39,.07); transform: translateY(-2px); }
     .card-header {
       border-bottom: 1px solid #e4eae6; padding-bottom: 12px; margin-bottom: 12px;
       display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
@@ -93,7 +97,9 @@
     .date-chip {
       background: #f7f9f8; border: 1px solid #e4eae6; border-radius: 9999px;
       padding: 4px 10px; font-size: 12px; color: #6b756f;
+      transition: background .2s ease, color .2s ease, border-color .2s ease;
     }
+    a.date-chip:hover { background: #e8f6ef; color: #087443; border-color: rgba(8,116,67,.3); }
 
     .attendance-card { grid-column: span 7; }
     .status-box {
@@ -111,6 +117,8 @@
     .status-icon {
       background: #e8f6ef; border: 1px solid rgba(8,116,67,.3); border-radius: 9999px;
       width: 40px; height: 40px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; color: #087443;
     }
 
     .key-details { display: flex; gap: 12px; margin-top: 12px; }
@@ -149,7 +157,13 @@
     .scan-preview .title { font-size: 12px; font-weight: 600; }
     .scan-preview .sub { font-size: 11px; color: rgba(255,255,255,.7); }
     .scan-actions { display: flex; gap: 10px; margin-top: 16px; }
-    .btn-camera { flex: 1; background: #fff; color: #087443; border: none; border-radius: 8px; padding: 10px 16px; font-weight: 600; font-size: 12px; cursor: pointer; }
+    .btn-camera {
+      flex: 1; background: #fff; color: #087443; border: none; border-radius: 8px;
+      padding: 10px 16px; font-weight: 600; font-size: 12px; cursor: pointer;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .btn-camera:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,.18); }
+    .btn-camera:active { transform: translateY(0); }
     .btn-scan { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.25); border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 12px; cursor: pointer; }
 
     /* Second row */
@@ -160,7 +174,9 @@
     .stat-cards .stat {
       background: #f7f9f8; border: 1px solid #e4eae6; border-radius: 8px;
       padding: 12px; flex: 1; text-align: center; min-width: 0;
+      transition: background .2s ease;
     }
+    .stat-cards .stat:hover { background: #f0f3f1; }
     .stat .label { font-size: 12px; color: #6b756f; }
     .stat .num { font-size: 24px; font-weight: 700; }
     .stat .sub { font-size: 10px; }
@@ -194,6 +210,9 @@
     table.jadwal th:last-child, table.jadwal td:last-child { text-align: right; }
     table.jadwal td { padding: 12px 10px; font-size: 12px; border-top: 1px solid #e4eae6; white-space: nowrap; }
     table.jadwal tr.berlangsung { background: rgba(240,253,244,.6); }
+    table.jadwal tbody tr { transition: background .15s ease; }
+    table.jadwal tbody tr:hover { background: #f7f9f8; }
+    table.jadwal tbody tr.berlangsung:hover { background: rgba(240,253,244,.8); }
     .kelas-chip { background: #f3f4f6; border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 600; }
     .status-selesai { background: #e8f6ef; border-radius: 9999px; padding: 2px 8px; font-size: 10px; color: #087443; }
     .status-berlangsung { background: #16a66a; border-radius: 9999px; padding: 2px 8px; font-size: 10px; color: #fff; font-weight: 600; }
@@ -423,7 +442,7 @@
    ========================================================= */
 @media (max-width: 768px) {
   .topbar { top: 12px; left: 12px; width: calc(100% - 24px); height: 64px; padding: 0 12px; border-radius: 20px; }
-  .content { padding: 88px 16px 20px; gap: 16px; }
+  .content { padding: 96px 16px 20px; gap: 16px; }
 
   .page-header { flex-direction: column; align-items: flex-start; }
   .page-header h1 { font-size: 20px; }
@@ -457,7 +476,7 @@
   .user-mini { border-left: none; padding-left: 0; }
   .user-mini > div:last-child { display: none; }
 
-  .content { padding: 80px 12px 16px; }
+  .content { padding: 100px 12px 16px; }
 
   .card { padding: 14px; }
   .card-title h2 { font-size: 14px; }

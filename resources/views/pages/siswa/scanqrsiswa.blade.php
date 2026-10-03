@@ -261,7 +261,7 @@
     let lastScannedText = '';
 
     function startCamera() {
-      if (isCameraRunning) return;
+      if (isCameraRunning || scanPending) return;
       lastScannedText = '';
       const feedback = document.getElementById('scanFeedback');
       feedback.hidden = true;
@@ -281,7 +281,9 @@
         onScanError
       ).then(() => {
         isCameraRunning = true;
-        document.getElementById('startCameraButton').disabled = true;
+        const startButton = document.getElementById('startCameraButton');
+        startButton.disabled = true;
+        startButton.textContent = 'Kamera Aktif';
 
         document.getElementById('cameraPlaceholder').style.display = 'none';
         const dot = document.getElementById('statusDot');
@@ -305,7 +307,9 @@
           document.getElementById('statusText').innerText = 'Kamera Nonaktif';
           
           html5QrCode.clear();
-          document.getElementById('startCameraButton').disabled = false;
+          const startButton = document.getElementById('startCameraButton');
+          startButton.disabled = scanPending;
+          startButton.textContent = scanPending ? 'Memproses...' : 'Buka Kamera';
         }).catch(err => {
           console.error("Gagal menghentikan kamera", err);
         });
@@ -316,6 +320,9 @@
       if (scanPending || decodedText === lastScannedText) return;
       scanPending = true;
       lastScannedText = decodedText;
+      const startButton = document.getElementById('startCameraButton');
+      startButton.disabled = true;
+      startButton.textContent = 'Memproses...';
       try {
         const response = await fetch(@json(route('siswa.scan')), {
           method: 'POST',
@@ -342,6 +349,8 @@
         showScanFeedback('error', 'Koneksi bermasalah. Periksa internet lalu coba scan kembali.');
       } finally {
         scanPending = false;
+        startButton.disabled = isCameraRunning;
+        startButton.textContent = isCameraRunning ? 'Kamera Aktif' : 'Buka Kamera';
       }
     }
 

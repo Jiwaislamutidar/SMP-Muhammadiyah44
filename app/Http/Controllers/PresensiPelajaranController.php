@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Guru;
 use App\Models\PresensiPelajaran;
-use App\Models\SesiPelajaran;
 use App\Models\Siswa;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,36 +17,79 @@ class PresensiPelajaranController extends Controller
         $validated = $request->validate([
             'token' => ['required', 'string', 'max:255'],
         ]);
-        $sesi = SesiPelajaran::with('jadwal')->where('qr_token', $validated['token'])->first();
+        $now = now();
+        $sesi = DB::table('sesi_pelajarans')
+            ->join('jadwal_pelajarans', 'jadwal_pelajarans.id', '=', 'sesi_pelajarans.jadwal_id')
+            ->where('sesi_pelajarans.qr_token', $validated['token'])
+            ->where('sesi_pelajarans.status_sesi', 'Berlangsung')
+            ->where('sesi_pelajarans.qr_expires_at', '>', $now)
+            ->select('sesi_pelajarans.id', 'jadwal_pelajarans.kelas_id')
+            ->first();
 
-        if (! $sesi || $sesi->status_sesi !== 'Berlangsung' || ! $sesi->qr_expires_at || now()->greaterThanOrEqualTo($sesi->qr_expires_at)) {
+        if (! $sesi) {
             return response()->json(['message' => 'QR Code tidak valid atau telah kedaluwarsa.'], 422);
         }
 
-        $siswa = Siswa::where('user_id', Auth::id())->first();
-        abort_unless($siswa, 403, 'Profil murid belum terhubung ke akun ini.');
+        $siswaId = Siswa::where('user_id', Auth::id())
+            ->where('kelas_id', $sesi->kelas_id)
+            ->value('id');
 
-        if ((int) $siswa->kelas_id !== (int) $sesi->jadwal->kelas_id) {
+        if (! $siswaId) {
+            abort_unless(Siswa::where('user_id', Auth::id())->exists(), 403, 'Profil murid belum terhubung ke akun ini.');
+
             return response()->json(['message' => 'QR Code ini bukan untuk kelas Anda.'], 403);
         }
 
-        $presensi = DB::transaction(function () use ($sesi, $siswa) {
-            $presensi = $sesi->presensiPelajarans()->where('siswa_id', $siswa->id)->lockForUpdate()->first();
-            if (! $presensi) {
-                abort(403, 'Murid tidak terdaftar pada sesi ini.');
-            }
+        $presensiQuery = DB::table('presensi_pelajarans')
+            ->where('sesi_pelajaran_id', $sesi->id)
+            ->where('siswa_id', $siswaId);
 
-            if ($presensi->status === 'Belum Absen') {
-                $presensi->update(['status' => 'Hadir', 'waktu_scan' => now()]);
-            }
+        if ($presensiQuery->where('status', '<>', 'Belum Absen')->exists()) {
+            $presensi = DB::table('presensi_pelajarans')
+                ->where('sesi_pelajaran_id', $sesi->id)
+                ->where('siswa_id', $siswaId)
+                ->first(['status', 'waktu_scan']);
 
-            return $presensi->fresh();
-        });
+            return response()->json([
+                'message' => 'Presensi Anda sudah tercatat.',
+                'status' => $presensi->status,
+                'waktu_scan' => $presensi->waktu_scan
+                    ? \Illuminate\Support\Carbon::parse($presensi->waktu_scan)->toIso8601String()
+                    : null,
+            ]);
+        }
+
+        $updated = DB::table('presensi_pelajarans')
+            ->where('sesi_pelajaran_id', $sesi->id)
+            ->where('siswa_id', $siswaId)
+            ->where('status', 'Belum Absen')
+            ->update([
+                'status' => 'Hadir',
+                'waktu_scan' => $now,
+                'updated_at' => $now,
+            ]);
+
+        if (! $updated) {
+            $presensi = DB::table('presensi_pelajarans')
+                ->where('sesi_pelajaran_id', $sesi->id)
+                ->where('siswa_id', $siswaId)
+                ->first(['status', 'waktu_scan']);
+
+            abort_unless($presensi, 403, 'Murid tidak terdaftar pada sesi ini.');
+
+            return response()->json([
+                'message' => 'Presensi Anda sudah tercatat.',
+                'status' => $presensi->status,
+                'waktu_scan' => $presensi->waktu_scan
+                    ? \Illuminate\Support\Carbon::parse($presensi->waktu_scan)->toIso8601String()
+                    : null,
+            ]);
+        }
 
         return response()->json([
-            'message' => $presensi->status === 'Hadir' ? 'Presensi berhasil dicatat.' : 'Presensi Anda sudah tercatat.',
-            'status' => $presensi->status,
-            'waktu_scan' => $presensi->waktu_scan?->toIso8601String(),
+            'message' => 'Presensi berhasil dicatat.',
+            'status' => 'Hadir',
+            'waktu_scan' => $now->toIso8601String(),
         ]);
     }
 

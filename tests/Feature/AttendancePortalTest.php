@@ -46,6 +46,14 @@ class AttendancePortalTest extends TestCase
             ->assertOk()
             ->assertJsonPath('status', 'Hadir');
 
+        $waktuScan = PresensiPelajaran::where('siswa_id', $siswa->id)->value('waktu_scan');
+        $this->actingAs($studentUser)
+            ->postJson(route('siswa.scan'), ['token' => $sesi->qr_token])
+            ->assertOk()
+            ->assertJsonPath('message', 'Presensi Anda sudah tercatat.')
+            ->assertJsonPath('status', 'Hadir');
+        $this->assertEquals($waktuScan, PresensiPelajaran::where('siswa_id', $siswa->id)->value('waktu_scan'));
+
         $sesi->update(['qr_expires_at' => now()->addMinute()]);
         $this->travelTo($sesi->fresh()->qr_expires_at);
         $this->actingAs($studentUser)

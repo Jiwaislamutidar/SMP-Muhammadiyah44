@@ -74,7 +74,7 @@
                 <button class="burger-btn" id="burgerBtn" onclick="toggleSidebar()" aria-label="Buka menu">
                     <span></span><span></span><span></span>
                 </button>
-                <div class="portal-tag">Portal Murid • SMP Muhammadiyah 44</div>
+                <div class="portal-tag">Profil • SMP Muhammadiyah 44</div>
             </div>
 
             <div class="topbar-right">
@@ -257,7 +257,6 @@
         });
     </script>
 
-    {{-- Jam & tanggal hidup, update tiap detik --}}
     <script>
         function updateLiveDatetime() {
             const hariList = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];

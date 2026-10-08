@@ -6,11 +6,10 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
   <title>Scan QR Presensi - SMP Muhammadiyah 44</title>
-  <link rel="stylesheet" href="{{ asset('siswa css/scanqrsiswa.css') }}?v=3">
+  <link rel="stylesheet" href="{{ asset('siswa css/scanqrsiswa.css') }}?v=4">
 </head>
 <body>
 
-  <!-- Preloader -->
   <div class="page-loader" id="pageLoader">
     <div class="loader-logo-wrap">
       <div class="loader-spinner"></div>
@@ -24,7 +23,6 @@
 
   <div class="dashboard-murid" id="dashboardMurid">
 
-    <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="sidebar-brand">
@@ -72,16 +70,14 @@
       </div>
     </div>
 
-    <!-- Overlay Sidebar -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-    <!-- Topbar -->
     <div class="topbar">
       <div class="topbar-left">
         <button class="burger-btn" id="burgerBtn" onclick="toggleSidebar()">
           <span></span><span></span><span></span>
         </button>
-        <div class="portal-tag">Portal Murid • SMP Muhammadiyah 44</div>
+        <div class="portal-tag">Scan QR • SMP Muhammadiyah 44</div>
       </div>
       <div class="topbar-right">
         <div class="ta-badge" id="liveDatetime">Memuat waktu...</div>
@@ -113,7 +109,6 @@
       </div>
     </div>
 
-    <!-- Content Utama Scan QR -->
     <div class="content">
       <div class="page-header">
         <div>
@@ -136,10 +131,8 @@
           </div>
           
           <div class="camera-frame">
-            <!-- Wadah stream video kamera -->
             <div id="reader" style="width: 100%; height: 100%;"></div>
 
-            <!-- Tampilan awal sebelum kamera dinyalakan -->
             <div class="camera-placeholder" id="cameraPlaceholder">
               <div class="scan-line"></div>
               <div class="corner top-left"></div>
@@ -157,7 +150,6 @@
           <div class="scan-feedback" id="scanFeedback" role="status" aria-live="assertive" hidden></div>
         </div>
 
-        {{-- Kolom kanan: sesi saat ini, cara absensi, info --}}
         <div class="right-column">
 
           <div class="session-card">
@@ -223,13 +215,18 @@
         </div>
       </div>
 
+      <dialog class="scan-success-modal" id="scanSuccessModal" aria-labelledby="scanSuccessTitle" aria-describedby="scanSuccessMessage">
+        <div class="success-icon" aria-hidden="true">✓</div>
+        <h2 id="scanSuccessTitle">Presensi Berhasil Ditambahkan!</h2>
+        <p id="scanSuccessMessage">Presensi Anda berhasil dicatat.</p>
+        <button class="success-modal-button" type="button" onclick="closeSuccessModal()" autofocus>Tutup</button>
+      </dialog>
+
     </div>
   </div>
 
-  <!-- Library HTML5-QRCode via CDN -->
   <script src="https://unpkg.com/html5-qrcode"></script>
 
-  <!-- Script Preloader & Sidebar -->
   <script>
     window.addEventListener('load', function () {
       setTimeout(function () {
@@ -245,7 +242,6 @@
     }
   </script>
 
-  {{-- Jam & tanggal hidup, update tiap detik --}}
   <script>
     function updateLiveDatetime() {
       const hariList = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
@@ -267,7 +263,6 @@
     setInterval(updateLiveDatetime, 1000);
   </script>
 
-  <!-- Script Pengontrol Kamera -->
   <script>
     let html5QrCode = null;
     let isCameraRunning = false;
@@ -309,24 +304,35 @@
       });
     }
 
-    function stopCamera() {
-      if (html5QrCode && isCameraRunning) {
-        html5QrCode.stop().then(() => {
-          isCameraRunning = false;
-          
-          document.getElementById('cameraPlaceholder').style.display = 'flex';
-          const dot = document.getElementById('statusDot');
-          dot.style.backgroundColor = '#94a3b8';
-          dot.style.animation = 'none';
-          document.getElementById('statusText').innerText = 'Kamera Nonaktif';
-          
-          html5QrCode.clear();
-          const startButton = document.getElementById('startCameraButton');
-          startButton.disabled = scanPending;
-          startButton.textContent = scanPending ? 'Memproses...' : 'Buka Kamera';
-        }).catch(err => {
-          console.error("Gagal menghentikan kamera", err);
-        });
+    async function stopCamera() {
+      if (!html5QrCode) return;
+
+      const scanner = html5QrCode;
+      try {
+        if (isCameraRunning) await scanner.stop();
+      } catch (error) {
+        console.error('Gagal menghentikan kamera melalui HTML5-QRCode.', error);
+      } finally {
+        const video = document.querySelector('#reader video');
+        video?.srcObject?.getTracks().forEach(track => track.stop());
+
+        try {
+          scanner.clear();
+        } catch (error) {
+          console.error('Gagal membersihkan elemen scanner.', error);
+        }
+
+        isCameraRunning = false;
+        html5QrCode = null;
+        document.getElementById('cameraPlaceholder').style.display = 'flex';
+        const dot = document.getElementById('statusDot');
+        dot.style.backgroundColor = '#94a3b8';
+        dot.style.animation = 'none';
+        document.getElementById('statusText').innerText = 'Kamera Nonaktif';
+
+        const startButton = document.getElementById('startCameraButton');
+        startButton.disabled = scanPending;
+        startButton.textContent = scanPending ? 'Memproses...' : 'Buka Kamera';
       }
     }
 
@@ -338,6 +344,7 @@
       startButton.disabled = true;
       startButton.textContent = 'Memproses...';
       try {
+        await stopCamera();
         const response = await fetch(@json(route('siswa.scan')), {
           method: 'POST',
           headers: {
@@ -355,9 +362,8 @@
           showScanFeedback('error', message);
           return;
         }
-        showScanFeedback('success', result.message || 'Presensi berhasil dicatat.');
+        showSuccessModal(result.message || 'Presensi berhasil dicatat.');
         playSuccessFeedback();
-        stopCamera();
       } catch (error) {
         lastScannedText = '';
         showScanFeedback('error', 'Koneksi bermasalah. Periksa internet lalu coba scan kembali.');
@@ -375,8 +381,21 @@
       feedback.hidden = false;
     }
 
+    function showSuccessModal(message) {
+      document.getElementById('scanSuccessMessage').textContent = message;
+      document.getElementById('scanSuccessModal').showModal();
+    }
+
+    function closeSuccessModal() {
+      document.getElementById('scanSuccessModal').close();
+    }
+
     function playSuccessFeedback() {
-      if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+      try {
+        if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+      } catch (error) {
+        console.debug('Getaran feedback tidak tersedia.', error);
+      }
       try {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         if (!AudioContextClass) return;

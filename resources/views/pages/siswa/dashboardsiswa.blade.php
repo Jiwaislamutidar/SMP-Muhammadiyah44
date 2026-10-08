@@ -9,7 +9,6 @@
 </head>
 <body>
 
-  {{-- Preloader, muncul sesaat pas halaman pertama dibuka --}}
   <div class="page-loader" id="pageLoader">
     <div class="loader-logo-wrap">
       <div class="loader-spinner"></div>
@@ -23,7 +22,6 @@
 
   <div class="dashboard-murid" id="dashboardMurid">
 
-    {{-- Sidebar --}}
     <div class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="sidebar-brand">
@@ -71,37 +69,21 @@
       </div>
     </div>
 
-    {{-- Overlay, buat nutup sidebar kalau diklik di luar --}}
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-    {{-- Topbar --}}
     <div class="topbar">
       <div class="topbar-left">
         <button class="burger-btn" id="burgerBtn" onclick="toggleSidebar()" aria-label="Buka menu">
           <span></span><span></span><span></span>
         </button>
-        <div class="portal-tag">Portal Murid • SMP Muhammadiyah 44</div>
+        <div class="portal-tag">Dashboard • SMP Muhammadiyah 44</div>
       </div>
       <div class="topbar-right">
         <div class="ta-badge" id="liveDatetime">Memuat waktu...</div>
-        <details style="position:relative;">
-          <summary class="icon-btn" aria-label="Notifikasi" title="Notifikasi" style="list-style:none;cursor:pointer;">
-            🔔
-            @if(count($notifikasiPresensi ?? []))
-              <span class="badge-dot"></span>
-            @endif
-          </summary>
-          <div style="position:absolute;z-index:20;right:0;top:calc(100% + 10px);width:290px;max-width:80vw;padding:14px;background:#fff;border:1px solid #e4eae6;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.14);">
-            <strong style="display:block;margin-bottom:10px;">Presensi Terbaru</strong>
-            @forelse($notifikasiPresensi ?? [] as $notifikasi)
-              <div style="padding:9px 0;border-top:1px solid #edf1ee;font-size:12px;line-height:1.5;">
-                Presensi {{ $notifikasi['status'] }} untuk mata pelajaran {{ $notifikasi['mapel'] }} pada {{ $notifikasi['waktu'] }} ({{ $notifikasi['tanggal'] }})
-              </div>
-            @empty
-              <div style="padding-top:8px;font-size:12px;color:#64748b;">Belum ada riwayat presensi.</div>
-            @endforelse
-          </div>
-        </details>
+        <div class="icon-btn">
+          🔔
+          <span class="badge-dot"></span>
+        </div>
         <div class="user-mini">
           <div class="avatar">{{ $siswa->inisial ?? 'AF' }}</div>
           <div>
@@ -114,7 +96,6 @@
 
     <div class="content">
 
-      {{-- Header sapaan --}}
       <div class="page-header">
         <div>
           <h1>Selamat Datang, {{ $siswa->nama ?? 'Ahmad Fauzan' }}</h1>
@@ -128,7 +109,6 @@
         </div>
       </div>
 
-      {{-- Baris atas: kehadiran hari ini & scan QR --}}
       <div class="top-row">
 
         <div class="card attendance-card">
@@ -187,7 +167,6 @@
           <p class="desc">Scan QR yang ditampilkan guru untuk mencatat kehadiran kamu di kelas saat sesi pembelajaran berlangsung.</p>
           <div class="scan-preview">
 
-            {{-- Kotak Ikon yang ditambahkan SVG QR Code --}}
             <div class="icon" style="display: flex; align-items: center; justify-content: center;">
               <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -204,14 +183,12 @@
             </div>
           </div>
 
-          {{-- Tombol dengan tambahan fungsi onclick pindah rute --}}
           <div class="scan-actions">
             <button class="btn-camera" onclick="window.location.href='{{ route('siswa.scan-qr') }}'">Buka Kamera</button>
           </div>
         </div>
       </div>
 
-      {{-- Baris kedua: ringkasan, absensi terbaru, jadwal --}}
       <div class="second-row">
 
         <div class="left-col">
@@ -266,7 +243,7 @@
             <div class="date-chip">{{ $siswa->kelas ?? '-' }} • {{ count($jadwalHariIni ?? []) }} Sesi Pembelajaran</div>
           </div>
 
-          {{-- Dibungkus supaya tabel bisa discroll ke samping di layar kecil, bukan gepeng --}}
+
           <div class="table-scroll">
             <table class="jadwal">
               <thead>
@@ -304,7 +281,7 @@
       </div>
     </div>
 
-    {{-- Footer --}}
+
     <div class="footer">
       <div>Sistem Presensi & Manajemen Akademik SMP Muhammadiyah 44 Tangerang Selatan</div>
       <div>© {{ date('Y') }} SMP Muhammadiyah 44 Tangerang Selatan. Seluruh hak cipta dilindungi.</div>
@@ -328,8 +305,6 @@
     }
   </script>
 
-  {{-- Jam & tanggal hidup, update tiap detik. Dipecah jadi 2 <span> (tanggal & jam)
-       supaya di layar kecil tanggalnya bisa disembunyikan lewat CSS, sisain jamnya aja --}}
   <script>
     function updateLiveDatetime() {
       const hariList = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];

@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#087443">
     <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
     <title>Riwayat Absensi - SMP Muhammadiyah 44</title>
-    <link rel="stylesheet" href="{{ asset('siswa css/riwayatsiswa.css') }}?v=3">
+    <link rel="stylesheet" href="{{ asset('siswa css/riwayatsiswa.css') }}?v=4">
 </head>
 <body>
     <div class="page-loader" id="pageLoader">
@@ -75,7 +75,7 @@
                 <button type="button" class="burger-btn" id="burgerBtn" onclick="toggleSidebar()" aria-label="Buka menu" aria-controls="sidebar" aria-expanded="false">
                     <span></span><span></span><span></span>
                 </button>
-                <div class="portal-tag">Portal Murid • SMP Muhammadiyah 44</div>
+                <div class="portal-tag">Riwayat Presensi • SMP Muhammadiyah 44</div>
             </div>
 
             <div class="topbar-right">
@@ -167,7 +167,7 @@
                     <div class="filter-block">
                         <label class="filter-label" for="periode">Periode</label>
                         <div class="select-box">
-                            <select id="periode" name="periode" style="width:100%;border:0;background:transparent;font:inherit;color:inherit;outline:none;">
+                            <select id="periode" name="periode">
                                 <option value="">Semua Periode</option>
                                 @foreach($periodeOptions as $periode => $label)
                                     <option value="{{ $periode }}" @selected($filters['periode'] === $periode)>{{ $label }}</option>
@@ -179,7 +179,7 @@
                     <div class="filter-block">
                         <label class="filter-label" for="mapel_id">Mata Pelajaran</label>
                         <div class="select-box">
-                            <select id="mapel_id" name="mapel_id" style="width:100%;border:0;background:transparent;font:inherit;color:inherit;outline:none;">
+                            <select id="mapel_id" name="mapel_id">
                                 <option value="">Semua Mata Pelajaran</option>
                                 @foreach($mataPelajaran as $mapel)
                                     <option value="{{ $mapel->id }}" @selected($filters['mapel_id'] === $mapel->id)>{{ $mapel->nama_mapel }}</option>
@@ -191,7 +191,7 @@
                     <div class="filter-block">
                         <label class="filter-label" for="status">Status Presensi</label>
                         <div class="select-box">
-                            <select id="status" name="status" style="width:100%;border:0;background:transparent;font:inherit;color:inherit;outline:none;">
+                            <select id="status" name="status">
                                 <option value="">Semua Status</option>
                                 @foreach(['Hadir', 'Izin', 'Sakit', 'Alfa'] as $status)
                                     <option value="{{ $status }}" @selected($filters['status'] === $status)>{{ $status }}</option>

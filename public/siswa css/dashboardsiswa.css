@@ -6,7 +6,6 @@
       font-family: "Inter", sans-serif;
     }
 
-    /* Topbar */
     .topbar {
       position: fixed;
       top: 18px;
@@ -61,7 +60,6 @@
     .user-mini .name { font-size: 12px; font-weight: 600; color: #17211c; }
     .user-mini .role { font-size: 11px; color: #6b756f; }
 
-    /* Content */
     .content { padding: 114px 40px 24px; display: flex; flex-direction: column; gap: 20px; flex: 1; }
     .page-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
     .page-header h1 { color: #17211c; font-size: 24px; font-weight: 600; margin: 0; }
@@ -79,7 +77,6 @@
       padding: 6px 12px; color: #087443; font-size: 12px; font-weight: 500;
     }
 
-    /* Top row: kehadiran hari ini + scan QR */
     .top-row { display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; }
     .card {
       background: #fff; border: 1px solid #e4eae6; border-radius: 16px;
@@ -138,7 +135,6 @@
     .next-session strong { color: #17211c; }
     .next-session .live { color: #087443; font-size: 11px; font-weight: 500; }
 
-    /* Scan QR card */
     .scan-card {
       grid-column: span 5;
       background: linear-gradient(135deg, #075c36 0%, #087443 100%);
@@ -166,7 +162,6 @@
     .btn-camera:active { transform: translateY(0); }
     .btn-scan { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.25); border-radius: 8px; padding: 10px 14px; color: #fff; font-size: 12px; cursor: pointer; }
 
-    /* Second row */
     .second-row { display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; }
     .left-col { grid-column: span 5; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 
@@ -199,7 +194,6 @@
 
     .right-col { grid-column: span 7; min-width: 0; }
 
-    /* Dibungkus supaya tabel bisa discroll ke samping di layar kecil, bukan gepeng */
     .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     table.jadwal { width: 100%; min-width: 560px; border-collapse: collapse; }
     table.jadwal thead { background: #f7f9f8; }
@@ -222,14 +216,12 @@
       display: flex; justify-content: space-between; font-size: 11px; color: #6b756f; gap: 8px; flex-wrap: wrap;
     }
 
-    /* Footer */
     .footer {
       background: #fff; border-top: 1px solid #e4eae6; height: 44px;
       padding: 0 32px; display: flex; align-items: center; justify-content: space-between;
       font-size: 11px; color: #6b756f;
     }
 
-/* Sidebar - Nempel ke sisi kiri layar (sama seperti di halaman riwayat) */
 .sidebar {
   position: fixed;
   top: 0;
@@ -251,7 +243,6 @@
 }
 .sidebar.open { transform: translateX(0); }
 
-/* Scrollbar halus untuk sidebar di kiri */
 .sidebar::-webkit-scrollbar {
   width: 6px;
 }
@@ -344,7 +335,6 @@
 .logout-item { color: rgba(255,120,120,.85); opacity: 1; transform: none; }
 .logout-item:hover { background: rgba(239,68,68,.12); color: #fca5a5; }
 
-/* Overlay latar belakang saat sidebar terbuka */
 .sidebar-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,.4); backdrop-filter: blur(1px);
   opacity: 0; visibility: hidden;
@@ -353,7 +343,6 @@
 }
 .sidebar-overlay.show { opacity: 1; visibility: visible; }
 
-/* Tombol burger, berubah jadi X saat sidebar aktif */
 .burger-btn {
   width: 36px; height: 36px; border-radius: 8px; border: 1px solid #e4eae6;
   background: #fff; cursor: pointer;
@@ -369,7 +358,6 @@
 .burger-btn.active span:nth-child(2) { opacity: 0; }
 .burger-btn.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-/* Preloader saat halaman pertama dibuka */
 .page-loader {
   position: fixed; inset: 0; z-index: 2000;
   background: linear-gradient(160deg, #062318 0%, #0b3b26 55%, #087443 100%);
@@ -417,29 +405,20 @@
 }
 @keyframes loaderFade { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
 
-/* Fade-in konten dashboard setelah loader hilang */
 #dashboardMurid { opacity: 0; }
 #dashboardMurid.loaded { opacity: 1; transition: opacity .5s ease; }
 
-/* =========================================================
-   RESPONSIF — Tablet (≤1024px)
-   ========================================================= */
 @media (max-width: 1024px) {
   .topbar { left: 20px; width: calc(100% - 40px); padding: 0 16px; }
   .content { padding: 100px 24px 24px; }
 
-  /* Kartu kehadiran & scan QR jadi satu kolom penuh, tumpuk ke bawah */
   .top-row { grid-template-columns: 1fr; }
   .attendance-card, .scan-card { grid-column: 1 / -1; }
 
-  /* Ringkasan/absensi terbaru & jadwal jadi satu kolom penuh, tumpuk ke bawah */
   .second-row { grid-template-columns: 1fr; }
   .left-col, .right-col { grid-column: 1 / -1; }
 }
 
-/* =========================================================
-   RESPONSIF — Tablet kecil & HP landscape (≤768px)
-   ========================================================= */
 @media (max-width: 768px) {
   .topbar { top: 12px; left: 12px; width: calc(100% - 24px); height: 64px; padding: 0 12px; border-radius: 20px; }
   .content { padding: 96px 16px 20px; gap: 16px; }
@@ -447,8 +426,6 @@
   .page-header { flex-direction: column; align-items: flex-start; }
   .page-header h1 { font-size: 20px; }
 
-  /* Kartu Scan QR ditaruh paling atas (di atas Kehadiran) khusus di HP,
-     tanpa ubah urutan HTML — cuma geser tampilan pakai order */
   .scan-card { order: -1; }
 
   .key-details { flex-direction: column; gap: 8px; }
@@ -457,22 +434,17 @@
   .footer { flex-direction: column; height: auto; padding: 12px 16px; gap: 4px; text-align: center; }
 }
 
-/* =========================================================
-   RESPONSIF — HP (≤480px)
-   ========================================================= */
 @media (max-width: 480px) {
   .sidebar { width: 82vw; }
 
   .topbar { padding: 0 10px; gap: 8px; }
   .topbar-left, .topbar-right { gap: 8px; }
-  .portal-tag { display: none; } /* teks portal disembunyikan, muat gak muat di HP kecil */
+  .portal-tag { display: none; }
   .icon-btn, .burger-btn { width: 32px; height: 32px; }
 
-  /* Jam live: sembunyikan bagian tanggal, sisain jamnya aja biar muat */
   .ta-badge { padding: 5px 8px; font-size: 11px; }
   .dt-date, .dt-sep { display: none; }
 
-  /* Sembunyikan nama & kelas di topbar, sisain avatar aja */
   .user-mini { border-left: none; padding-left: 0; }
   .user-mini > div:last-child { display: none; }
 
@@ -488,10 +460,6 @@
   .scan-preview { flex-wrap: wrap; }
 }
 
-/* ============ TAMBAHAN: Fade-in halaman saat pertama dibuka ============
-   Tempel ini di PALING BAWAH dashboardsiswa.css DAN scanqrsiswa.css
-   (dua-duanya pakai id="dashboardMurid", jadi snippet-nya sama) */
-
 #dashboardMurid {
   opacity: 0;
   transform: none;
@@ -502,8 +470,6 @@
   transition: opacity .5s ease;
 }
 
-/* Konten utama (page-header, top-row/scanner-container, second-row, dst)
-   muncul satu-satu, bukan barengan semua */
 #dashboardMurid .content > * {
   opacity: 0;
   transform: translateY(14px);
@@ -516,7 +482,6 @@
 #dashboardMurid.loaded .content > *:nth-child(3) { animation-delay: .19s; }
 #dashboardMurid.loaded .content > *:nth-child(4) { animation-delay: .26s; }
 
-/* Scroll halaman */
 html, body {
   min-height: 100%;
   overflow-y: auto;

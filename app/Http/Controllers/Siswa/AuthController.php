@@ -27,13 +27,11 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $request->has('remember'))) {
             $user = Auth::user();
 
-            // KUNCI KEAMANAN: Cek apakah yang login benar-benar Siswa
-            if ($user->role === 'siswa') { // Sesuaikan nama kolom/role di databasemu (misal: 'siswa')
+            if ($user->role === 'siswa') {
                 $request->session()->regenerate();
                 return redirect()->route('siswa.dashboard');
             }
 
-            // Jika BUKAN siswa (misal Guru coba login di sini), paksa logout
             Auth::logout();
             return back()->with('error', 'Akses ditolak! Halaman ini khusus untuk Siswa.');
         }

@@ -36,7 +36,6 @@ body::-webkit-scrollbar-thumb {
 }
 .content { padding: 114px 40px 24px; display: flex; flex-direction: column; gap: 20px; flex: 1; }
 
-/* Topbar — kapsul, fixed, ngikut pas discroll (sama kayak dashboard) */
 .topbar {
   position: fixed;
   top: 18px;
@@ -86,7 +85,6 @@ body::-webkit-scrollbar-thumb {
 .user-mini .name { font-size: 12px; font-weight: 600; color: #17211c; }
 .user-mini .role { font-size: 11px; color: #6b756f; }
 
-/* Header halaman */
 .section-header { display: flex; align-items: center; justify-content: space-between; }
 .header-copy h1 { color: #17211c; font-size: 24px; font-weight: 700; margin: 0; letter-spacing: -0.6px; }
 .header-copy p { color: #6b756f; font-size: 14px; margin: 2px 0 0; }
@@ -97,7 +95,6 @@ body::-webkit-scrollbar-thumb {
 }
 .status-badge .dot { background: #10b981; border-radius: 9999px; width: 8px; height: 8px; }
 
-/* Kartu profil utama */
 .profile-card {
   background: #fff; border: 1px solid #e4eae6; border-radius: 16px;
   padding: 32px; box-shadow: 0 1px 2px rgba(0,0,0,.05);
@@ -134,7 +131,6 @@ body::-webkit-scrollbar-thumb {
 }
 .btn-outline:hover { background: #f7f9f8; border-color: #087443; }
 
-/* Informasi akun */
 .account-info-section { padding: 0 0 28px; display: flex; flex-direction: column; gap: 16px; }
 .section-label {
   color: #6b756f; font-size: 14px; font-weight: 700;
@@ -151,7 +147,6 @@ body::-webkit-scrollbar-thumb {
 }
 .info-value { color: #17211c; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
 
-/* Catatan bawah kartu */
 .profile-footer-note {
   border-top: 1px solid #e4eae6; padding-top: 20px;
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
@@ -159,14 +154,12 @@ body::-webkit-scrollbar-thumb {
 .footer-note-left { display: flex; align-items: flex-start; gap: 8px; color: #6b756f; font-size: 12px; }
 .footer-note-right { color: #6b756f; font-size: 12px; white-space: nowrap; }
 
-/* Footer */
 .footer {
   background: #fff; border-top: 1px solid #e4eae6; height: 44px;
   padding: 0 32px; display: flex; align-items: center; justify-content: space-between;
   font-size: 11px; color: #6b756f;
 }
 
-/* Sidebar - Nempel ke sisi kiri layar (sama seperti di halaman riwayat) */
 .sidebar {
   position: fixed;
   top: 0;
@@ -188,7 +181,6 @@ body::-webkit-scrollbar-thumb {
 }
 .sidebar.open { transform: translateX(0); }
 
-/* Scrollbar halus untuk sidebar di kiri */
 .sidebar::-webkit-scrollbar {
   width: 6px;
 }
@@ -302,7 +294,6 @@ body::-webkit-scrollbar-thumb {
 .burger-btn.active span:nth-child(2) { opacity: 0; }
 .burger-btn.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-/* Preloader */
 .page-loader {
   position: fixed; inset: 0; z-index: 2000;
   background: linear-gradient(160deg, #062318 0%, #0b3b26 55%, #087443 100%);
@@ -341,11 +332,9 @@ body::-webkit-scrollbar-thumb {
 .loader-subtext { color: rgba(255,255,255,.6); font-size: 11.5px; animation: loaderFade 1.6s ease-in-out infinite; }
 @keyframes loaderFade { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
 
-/* Fade-in konten setelah loader hilang */
 #profilMurid { opacity: 0; }
 #profilMurid.loaded { opacity: 1; transition: opacity .5s ease; }
 
-/* Responsif mengikuti layout dashboard */
 @media (max-width: 1024px) {
   .topbar { left: 20px; width: calc(100% - 40px); padding: 0 16px; }
   .content { padding: 100px 24px 24px; }
@@ -388,12 +377,6 @@ body::-webkit-scrollbar-thumb {
   .info-value { font-size: 14px; overflow-wrap: anywhere; }
 }
 
-/* ============ TAMBAHAN: Fade-in halaman saat pertama dibuka ============
-   Tempel ini di PALING BAWAH profilsiswa.css.
-   Ini akan MENIMPA rule lama "#profilMurid.loaded { opacity: 1; ... }"
-   yang sudah ada di file kamu (gak apa-apa, karena ditaruh di bawahnya,
-   CSS cascade otomatis pakai yang terakhir) */
-
 #profilMurid {
   opacity: 0;
 }
@@ -402,7 +385,6 @@ body::-webkit-scrollbar-thumb {
   transition: opacity .5s ease;
 }
 
-/* Konten utama (section-header, profile-card) muncul satu-satu */
 #profilMurid .content > * {
   opacity: 0;
   transform: translateY(14px);

@@ -35,7 +35,6 @@ body::-webkit-scrollbar-thumb {
   font-family: "Inter", sans-serif;
 }
 
-/* Topbar */
 .topbar {
   position: fixed;
   top: 18px;
@@ -85,7 +84,6 @@ body::-webkit-scrollbar-thumb {
 .user-mini .name { font-size: 12px; font-weight: 600; color: #17211c; }
 .user-mini .role { font-size: 11px; color: #6b756f; }
 
-/* Content */
 .content { padding: 114px 40px 24px; display: flex; flex-direction: column; gap: 20px; flex: 1; }
 .page-header { display: flex; align-items: center; justify-content: space-between; }
 .page-header h1 { color: #17211c; font-size: 24px; font-weight: 600; margin: 0; }
@@ -109,11 +107,6 @@ body::-webkit-scrollbar-thumb {
   box-shadow: 0 1px 2px rgba(8, 116, 67, 0.08);
 }
 
-/* Media query responsif dipindah ke bagian PALING BAWAH file (lihat akhir file) —
-   supaya override-nya gak ketiban lagi sama aturan dasar .scanner-container / .right-column
-   yang ditulis belakangan. Urutan CSS itu penting: dasar dulu, override belakangan. */
-
-/* Sidebar - Nempel ke sisi kiri layar (sama seperti di halaman riwayat) */
 .sidebar {
   position: fixed;
   top: 0;
@@ -135,7 +128,6 @@ body::-webkit-scrollbar-thumb {
 }
 .sidebar.open { transform: translateX(0); }
 
-/* Scrollbar halus untuk sidebar di kiri */
 .sidebar::-webkit-scrollbar {
   width: 6px;
 }
@@ -228,7 +220,6 @@ body::-webkit-scrollbar-thumb {
 .logout-item { color: rgba(255,120,120,.85); opacity: 1; transform: none; }
 .logout-item:hover { background: rgba(239,68,68,.12); color: #fca5a5; }
 
-/* Overlay latar belakang saat sidebar terbuka */
 .sidebar-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,.4); backdrop-filter: blur(1px);
   opacity: 0; visibility: hidden;
@@ -237,7 +228,6 @@ body::-webkit-scrollbar-thumb {
 }
 .sidebar-overlay.show { opacity: 1; visibility: visible; }
 
-/* Tombol burger */
 .burger-btn {
   width: 36px; height: 36px; border-radius: 8px; border: 1px solid #e4eae6;
   background: #fff; cursor: pointer;
@@ -253,7 +243,6 @@ body::-webkit-scrollbar-thumb {
 .burger-btn.active span:nth-child(2) { opacity: 0; }
 .burger-btn.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-/* Preloader */
 .page-loader {
   position: fixed; inset: 0; z-index: 2000;
   background: linear-gradient(160deg, #062318 0%, #0b3b26 55%, #087443 100%);
@@ -293,9 +282,6 @@ body::-webkit-scrollbar-thumb {
 #dashboardMurid { opacity: 0; }
 #dashboardMurid.loaded { opacity: 1; transition: opacity .5s ease; }
 
-/* =========================================
-   TAMBAHAN KHUSUS UNTUK HALAMAN SCAN QR
-   ========================================= */
 .scanner-container {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -339,7 +325,6 @@ body::-webkit-scrollbar-thumb {
   100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
 
-/* Bingkai Kamera Utama */
 .camera-frame {
   width: 100%;
   max-width: 400px;
@@ -353,7 +338,6 @@ body::-webkit-scrollbar-thumb {
   justify-content: center;
 }
 
-/* Memaksa elemen video bawaan HTML5-QRCode agar Full Card */
 #reader {
   width: 100% !important;
   height: 100% !important;
@@ -367,7 +351,6 @@ body::-webkit-scrollbar-thumb {
   border-radius: 16px;
 }
 
-/* Memperbaiki posisi Placeholder & Garis Scan tepat di tengah */
 .camera-placeholder {
   position: absolute;
   top: 50%;
@@ -391,7 +374,6 @@ body::-webkit-scrollbar-thumb {
   z-index: 2;
 }
 
-/* Garis Animasi Scanning */
 .scan-line {
   position: absolute;
   top: 0;
@@ -411,7 +393,6 @@ body::-webkit-scrollbar-thumb {
   50% { top: 100%; }
 }
 
-/* Sudut-sudut bingkai QR */
 .corner {
   position: absolute;
   width: 40px;
@@ -449,21 +430,6 @@ body::-webkit-scrollbar-thumb {
 .btn-secondary { background: #f3f4f6; color: #17211c; border: 1px solid #e4eae6 !important; }
 .btn-secondary:hover { background: #e4eae6; }
 
-/* Info Card lama (Panduan Presensi) - sudah tidak dipakai di blade terbaru, dibiarkan tidak masalah */
-.info-card {
-  background: #f7f9f8;
-  border: 1px solid #e4eae6;
-  border-radius: 16px;
-  padding: 24px;
-  height: fit-content;
-}
-.info-card h3 { font-size: 16px; color: #17211c; margin: 0 0 16px 0; }
-.info-card ul { padding-left: 18px; margin: 0; color: #6b756f; font-size: 13px; line-height: 1.6; }
-.info-card ul li { margin-bottom: 10px; }
-
-/* =========================================
-   TAMBAHAN: kolom kanan (Sesi Saat Ini, Cara Absensi, Info)
-   ========================================= */
 .right-column { display: flex; flex-direction: column; gap: 20px; }
 
 .session-card, .steps-card, .info-note-card {
@@ -519,10 +485,6 @@ body::-webkit-scrollbar-thumb {
 }
 .info-note-card p { font-size: 11px; color: #087443; margin: 0; line-height: 1.6; }
 
-/* ============ TAMBAHAN: Fade-in halaman saat pertama dibuka ============
-   Tempel ini di PALING BAWAH dashboardsiswa.css DAN scanqrsiswa.css
-   (dua-duanya pakai id="dashboardMurid", jadi snippet-nya sama) */
-
 #dashboardMurid {
   opacity: 0;
 }
@@ -531,7 +493,6 @@ body::-webkit-scrollbar-thumb {
   transition: opacity .5s ease;
 }
 
-/* Konten utama muncul satu-satu */
 #dashboardMurid .content > * {
   opacity: 0;
   transform: translateY(14px);
@@ -565,7 +526,6 @@ body::-webkit-scrollbar-thumb {
   .page-header h1 { font-size: 20px; }
   .role-status { width: 100%; }
 
-  /* Kamera (scanner-card) dipastikan tetap paling atas di HP */
   .scanner-card { order: -1; padding: 18px; }
 
   .right-column { grid-template-columns: 1fr; }
@@ -598,3 +558,54 @@ body::-webkit-scrollbar-thumb {
 .scanner-actions button { min-height:48px; font-size:14px; }
 .scanner-actions button:disabled { opacity:.65; cursor:not-allowed; }
 @media (max-width:480px) { .scan-feedback { padding:14px 12px; font-size:14px; } }
+
+.scan-success-modal {
+  width: min(420px, calc(100% - 32px));
+  padding: 32px;
+  border: 1px solid #e4eae6;
+  border-radius: 20px;
+  background: #fff;
+  color: #17211c;
+  text-align: center;
+  box-shadow: 0 24px 70px rgba(6, 35, 24, .24);
+}
+.scan-success-modal::backdrop { background: rgba(6, 35, 24, .58); backdrop-filter: blur(3px); }
+.scan-success-modal[open] { animation: successModalIn .22s ease-out; }
+.success-icon {
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #e8f6ef;
+  color: #087443;
+  font-size: 30px;
+  font-weight: 700;
+}
+.scan-success-modal h2 { margin: 0; font-size: 21px; line-height: 1.35; }
+.scan-success-modal p { margin: 10px 0 24px; color: #6b756f; font-size: 14px; line-height: 1.6; }
+.success-modal-button {
+  min-width: 120px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 10px;
+  background: #087443;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s ease, transform .2s ease;
+}
+.success-modal-button:hover { background: #065c35; transform: translateY(-1px); }
+.success-modal-button:focus-visible { outline: 3px solid rgba(8, 116, 67, .25); outline-offset: 3px; }
+@keyframes successModalIn {
+  from { opacity: 0; transform: translateY(8px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 480px) {
+  .scan-success-modal { padding: 26px 20px; }
+  .scan-success-modal h2 { font-size: 19px; }
+}

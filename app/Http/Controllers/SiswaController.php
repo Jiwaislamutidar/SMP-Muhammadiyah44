@@ -4,12 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Siswa;
 use App\Models\JadwalPelajaran;
+use App\Models\Mapel;
 use App\Models\PresensiPelajaran;
 use App\Models\SesiPelajaran;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class SiswaController extends Controller
@@ -24,19 +29,65 @@ class SiswaController extends Controller
         return view('pages.siswa.scanqrsiswa', $this->pageData());
     }
 
-    public function riwayat(): View
+    public function riwayat(Request $request): View
     {
         $data = $this->pageData();
-        $siswaId = Siswa::where('user_id', Auth::id())->value('id');
-        $data['riwayatPresensi'] = PresensiPelajaran::with([
-            'sesiPelajaran.jadwal.mapel',
-            'sesiPelajaran.jadwal.kelas',
-        ])
-            ->where('siswa_id', $siswaId)
-            ->latest('updated_at')
+        $filters = $this->validatedAttendanceFilters($request);
+        $siswaModel = Auth::user()->siswa()->with('kelas')->first();
+        $siswaId = $siswaModel?->id;
+        $data['riwayatPresensi'] = $this->filteredAttendanceQuery($siswaId, $filters)
+            ->orderByDesc('updated_at')
             ->paginate(10);
+        $data['mataPelajaran'] = $siswaModel?->kelas_id
+            ? Mapel::query()
+                ->whereHas('jadwals', fn (Builder $query) => $query->where('kelas_id', $siswaModel->kelas_id))
+                ->orderBy('nama_mapel')
+                ->get(['id', 'nama_mapel'])
+            : collect();
+        $periods = $siswaId
+            ? PresensiPelajaran::query()
+                ->where('siswa_id', $siswaId)
+                ->whereHas('sesiPelajaran')
+                ->with('sesiPelajaran:id,tanggal')
+                ->get(['sesi_pelajaran_id'])
+                ->pluck('sesiPelajaran.tanggal')
+                ->filter()
+                ->map(fn (Carbon $tanggal) => $tanggal->format('Y-m'))
+                ->unique()
+                ->sortDesc()
+                ->values()
+            : collect();
+        $data['periodeOptions'] = $periods->mapWithKeys(fn (string $periode) => [
+            $periode => Carbon::createFromFormat('Y-m', $periode)->locale('id')->translatedFormat('F Y'),
+        ]);
+        $data['filters'] = $filters;
 
         return view('pages.siswa.riwayatsiswa', $data);
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $filters = $this->validatedAttendanceFilters($request);
+        $siswaModel = Auth::user()->siswa()->with('kelas')->first();
+        $presensi = $this->filteredAttendanceQuery($siswaModel?->id, $filters)
+            ->orderByDesc('updated_at')
+            ->get();
+        $mapelTerpilih = $filters['mapel_id'] !== null && $siswaModel?->kelas_id
+            ? Mapel::query()
+                ->whereKey($filters['mapel_id'])
+                ->whereHas('jadwals', fn (Builder $query) => $query->where('kelas_id', $siswaModel->kelas_id))
+                ->value('nama_mapel')
+            : null;
+
+        $pdf = Pdf::loadView('pages.siswa.rekap-presensi-pdf', [
+            'siswa' => $siswaModel,
+            'riwayatPresensi' => $presensi,
+            'filters' => $filters,
+            'mapelTerpilih' => $mapelTerpilih,
+            'generatedAt' => now(),
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->download('rekap-presensi-'.Str::slug($siswaModel?->nama_lengkap ?? Auth::user()->name).'.pdf');
     }
 
     public function profil(): View
@@ -136,8 +187,8 @@ class SiswaController extends Controller
                 ->take(5)
                 ->get()
                 ->map(fn (PresensiPelajaran $attendance) => [
-                    'mapel' => $attendance->sesiPelajaran->jadwal->mapel->nama_mapel,
-                    'tanggal' => $attendance->sesiPelajaran->tanggal->format('d/m/Y'),
+                    'mapel' => $attendance->sesiPelajaran?->jadwal?->mapel?->nama_mapel ?? '-',
+                    'tanggal' => $attendance->sesiPelajaran?->tanggal?->format('d/m/Y') ?? '-',
                     'waktu' => $attendance->waktu_scan ? $attendance->waktu_scan->format('H:i').' WIB' : '-',
                     'status' => $attendance->status,
                 ])->all()
@@ -188,6 +239,7 @@ class SiswaController extends Controller
             ],
             'jadwalHariIni' => $jadwalHariIni,
             'absensiTerbaru' => $absensiTerbaru,
+            'notifikasiPresensi' => $absensiTerbaru,
             'sesiBerikutnya' => $sesiBerikutnya
                 ? $sesiBerikutnya->mapel->nama_mapel.' ('.substr($sesiBerikutnya->jam_mulai, 0, 5).' WIB)'
                 : '-',
@@ -203,5 +255,53 @@ class SiswaController extends Controller
                 'guru' => $sesiAktif?->jadwal?->guru?->nama_lengkap ?? '-',
             ],
         ];
+    }
+
+    /**
+     * @return array{periode: ?string, mapel_id: ?int, status: ?string}
+     */
+    private function validatedAttendanceFilters(Request $request): array
+    {
+        $validated = $request->validate([
+            'periode' => ['nullable', 'date_format:Y-m'],
+            'mapel_id' => ['nullable', 'integer'],
+            'status' => ['nullable', 'in:Hadir,Izin,Sakit,Alfa'],
+        ]);
+
+        return [
+            'periode' => $validated['periode'] ?? null,
+            'mapel_id' => isset($validated['mapel_id']) ? (int) $validated['mapel_id'] : null,
+            'status' => $validated['status'] ?? null,
+        ];
+    }
+
+    private function filteredAttendanceQuery(?int $siswaId, array $filters): Builder
+    {
+        $query = PresensiPelajaran::query()
+            ->with(['sesiPelajaran.jadwal.mapel', 'sesiPelajaran.jadwal.kelas']);
+
+        if ($siswaId === null) {
+            $query->whereRaw('1 = 0');
+        } else {
+            $query->where('siswa_id', $siswaId);
+        }
+
+        if ($filters['periode'] !== null) {
+            [$year, $month] = explode('-', $filters['periode']);
+            $query->whereHas('sesiPelajaran', fn (Builder $sesi) => $sesi
+                ->whereYear('tanggal', $year)
+                ->whereMonth('tanggal', $month));
+        }
+
+        if ($filters['mapel_id'] !== null) {
+            $query->whereHas('sesiPelajaran.jadwal', fn (Builder $jadwal) => $jadwal
+                ->where('mapel_id', $filters['mapel_id']));
+        }
+
+        if ($filters['status'] !== null) {
+            $query->where('status', $filters['status']);
+        }
+
+        return $query;
     }
 }

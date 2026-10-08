@@ -80,10 +80,24 @@
 
             <div class="topbar-right">
                 <div class="ta-badge" id="liveDatetime">Memuat waktu...</div>
-                <div class="icon-btn" aria-label="Notifikasi">
-                    🔔
-                    <span class="badge-dot"></span>
-                </div>
+                <details style="position:relative;">
+                    <summary class="icon-btn" aria-label="Notifikasi" title="Notifikasi" style="list-style:none;cursor:pointer;">
+                        🔔
+                        @if(count($notifikasiPresensi ?? []))
+                            <span class="badge-dot"></span>
+                        @endif
+                    </summary>
+                    <div style="position:absolute;z-index:20;right:0;top:calc(100% + 10px);width:290px;max-width:80vw;padding:14px;background:#fff;border:1px solid #e4eae6;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.14);">
+                        <strong style="display:block;margin-bottom:10px;">Presensi Terbaru</strong>
+                        @forelse($notifikasiPresensi ?? [] as $notifikasi)
+                            <div style="padding:9px 0;border-top:1px solid #edf1ee;font-size:12px;line-height:1.5;">
+                                Presensi {{ $notifikasi['status'] }} untuk mata pelajaran {{ $notifikasi['mapel'] }} pada {{ $notifikasi['waktu'] }} ({{ $notifikasi['tanggal'] }})
+                            </div>
+                        @empty
+                            <div style="padding-top:8px;font-size:12px;color:#64748b;">Belum ada riwayat presensi.</div>
+                        @endforelse
+                    </div>
+                </details>
                 <div class="user-mini">
                     <div class="avatar">{{ $siswa->inisial ?? 'AF' }}</div>
                     <div>
@@ -149,34 +163,48 @@
             </section>
 
             <section class="filter-bar">
-                <div class="filter-block">
-                    <label class="filter-label">Periode</label>
-                    <div class="select-box">
-                        <span>{{ now()->locale('id')->translatedFormat('F Y') }}</span>
-                        <span class="chev">▾</span>
+                <form method="GET" action="{{ route('siswa.riwayat') }}" style="display:contents;">
+                    <div class="filter-block">
+                        <label class="filter-label" for="periode">Periode</label>
+                        <div class="select-box">
+                            <select id="periode" name="periode" style="width:100%;border:0;background:transparent;font:inherit;color:inherit;outline:none;">
+                                <option value="">Semua Periode</option>
+                                @foreach($periodeOptions as $periode => $label)
+                                    <option value="{{ $periode }}" @selected($filters['periode'] === $periode)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
-                </div>
 
-                <div class="filter-block">
-                    <label class="filter-label">Mata Pelajaran</label>
-                    <div class="select-box">
-                        <span>Semua Mata Pelajaran</span>
-                        <span class="chev">▾</span>
+                    <div class="filter-block">
+                        <label class="filter-label" for="mapel_id">Mata Pelajaran</label>
+                        <div class="select-box">
+                            <select id="mapel_id" name="mapel_id" style="width:100%;border:0;background:transparent;font:inherit;color:inherit;outline:none;">
+                                <option value="">Semua Mata Pelajaran</option>
+                                @foreach($mataPelajaran as $mapel)
+                                    <option value="{{ $mapel->id }}" @selected($filters['mapel_id'] === $mapel->id)>{{ $mapel->nama_mapel }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
-                </div>
 
-                <div class="filter-block">
-                    <label class="filter-label">Status Presensi</label>
-                    <div class="select-box">
-                        <span>Semua Status</span>
-                        <span class="chev">▾</span>
+                    <div class="filter-block">
+                        <label class="filter-label" for="status">Status Presensi</label>
+                        <div class="select-box">
+                            <select id="status" name="status" style="width:100%;border:0;background:transparent;font:inherit;color:inherit;outline:none;">
+                                <option value="">Semua Status</option>
+                                @foreach(['Hadir', 'Izin', 'Sakit', 'Alfa'] as $status)
+                                    <option value="{{ $status }}" @selected($filters['status'] === $status)>{{ $status }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
-                </div>
 
-                <div class="filter-actions">
-                    <button class="btn-apply" type="button">Terapkan</button>
-                    <button class="btn-reset" type="button">Reset</button>
-                </div>
+                    <div class="filter-actions">
+                        <button class="btn-apply" type="submit">Terapkan</button>
+                        <a class="btn-reset" href="{{ route('siswa.riwayat') }}" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;">Reset</a>
+                    </div>
+                </form>
             </section>
 
             <section class="table-card">
@@ -185,7 +213,12 @@
                         <h2>Riwayat Kehadiran</h2>
                         <span>({{ $riwayatPresensi->total() }} Catatan Presensi)</span>
                     </div>
-                    <button class="btn-export" type="button">Unduh Rekap (PDF)</button>
+                    <form method="GET" action="{{ route('siswa.riwayat.export') }}">
+                        <input type="hidden" name="periode" value="{{ $filters['periode'] }}">
+                        <input type="hidden" name="mapel_id" value="{{ $filters['mapel_id'] }}">
+                        <input type="hidden" name="status" value="{{ $filters['status'] }}">
+                        <button class="btn-export" type="submit">Unduh Rekap (PDF)</button>
+                    </form>
                 </div>
 
                 <div class="table-wrap">
@@ -202,13 +235,14 @@
                         </thead>
                         <tbody>
                             @forelse($riwayatPresensi as $presensi)
-                                @php($jadwal = $presensi->sesiPelajaran->jadwal)
+                                @php($sesi = $presensi->sesiPelajaran)
+                                @php($jadwal = $sesi?->jadwal)
                                 <tr>
-                                    <td class="nowrap" data-label="Tanggal">{{ $presensi->sesiPelajaran->tanggal->format('d M Y') }}</td>
-                                    <td data-label="Hari">{{ $presensi->sesiPelajaran->tanggal->locale('id')->translatedFormat('l') }}</td>
-                                    <td data-label="Mata Pelajaran">{{ $jadwal->mapel->nama_mapel }}</td>
-                                    <td class="nowrap" data-label="Jam">{{ substr($jadwal->jam_mulai, 0, 5) }} - {{ substr($jadwal->jam_selesai, 0, 5) }} WIB</td>
-                                    <td data-label="Kelas">{{ $jadwal->kelas->nama_kelas }}</td>
+                                    <td class="nowrap" data-label="Tanggal">{{ $sesi?->tanggal?->format('d M Y') ?? '-' }}</td>
+                                    <td data-label="Hari">{{ $sesi?->tanggal?->locale('id')->translatedFormat('l') ?? '-' }}</td>
+                                    <td data-label="Mata Pelajaran">{{ $jadwal?->mapel?->nama_mapel ?? '-' }}</td>
+                                    <td class="nowrap" data-label="Jam">{{ $jadwal?->jam_mulai ? substr($jadwal->jam_mulai, 0, 5) : '-' }} - {{ $jadwal?->jam_selesai ? substr($jadwal->jam_selesai, 0, 5) : '-' }} WIB</td>
+                                    <td data-label="Kelas">{{ $jadwal?->kelas?->nama_kelas ?? '-' }}</td>
                                     <td data-label="Status"><span class="badge badge-{{ str_replace(' ', '-', strtolower($presensi->status)) }}">{{ $presensi->status }}</span></td>
                                 </tr>
                             @empty

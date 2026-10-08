@@ -79,10 +79,24 @@
 
             <div class="topbar-right">
                 <div class="ta-badge" id="liveDatetime">Memuat waktu...</div>
-                <div class="icon-btn">
-                    🔔
-                    <span class="badge-dot"></span>
-                </div>
+                <details style="position:relative;">
+                    <summary class="icon-btn" aria-label="Notifikasi" title="Notifikasi" style="list-style:none;cursor:pointer;">
+                        🔔
+                        @if(count($notifikasiPresensi ?? []))
+                            <span class="badge-dot"></span>
+                        @endif
+                    </summary>
+                    <div style="position:absolute;z-index:20;right:0;top:calc(100% + 10px);width:290px;max-width:80vw;padding:14px;background:#fff;border:1px solid #e4eae6;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.14);">
+                        <strong style="display:block;margin-bottom:10px;">Presensi Terbaru</strong>
+                        @forelse($notifikasiPresensi ?? [] as $notifikasi)
+                            <div style="padding:9px 0;border-top:1px solid #edf1ee;font-size:12px;line-height:1.5;">
+                                Presensi {{ $notifikasi['status'] }} untuk mata pelajaran {{ $notifikasi['mapel'] }} pada {{ $notifikasi['waktu'] }} ({{ $notifikasi['tanggal'] }})
+                            </div>
+                        @empty
+                            <div style="padding-top:8px;font-size:12px;color:#64748b;">Belum ada riwayat presensi.</div>
+                        @endforelse
+                    </div>
+                </details>
                 <div class="user-mini">
                     <div class="avatar">{{ $siswa->inisial ?? 'AF' }}</div>
                     <div>

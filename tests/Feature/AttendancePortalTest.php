@@ -200,6 +200,84 @@ class AttendancePortalTest extends TestCase
             ->assertDontSee('Ust. Ahmad Fauzi');
     }
 
+    public function test_student_pages_show_all_todays_schedules_and_the_schedule_active_by_time(): void
+    {
+        [, $guru, $jadwal, $kelas] = $this->makeSchedule();
+        [$studentUser] = $this->makeStudent($kelas);
+        $jadwal->update(['jam_mulai' => '07:00:00', 'jam_selesai' => '08:00:00']);
+
+        $activeMapel = Mapel::create([
+            'kode' => 'QA-'.bin2hex(random_bytes(4)),
+            'nama_mapel' => 'Mapel Aktif QA',
+        ]);
+        JadwalPelajaran::create([
+            'guru_id' => $guru->id,
+            'kelas_id' => $kelas->id,
+            'mapel_id' => $activeMapel->id,
+            'hari' => now()->locale('id')->isoFormat('dddd'),
+            'jam_mulai' => '10:00:00',
+            'jam_selesai' => '11:00:00',
+            'ruangan' => 'Ruang Aktif QA',
+        ]);
+
+        $nextMapel = Mapel::create([
+            'kode' => 'QA-'.bin2hex(random_bytes(4)),
+            'nama_mapel' => 'Mapel Berikutnya QA',
+        ]);
+        JadwalPelajaran::create([
+            'guru_id' => $guru->id,
+            'kelas_id' => $kelas->id,
+            'mapel_id' => $nextMapel->id,
+            'hari' => now()->locale('id')->isoFormat('dddd'),
+            'jam_mulai' => '14:00:00',
+            'jam_selesai' => '15:00:00',
+            'ruangan' => 'Ruang Berikutnya QA',
+        ]);
+
+        $kelasLain = Kelas::create(['nama_kelas' => 'Kelas Lain QA '.bin2hex(random_bytes(3))]);
+        $mapelKelasLain = Mapel::create([
+            'kode' => 'QA-'.bin2hex(random_bytes(4)),
+            'nama_mapel' => 'Mapel Kelas Lain QA',
+        ]);
+        JadwalPelajaran::create([
+            'guru_id' => $guru->id,
+            'kelas_id' => $kelasLain->id,
+            'mapel_id' => $mapelKelasLain->id,
+            'hari' => now()->locale('id')->isoFormat('dddd'),
+            'jam_mulai' => '10:00:00',
+            'jam_selesai' => '11:00:00',
+            'ruangan' => 'Ruang Kelas Lain QA',
+        ]);
+
+        $this->travelTo(now()->setTime(10, 30));
+        $this->actingAs($studentUser)
+            ->get(route('siswa.dashboard'))
+            ->assertOk()
+            ->assertSee($jadwal->mapel->nama_mapel)
+            ->assertSee($activeMapel->nama_mapel)
+            ->assertSee($nextMapel->nama_mapel)
+            ->assertDontSee($mapelKelasLain->nama_mapel)
+            ->assertSee('10:00 - 11:00')
+            ->assertSee('Berlangsung')
+            ->assertSee('14:00 WIB');
+
+        $this->actingAs($studentUser)
+            ->get(route('siswa.scan-qr'))
+            ->assertOk()
+            ->assertSee($activeMapel->nama_mapel)
+            ->assertSee('10:00 - 11:00 WIB')
+            ->assertSee($guru->nama_lengkap);
+
+        $this->travelTo(now()->setTime(12, 0));
+        $this->actingAs($studentUser)
+            ->get(route('siswa.dashboard'))
+            ->assertOk()
+            ->assertSee('Tidak ada sesi aktif')
+            ->assertSee('Mapel Berikutnya QA (14:00 WIB)');
+
+        $this->travelBack();
+    }
+
     public function test_guru_role_can_open_dashboard_without_prelinked_profile(): void
     {
         $suffix = bin2hex(random_bytes(4));

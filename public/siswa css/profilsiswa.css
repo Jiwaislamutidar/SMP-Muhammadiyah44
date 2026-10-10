@@ -430,3 +430,257 @@ body::-webkit-scrollbar-thumb {
   .password-modal-actions { display: grid; grid-template-columns: 1fr 1fr; }
   .password-modal-cancel, .password-modal-submit { padding-inline: 10px; }
 }
+
+
+/* ============================================================
+   Sidebar nav — blok yang SAMA di semua halaman siswa
+   (dashboard, scan QR, riwayat, profil). Taruh paling bawah file.
+   ============================================================ */
+
+/* Ukuran dasar disamakan dengan dashboard */
+.sidebar-logo { width: 38px; height: 38px; }
+.sidebar-title { font-size: 14px; font-weight: 700; line-height: 1.3; }
+.sidebar-subtitle { font-size: 11px; color: rgba(255,255,255,.55); margin-top: 2px; }
+.sidebar-section-label { font-size: 11px; }
+.sidebar-close-btn { width: 30px; height: 30px; border-radius: 8px; }
+.sidebar-footer-user .avatar { width: 34px; height: 34px; font-size: 11px; }
+.sidebar-footer-user .name { font-size: 12px; color: #fff; }
+.sidebar-footer-user .role { font-size: 11px; color: rgba(255,255,255,.55); margin-top: 2px; }
+
+/* Item menu */
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255,255,255,.78);
+  text-decoration: none;
+  position: relative;
+  opacity: 0;
+  transform: translateX(-12px);
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background .25s cubic-bezier(.22,.9,.35,1),
+    color .25s ease,
+    transform .25s cubic-bezier(.22,.9,.35,1);
+}
+
+/* Masuk bertahap saat sidebar dibuka.
+   Pakai "backwards", bukan "forwards": kalau forwards, animasi terus mengunci
+   transform sehingga efek hover geser (translateX) tidak pernah jalan. */
+.sidebar.open .nav-item {
+  opacity: 1;
+  transform: none;
+  animation: navItemIn .35s cubic-bezier(.22,.9,.35,1) backwards;
+  animation-delay: calc(var(--delay, 1) * .05s);
+}
+@keyframes navItemIn {
+  from { opacity: 0; transform: translateX(-12px); }
+}
+
+/* Hover & tekan (specificity sengaja lebih tinggi dari .sidebar.open .nav-item) */
+.sidebar.open .nav-item:hover {
+  background: rgba(255,255,255,.08);
+  color: #fff;
+  transform: translateX(4px);
+}
+.sidebar.open .nav-item:active {
+  transform: translateX(2px) scale(.985);
+}
+.sidebar.open .nav-item.active:hover { background: rgba(22,166,106,.24); }
+
+/* Kotak ikon */
+.nav-icon-box {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: rgba(255,255,255,.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition:
+    background .25s ease,
+    color .25s ease,
+    transform .3s cubic-bezier(.34,1.4,.64,1),
+    box-shadow .3s ease;
+}
+.nav-icon-box svg { transition: color .25s ease, transform .25s ease; }
+
+.nav-item:hover .nav-icon-box {
+  background: rgba(255,255,255,.14);
+  transform: scale(1.08);
+}
+.nav-item:hover .nav-icon-box svg { color: #34d399; }
+
+/* Menu aktif */
+.nav-item.active {
+  background: rgba(22,166,106,.18);
+  color: #fff;
+}
+.nav-item.active .nav-icon-box {
+  background: rgba(22,166,106,.28);
+  color: #34d399;
+  box-shadow: inset 0 0 0 1px rgba(52,211,153,.25);
+}
+.nav-item.active .nav-icon-box svg { color: #34d399; transform: scale(1.04); }
+
+.nav-item.active::before {
+  content: "";
+  position: absolute;
+  left: -12px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  background: #10b981;
+  border-radius: 0 4px 4px 0;
+  animation: activeBarPulse 2s ease-in-out infinite;
+}
+@keyframes activeBarPulse {
+  0%, 100% { opacity: 1;   box-shadow: 0 0 6px rgba(16,185,129,.5); }
+  50%      { opacity: .85; box-shadow: 0 0 14px rgba(16,185,129,.9); }
+}
+
+.nav-item.active::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(52,211,153,.08) 45%,
+    rgba(52,211,153,.16) 50%,
+    rgba(52,211,153,.08) 55%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: activeSweep 3.2s ease-in-out infinite;
+  pointer-events: none;
+  opacity: .7;
+}
+@keyframes activeSweep {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* Tombol Keluar (tag <button>) */
+.nav-item.logout-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: rgba(255,120,120,.9);
+}
+.sidebar.open .nav-item.logout-item:hover {
+  background: rgba(239,68,68,.12);
+  color: #fca5a5;
+}
+.nav-item.logout-item:hover .nav-icon-box { background: rgba(239,68,68,.18); }
+
+.nav-item:focus-visible {
+  outline: 2px solid #34d399;
+  outline-offset: 2px;
+  background: rgba(255,255,255,.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-item.active::before,
+  .nav-item.active::after { animation: none; }
+  .sidebar.open .nav-item { animation: none; }
+  .sidebar.open .nav-item:hover,
+  .sidebar.open .nav-item:active,
+  .nav-item:hover .nav-icon-box { transform: none; }
+  .nav-item,
+  .nav-icon-box,
+  .nav-icon-box svg { transition-duration: .001ms; }
+}
+
+/* ============================================================
+   Menu pop-up — menggantikan sidebar layar penuh
+   Muncul dari tombol burger, ukurannya sebesar isi menunya.
+   ============================================================ */
+:root {
+  --pop-top: 98px;
+  --pop-left: 32px;
+  --pop-ox: 40px;
+  --pop-oy: -44px;
+}
+
+.sidebar {
+  top: var(--pop-top);
+  left: var(--pop-left);
+  width: 244px;
+  height: auto;
+  max-height: calc(100dvh - var(--pop-top) - 16px);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 24px 48px -12px rgba(5,46,27,.45), 0 8px 16px rgba(5,46,27,.2);
+  transform-origin: var(--pop-ox) var(--pop-oy);
+  transform: scale(.6) translateY(-6px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    transform .3s cubic-bezier(.22,.9,.35,1),
+    opacity .18s ease,
+    visibility 0s linear .3s;
+}
+.sidebar.open {
+  transform: none;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+/* Header, label "Menu", dan tombol tutup tidak dipakai lagi (burger = tombol tutup) */
+.sidebar-header,
+.sidebar-section-label,
+.sidebar-close-btn { display: none; }
+
+.sidebar-nav { flex: none; padding: 10px 12px 6px; gap: 2px; }
+.sidebar-footer { margin-top: 4px; padding: 8px 12px 12px; gap: 4px; }
+
+/* Item tetap terlihat saat popup menutup; animasi masuk hanya saat dibuka */
+.nav-item { opacity: 1; transform: none; }
+.sidebar.open .nav-item {
+  animation-duration: .26s;
+  animation-delay: calc(.05s + var(--delay, 1) * .035s);
+}
+
+/* Latar redup ringan, di bawah topbar supaya burger tetap bisa diklik */
+.sidebar-overlay {
+  z-index: 90;
+  background: rgba(15,26,20,.16);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.topbar-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1024px) {
+  :root { --pop-left: 20px; --pop-ox: 34px; }
+}
+@media (max-width: 768px) {
+  :root { --pop-top: 84px; --pop-left: 12px; --pop-ox: 30px; --pop-oy: -40px; }
+}
+@media (max-width: 480px) {
+  :root { --pop-ox: 26px; }
+  .sidebar { width: min(232px, calc(100vw - 24px)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar { transform: none; }
+}

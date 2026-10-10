@@ -22,32 +22,50 @@
 
     <div class="riwayat-murid" id="riwayatMurid">
         <aside class="sidebar" id="sidebar" aria-label="Menu utama">
-            <div class="sidebar-header">
-                <div class="sidebar-brand">
-                    <div class="sidebar-logo">
-                        <img src="{{ asset('logo.jpg') }}" alt="Logo SMP Muhammadiyah 44">
-                    </div>
-                    <div>
-                        <div class="sidebar-title">SMP Muhammadiyah 44</div>
-                        <div class="sidebar-subtitle">Portal Presensi Murid</div>
-                    </div>
-                </div>
-                <button type="button" class="sidebar-close-btn" onclick="toggleSidebar()" aria-label="Tutup menu">✕</button>
-            </div>
-
-            <div class="sidebar-section-label">Menu</div>
-            <nav class="sidebar-nav">
+            <nav class="sidebar-nav" aria-label="Menu utama">
                 <a href="{{ route('siswa.dashboard') }}" class="nav-item" style="--delay: 1">
-                    <span class="nav-icon-box">🏠</span> Dashboard
+                    <span class="nav-icon-box">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 10.5 12 3l9 7.5"/>
+                            <path d="M5 9.5V21h14V9.5"/>
+                            <path d="M9 21v-6h6v6"/>
+                        </svg>
+                    </span>
+                    Dashboard
                 </a>
                 <a href="{{ route('siswa.scan-qr') }}" class="nav-item" style="--delay: 2">
-                    <span class="nav-icon-box">📷</span> Scan QR
+                    <span class="nav-icon-box">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="7" rx="1"/>
+                            <rect x="14" y="3" width="7" height="7" rx="1"/>
+                            <rect x="3" y="14" width="7" height="7" rx="1"/>
+                            <path d="M14 14h3v3h-3z"/>
+                            <path d="M18 18h3v3h-3z"/>
+                        </svg>
+                    </span>
+                    Scan QR
                 </a>
                 <a href="{{ route('siswa.riwayat') }}" class="nav-item active" style="--delay: 3">
-                    <span class="nav-icon-box">🕘</span> Riwayat Absensi
+                    <span class="nav-icon-box">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="9"/>
+                            <path d="M12 7v5l3 2"/>
+                        </svg>
+                    </span>
+                    Riwayat Absensi
                 </a>
                 <a href="{{ route('siswa.profil') }}" class="nav-item" style="--delay: 4">
-                    <span class="nav-icon-box">👤</span> Profil
+                    <span class="nav-icon-box">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="8" r="4"/>
+                            <path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>
+                        </svg>
+                    </span>
+                    Profil
                 </a>
             </nav>
 
@@ -62,7 +80,15 @@
                 <form action="{{ route('siswa.logout') }}" method="POST">
                     @csrf
                     <button type="submit" class="nav-item logout-item">
-                        <span class="nav-icon-box">🚪</span> Keluar
+                        <span class="nav-icon-box">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                                <path d="m10 17-5-5 5-5"/>
+                                <path d="M15 12H5"/>
+                            </svg>
+                        </span>
+                        Keluar
                     </button>
                 </form>
             </div>
@@ -75,6 +101,7 @@
                 <button type="button" class="burger-btn" id="burgerBtn" onclick="toggleSidebar()" aria-label="Buka menu" aria-controls="sidebar" aria-expanded="false">
                     <span></span><span></span><span></span>
                 </button>
+                <img class="topbar-logo" src="{{ asset('logo.jpg') }}" alt="Logo SMP Muhammadiyah 44">
                 <div class="portal-tag">Riwayat Presensi • SMP Muhammadiyah 44</div>
             </div>
 
@@ -82,7 +109,11 @@
                 <div class="ta-badge" id="liveDatetime">Memuat waktu...</div>
                 <details style="position:relative;">
                     <summary class="icon-btn" aria-label="Notifikasi" title="Notifikasi" style="list-style:none;cursor:pointer;">
-                        🔔
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/>
+                            <path d="M10.3 21a2 2 0 0 0 3.4 0"/>
+                        </svg>
                         @if(count($notifikasiPresensi ?? []))
                             <span class="badge-dot"></span>
                         @endif
@@ -278,16 +309,20 @@
 
         function toggleSidebar(force) {
             var sidebar = document.getElementById('sidebar');
+            var overlay = document.getElementById('sidebarOverlay');
+            var burger  = document.getElementById('burgerBtn');
             var open = typeof force === 'boolean' ? force : !sidebar.classList.contains('open');
+
             sidebar.classList.toggle('open', open);
-            document.getElementById('sidebarOverlay').classList.toggle('show', open);
-            var burger = document.getElementById('burgerBtn');
+            overlay.classList.toggle('show', open);
             burger.classList.toggle('active', open);
-            burger.setAttribute('aria-expanded', open);
-            document.body.classList.toggle('no-scroll', open);
+            burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+            burger.setAttribute('aria-label', open ? 'Tutup menu' : 'Buka menu');
         }
 
-        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') toggleSidebar(false); });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') toggleSidebar(false);
+        });
         window.addEventListener('resize', function () { if (window.innerWidth > 1024) toggleSidebar(false); });
 
         function updateLiveDatetime() {

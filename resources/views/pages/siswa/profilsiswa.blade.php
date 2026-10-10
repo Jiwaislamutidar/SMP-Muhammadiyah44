@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
     <title>Profil Murid - SMP Muhammadiyah 44</title>
-    <link rel="stylesheet" href="{{ asset('siswa css/profilsiswa.css') }}?v=1">
+    <link rel="stylesheet" href="{{ asset('siswa css/profilsiswa.css') }}?v=3">
 </head>
 <body>
     <div class="page-loader" id="pageLoader">
@@ -56,7 +56,7 @@
                     </span>
                     Riwayat Absensi
                 </a>
-                <a href="{{ route('siswa.profil') }}" class="nav-item active" style="--delay: 4">
+                <a href="{{ route('siswa.profil') }}" class="nav-item active" aria-current="page" style="--delay: 4">
                     <span class="nav-icon-box">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                              stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -280,6 +280,12 @@
         }
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') toggleSidebar(false);
+        });
+        document.querySelectorAll('.sidebar .nav-item.active').forEach(function (item) {
+            item.addEventListener('click', function (event) {
+                event.preventDefault();
+                toggleSidebar(false);
+            });
         });
 
         const passwordModal = document.getElementById('passwordModal');

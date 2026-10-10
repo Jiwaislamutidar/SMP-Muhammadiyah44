@@ -3,7 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\Kelas;
+use App\Models\Guru;
+use App\Models\JadwalPelajaran;
+use App\Models\Mapel;
+use App\Models\PresensiPelajaran;
 use App\Models\Siswa;
+use App\Models\SesiPelajaran;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
@@ -80,6 +85,67 @@ class SiswaPortalTest extends TestCase
             ->assertSessionHasErrors('current_password');
 
         $this->assertSame($originalPassword, $user->fresh()->password);
+    }
+
+    public function test_student_can_hide_only_their_own_history_without_deleting_attendance_records(): void
+    {
+        [$user, $student] = $this->makeStudent();
+        [, $otherStudent] = $this->makeStudent();
+        $studentAttendance = $this->makeHistoryAttendance($student);
+        $otherAttendance = $this->makeHistoryAttendance($otherStudent);
+
+        $this->actingAs($user)
+            ->post(route('siswa.riwayat.destroy'), [])
+            ->assertRedirect(route('siswa.riwayat'))
+            ->assertSessionHas('success', 'Riwayat presensi berhasil dihapus dari daftar Anda.');
+
+        $this->assertDatabaseHas('presensi_pelajarans', ['id' => $studentAttendance->id]);
+        $this->assertNotNull($studentAttendance->fresh()->hidden_from_student_at);
+        $this->assertNull($otherAttendance->fresh()->hidden_from_student_at);
+    }
+
+    public function test_guest_cannot_hide_student_history(): void
+    {
+        [, $student] = $this->makeStudent();
+        $attendance = $this->makeHistoryAttendance($student);
+
+        $this->post(route('siswa.riwayat.destroy'), [])
+            ->assertRedirect(route('login'));
+
+        $this->assertNull($attendance->fresh()->hidden_from_student_at);
+    }
+
+    private function makeHistoryAttendance(Siswa $student): PresensiPelajaran
+    {
+        $suffix = bin2hex(random_bytes(5));
+        $guru = Guru::create([
+            'nama_lengkap' => 'Guru Riwayat QA '.$suffix,
+            'status' => 'aktif',
+        ]);
+        $mapel = Mapel::create([
+            'kode' => 'RIWAYAT-'.$suffix,
+            'nama_mapel' => 'Mapel Riwayat QA '.$suffix,
+        ]);
+        $jadwal = JadwalPelajaran::create([
+            'guru_id' => $guru->id,
+            'kelas_id' => $student->kelas_id,
+            'mapel_id' => $mapel->id,
+            'hari' => 'Senin',
+            'jam_mulai' => '09:00:00',
+            'jam_selesai' => '10:00:00',
+        ]);
+        $sesi = SesiPelajaran::create([
+            'jadwal_id' => $jadwal->id,
+            'guru_id' => $guru->id,
+            'tanggal' => today()->toDateString(),
+            'status_sesi' => 'Selesai',
+        ]);
+
+        return PresensiPelajaran::create([
+            'sesi_pelajaran_id' => $sesi->id,
+            'siswa_id' => $student->id,
+            'status' => 'Hadir',
+        ]);
     }
 
     private function makeStudent(): array

@@ -97,6 +97,7 @@ Route::domain($domain)->group(function () {
         Route::post('/scan-qr', [PresensiPelajaranController::class, 'scan'])->name('siswa.scan');
         Route::get('/riwayat', [SiswaController::class, 'riwayat'])->name('siswa.riwayat');
         Route::get('/riwayat/unduh-pdf', [SiswaController::class, 'exportPdf'])->name('siswa.riwayat.export');
+        Route::post('/riwayat/hapus', [SiswaController::class, 'deleteHistory'])->name('siswa.riwayat.destroy');
         Route::get('/profil', [SiswaController::class, 'profil'])->name('siswa.profil');
         Route::put('/profil/ubah-password', [SiswaController::class, 'updatePassword'])->name('siswa.profil.update-password');
 

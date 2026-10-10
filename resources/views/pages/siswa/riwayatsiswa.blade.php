@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#087443">
     <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
     <title>Riwayat Absensi - SMP Muhammadiyah 44</title>
-    <link rel="stylesheet" href="{{ asset('siswa css/riwayatsiswa.css') }}?v=4">
+    <link rel="stylesheet" href="{{ asset('siswa css/riwayatsiswa.css') }}?v=6">
 </head>
 <body>
     <div class="page-loader" id="pageLoader">
@@ -47,7 +47,7 @@
                     </span>
                     Scan QR
                 </a>
-                <a href="{{ route('siswa.riwayat') }}" class="nav-item active" style="--delay: 3">
+                <a href="{{ route('siswa.riwayat') }}" class="nav-item active" aria-current="page" style="--delay: 3">
                     <span class="nav-icon-box">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                              stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -196,38 +196,50 @@
             <section class="filter-bar">
                 <form method="GET" action="{{ route('siswa.riwayat') }}" style="display:contents;">
                     <div class="filter-block">
-                        <label class="filter-label" for="periode">Periode</label>
-                        <div class="select-box">
-                            <select id="periode" name="periode">
+                        <label class="filter-label" id="periodeLabel" for="periode">Periode</label>
+                        <div class="select-box filter-select" data-filter-select>
+                            <select class="filter-native-select" id="periode" name="periode" aria-hidden="true" tabindex="-1">
                                 <option value="">Semua Periode</option>
                                 @foreach($periodeOptions as $periode => $label)
                                     <option value="{{ $periode }}" @selected($filters['periode'] === $periode)>{{ $label }}</option>
                                 @endforeach
                             </select>
+                            <button class="filter-select-trigger" type="button" aria-labelledby="periodeLabel" aria-haspopup="listbox" aria-expanded="false" aria-controls="periodeOptions">
+                                <span class="filter-select-value"></span>
+                            </button>
+                            <div class="filter-options" id="periodeOptions" role="listbox" hidden></div>
                         </div>
                     </div>
 
                     <div class="filter-block">
-                        <label class="filter-label" for="mapel_id">Mata Pelajaran</label>
-                        <div class="select-box">
-                            <select id="mapel_id" name="mapel_id">
+                        <label class="filter-label" id="mapelLabel" for="mapel_id">Mata Pelajaran</label>
+                        <div class="select-box filter-select" data-filter-select>
+                            <select class="filter-native-select" id="mapel_id" name="mapel_id" aria-hidden="true" tabindex="-1">
                                 <option value="">Semua Mata Pelajaran</option>
                                 @foreach($mataPelajaran as $mapel)
                                     <option value="{{ $mapel->id }}" @selected($filters['mapel_id'] === $mapel->id)>{{ $mapel->nama_mapel }}</option>
                                 @endforeach
                             </select>
+                            <button class="filter-select-trigger" type="button" aria-labelledby="mapelLabel" aria-haspopup="listbox" aria-expanded="false" aria-controls="mapelOptions">
+                                <span class="filter-select-value"></span>
+                            </button>
+                            <div class="filter-options" id="mapelOptions" role="listbox" hidden></div>
                         </div>
                     </div>
 
                     <div class="filter-block">
-                        <label class="filter-label" for="status">Status Presensi</label>
-                        <div class="select-box">
-                            <select id="status" name="status">
+                        <label class="filter-label" id="statusLabel" for="status">Status Presensi</label>
+                        <div class="select-box filter-select" data-filter-select>
+                            <select class="filter-native-select" id="status" name="status" aria-hidden="true" tabindex="-1">
                                 <option value="">Semua Status</option>
                                 @foreach(['Hadir', 'Izin', 'Sakit', 'Alfa'] as $status)
                                     <option value="{{ $status }}" @selected($filters['status'] === $status)>{{ $status }}</option>
                                 @endforeach
                             </select>
+                            <button class="filter-select-trigger" type="button" aria-labelledby="statusLabel" aria-haspopup="listbox" aria-expanded="false" aria-controls="statusOptions">
+                                <span class="filter-select-value"></span>
+                            </button>
+                            <div class="filter-options" id="statusOptions" role="listbox" hidden></div>
                         </div>
                     </div>
 
@@ -244,13 +256,23 @@
                         <h2>Riwayat Kehadiran</h2>
                         <span>({{ $riwayatPresensi->total() }} Catatan Presensi)</span>
                     </div>
-                    <form method="GET" action="{{ route('siswa.riwayat.export') }}">
-                        <input type="hidden" name="periode" value="{{ $filters['periode'] }}">
-                        <input type="hidden" name="mapel_id" value="{{ $filters['mapel_id'] }}">
-                        <input type="hidden" name="status" value="{{ $filters['status'] }}">
-                        <button class="btn-export" type="submit">Unduh Rekap (PDF)</button>
-                    </form>
+                    <div class="table-actions">
+                        <form method="GET" action="{{ route('siswa.riwayat.export') }}">
+                            <input type="hidden" name="periode" value="{{ $filters['periode'] }}">
+                            <input type="hidden" name="mapel_id" value="{{ $filters['mapel_id'] }}">
+                            <input type="hidden" name="status" value="{{ $filters['status'] }}">
+                            <button class="btn-export" type="submit">Unduh Rekap (PDF)</button>
+                        </form>
+                        <button class="btn-delete-history" type="button" id="openDeleteHistoryModal">Hapus Riwayat</button>
+                    </div>
                 </div>
+
+                @if(session('success'))
+                    <div class="history-alert history-alert-success" role="status">{{ session('success') }}</div>
+                @endif
+                @if(session('error'))
+                    <div class="history-alert history-alert-error" role="alert">{{ session('error') }}</div>
+                @endif
 
                 <div class="table-wrap">
                     <table>
@@ -290,6 +312,24 @@
             </section>
         </main>
 
+        <div class="history-modal-backdrop" id="deleteHistoryModal" hidden>
+            <section class="history-modal" role="dialog" aria-modal="true" aria-labelledby="deleteHistoryTitle" aria-describedby="deleteHistoryDescription">
+                <div class="history-modal-icon" aria-hidden="true">!</div>
+                <h2 id="deleteHistoryTitle">Hapus riwayat presensi?</h2>
+                <p id="deleteHistoryDescription">Riwayat yang sesuai dengan filter aktif akan disembunyikan dari daftar dan rekap Anda. Data presensi tetap tersimpan untuk keperluan sekolah.</p>
+                <form method="POST" action="{{ route('siswa.riwayat.destroy') }}" class="history-modal-form">
+                    @csrf
+                    <input type="hidden" name="periode" value="{{ $filters['periode'] }}">
+                    <input type="hidden" name="mapel_id" value="{{ $filters['mapel_id'] }}">
+                    <input type="hidden" name="status" value="{{ $filters['status'] }}">
+                    <div class="history-modal-actions">
+                        <button type="button" class="history-modal-cancel" id="cancelDeleteHistory">Batal</button>
+                        <button type="submit" class="history-modal-confirm">Hapus Riwayat</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+
         <footer class="footer">
             <div class="footer-left">
                 <span class="footer-dot"></span>
@@ -323,7 +363,141 @@
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') toggleSidebar(false);
         });
+        document.querySelectorAll('.sidebar .nav-item.active').forEach(function (item) {
+            item.addEventListener('click', function (event) {
+                event.preventDefault();
+                toggleSidebar(false);
+            });
+        });
         window.addEventListener('resize', function () { if (window.innerWidth > 1024) toggleSidebar(false); });
+
+        (function () {
+            var modal = document.getElementById('deleteHistoryModal');
+            var openButton = document.getElementById('openDeleteHistoryModal');
+            var cancelButton = document.getElementById('cancelDeleteHistory');
+
+            function closeModal() {
+                modal.hidden = true;
+                openButton.focus();
+            }
+
+            openButton.addEventListener('click', function () {
+                modal.hidden = false;
+                cancelButton.focus();
+            });
+            cancelButton.addEventListener('click', closeModal);
+            modal.addEventListener('click', function (event) {
+                if (event.target === modal) closeModal();
+            });
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && !modal.hidden) closeModal();
+            });
+        })();
+
+        (function () {
+            var selects = document.querySelectorAll('[data-filter-select]');
+
+            function closeDropdown(dropdown, restoreFocus) {
+                var trigger = dropdown.querySelector('.filter-select-trigger');
+                window.clearTimeout(dropdown._closeTimer);
+                dropdown.classList.remove('is-open');
+                dropdown.classList.add('is-closing');
+                trigger.setAttribute('aria-expanded', 'false');
+                dropdown._closeTimer = window.setTimeout(function () {
+                    dropdown.querySelector('.filter-options').hidden = true;
+                    dropdown.classList.remove('is-closing');
+                }, 150);
+                if (restoreFocus) trigger.focus();
+            }
+
+            function updateDropdown(dropdown) {
+                var select = dropdown.querySelector('.filter-native-select');
+                var trigger = dropdown.querySelector('.filter-select-trigger');
+                trigger.querySelector('.filter-select-value').textContent = select.options[select.selectedIndex].text;
+                dropdown.querySelectorAll('[role="option"]').forEach(function (option) {
+                    option.setAttribute('aria-selected', option.dataset.value === select.value ? 'true' : 'false');
+                });
+            }
+
+            function openDropdown(dropdown, focusSelected) {
+                var trigger = dropdown.querySelector('.filter-select-trigger');
+                document.querySelectorAll('[data-filter-select].is-open').forEach(function (other) {
+                    if (other !== dropdown) closeDropdown(other, false);
+                });
+                window.clearTimeout(dropdown._closeTimer);
+                dropdown.classList.remove('is-closing');
+                dropdown.classList.add('is-open');
+                dropdown.querySelector('.filter-options').hidden = false;
+                trigger.setAttribute('aria-expanded', 'true');
+                if (focusSelected) {
+                    var selected = dropdown.querySelector('[role="option"][aria-selected="true"]');
+                    if (selected) selected.focus();
+                }
+            }
+
+            selects.forEach(function (dropdown) {
+                var select = dropdown.querySelector('.filter-native-select');
+                var trigger = dropdown.querySelector('.filter-select-trigger');
+                var options = dropdown.querySelector('.filter-options');
+
+                Array.from(select.options).forEach(function (nativeOption) {
+                    var option = document.createElement('button');
+                    option.type = 'button';
+                    option.className = 'filter-option';
+                    option.setAttribute('role', 'option');
+                    option.dataset.value = nativeOption.value;
+                    option.textContent = nativeOption.text;
+                    option.addEventListener('click', function () {
+                        select.value = option.dataset.value;
+                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                        updateDropdown(dropdown);
+                        closeDropdown(dropdown, true);
+                    });
+                    options.appendChild(option);
+                });
+
+                trigger.addEventListener('click', function () {
+                    if (trigger.getAttribute('aria-expanded') === 'true') {
+                        closeDropdown(dropdown, false);
+                    } else {
+                        openDropdown(dropdown, true);
+                    }
+                });
+                trigger.addEventListener('keydown', function (event) {
+                    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                        event.preventDefault();
+                        openDropdown(dropdown, true);
+                    }
+                });
+                options.addEventListener('keydown', function (event) {
+                    var items = Array.from(options.querySelectorAll('[role="option"]'));
+                    var index = items.indexOf(document.activeElement);
+                    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                        event.preventDefault();
+                        var step = event.key === 'ArrowDown' ? 1 : -1;
+                        items[(index + step + items.length) % items.length].focus();
+                    } else if (event.key === 'Home' || event.key === 'End') {
+                        event.preventDefault();
+                        items[event.key === 'Home' ? 0 : items.length - 1].focus();
+                    }
+                });
+                select.addEventListener('change', function () { updateDropdown(dropdown); });
+                updateDropdown(dropdown);
+            });
+
+            document.addEventListener('click', function (event) {
+                document.querySelectorAll('[data-filter-select].is-open').forEach(function (dropdown) {
+                    if (!dropdown.contains(event.target)) closeDropdown(dropdown, false);
+                });
+            });
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    document.querySelectorAll('[data-filter-select].is-open').forEach(function (dropdown) {
+                        closeDropdown(dropdown, true);
+                    });
+                }
+            });
+        })();
 
         function updateLiveDatetime() {
             var hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];

@@ -5,17 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
   <title>Dashboard Murid - SMP Muhammadiyah 44</title>
-  <link rel="stylesheet" href="{{ asset('siswa css/dashboardsiswa.css') }}?v=7">
+  <link rel="stylesheet" href="{{ asset('siswa css/dashboardsiswa.css') }}?v=8">
 </head>
 <body>
 
   @php
-    /* ---- Time-based greeting ---- */
+
     $hour = now()->hour;
     $greeting = $hour < 11 ? 'Selamat pagi' : ($hour < 15 ? 'Selamat siang' : ($hour < 18 ? 'Selamat sore' : 'Selamat malam'));
 
-    /* ---- Attendance status ---- */
-    $status = $presensi['status'] ?? 'Belum Absen';
+$status = $presensi['status'] ?? 'Belum Absen';
     $statusKey = match($status) {
       'Hadir' => 'hadir',
       'Izin'  => 'izin',
@@ -23,19 +22,17 @@
       default => 'belum',
     };
 
-    /* ---- Ringkasan ring percentage ---- */
-    $rHadir = (int) ($ringkasan['hadir'] ?? 0);
+$rHadir = (int) ($ringkasan['hadir'] ?? 0);
     $rIzin  = (int) ($ringkasan['izin']  ?? 0);
     $rAlfa  = (int) ($ringkasan['alfa']  ?? 0);
     $rTotal = $rHadir + $rIzin + $rAlfa;
     $persen = $rTotal > 0 ? (int) round(($rHadir / $rTotal) * 100) : 0;
 
-    $circumference = 2 * 3.14159265 * 52; // r=52
+    $circumference = 2 * 3.14159265 * 52;
     $dashOffset    = $circumference * (1 - $persen / 100);
     $ringTone      = $persen >= 90 ? 'good' : ($persen >= 75 ? 'warn' : 'danger');
   @endphp
 
-  {{-- ============ LOADER ============ --}}
   <div class="page-loader" id="pageLoader">
     <div class="loader-logo-wrap">
       <div class="loader-spinner"></div>
@@ -49,10 +46,9 @@
 
   <div class="dashboard-murid" id="dashboardMurid">
 
-    {{-- ============ SIDEBAR ============ --}}
     <aside class="sidebar" id="sidebar">
       <nav class="sidebar-nav" aria-label="Menu utama">
-        <a href="{{ route('siswa.dashboard') }}" class="nav-item active" style="--delay: 1">
+        <a href="{{ route('siswa.dashboard') }}" class="nav-item active" aria-current="page" style="--delay: 1">
           <span class="nav-icon-box">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                  stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -126,7 +122,6 @@
 
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-    {{-- ============ TOPBAR ============ --}}
     <header class="topbar">
       <div class="topbar-left">
         <button class="burger-btn" id="burgerBtn" onclick="toggleSidebar()" aria-label="Buka menu"
@@ -156,10 +151,8 @@
       </div>
     </header>
 
-    {{-- ============ CONTENT ============ --}}
     <main class="content">
 
-      {{-- Page header --}}
       <div class="page-header">
         <div>
           <h1>{{ $greeting }}, {{ $siswa->nama ?? 'Ahmad Fauzan' }}</h1>
@@ -173,10 +166,8 @@
         </div>
       </div>
 
-      {{-- ============ TOP ROW ============ --}}
       <div class="top-row">
 
-        {{-- Attendance Card (Hero) --}}
         <section class="card attendance-card">
           <div class="card-header">
             <div class="card-title">
@@ -251,7 +242,6 @@
           </div>
         </section>
 
-        {{-- Scan Card --}}
         <section class="card scan-card">
           <div class="card-header">
             <div class="card-title">
@@ -301,12 +291,10 @@
         </section>
       </div>
 
-      {{-- ============ SECOND ROW ============ --}}
       <div class="second-row">
 
         <div class="left-col">
 
-          {{-- Ringkasan Kehadiran --}}
           <section class="card">
             <div class="card-header">
               <div class="card-title">
@@ -357,7 +345,6 @@
             </div>
           </section>
 
-          {{-- Absensi Terbaru --}}
           <section class="card">
             <div class="card-header">
               <div class="card-title">
@@ -393,7 +380,6 @@
           </section>
         </div>
 
-        {{-- Jadwal Hari Ini --}}
         <section class="card right-col">
           <div class="card-header">
             <div class="card-title">
@@ -458,14 +444,12 @@
 
     </main>
 
-    {{-- ============ FOOTER ============ --}}
     <footer class="footer">
       <div>Sistem Presensi &amp; Manajemen Akademik SMP Muhammadiyah 44 Tangerang Selatan</div>
       <div>© {{ date('Y') }} SMP Muhammadiyah 44 Tangerang Selatan. Seluruh hak cipta dilindungi.</div>
     </footer>
   </div>
 
-  {{-- ============ SCRIPTS ============ --}}
   <script>
     window.addEventListener('load', function () {
       setTimeout(function () {
@@ -490,6 +474,12 @@
     }
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') toggleSidebar(false);
+    });
+    document.querySelectorAll('.sidebar .nav-item.active').forEach(function (item) {
+      item.addEventListener('click', function (event) {
+        event.preventDefault();
+        toggleSidebar(false);
+      });
     });
   </script>
 

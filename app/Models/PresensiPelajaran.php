@@ -17,6 +17,7 @@ class PresensiPelajaran extends Model
 
     protected $casts = [
         'waktu_scan' => 'datetime',
+        'hidden_from_student_at' => 'datetime',
     ];
 
     public function sesiPelajaran(): BelongsTo

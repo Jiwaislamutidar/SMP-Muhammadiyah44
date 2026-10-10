@@ -46,6 +46,7 @@ class SiswaController extends Controller
         $periods = $siswaId
             ? PresensiPelajaran::query()
                 ->where('siswa_id', $siswaId)
+                ->whereNull('hidden_from_student_at')
                 ->whereHas('sesiPelajaran')
                 ->with('sesiPelajaran:id,tanggal')
                 ->get(['sesi_pelajaran_id'])
@@ -87,6 +88,24 @@ class SiswaController extends Controller
         ])->setPaper('a4', 'landscape');
 
         return $pdf->download('rekap-presensi-'.Str::slug($siswaModel?->nama_lengkap ?? Auth::user()->name).'.pdf');
+    }
+
+    public function deleteHistory(Request $request): RedirectResponse
+    {
+        $filters = $this->validatedAttendanceFilters($request);
+        $siswaId = Auth::user()->siswa()->value('id');
+        $deletedCount = $this->filteredAttendanceQuery($siswaId, $filters)
+            ->update(['hidden_from_student_at' => now()]);
+        $redirect = redirect()->route(
+            'siswa.riwayat',
+            array_filter($filters, static fn ($value) => $value !== null)
+        );
+
+        if ($deletedCount === 0) {
+            return $redirect->with('error', 'Tidak ada riwayat yang cocok dengan filter untuk dihapus.');
+        }
+
+        return $redirect->with('success', 'Riwayat presensi berhasil dihapus dari daftar Anda.');
     }
 
     public function profil(): View
@@ -269,7 +288,8 @@ class SiswaController extends Controller
     private function filteredAttendanceQuery(?int $siswaId, array $filters): Builder
     {
         $query = PresensiPelajaran::query()
-            ->with(['sesiPelajaran.jadwal.mapel', 'sesiPelajaran.jadwal.kelas']);
+            ->with(['sesiPelajaran.jadwal.mapel', 'sesiPelajaran.jadwal.kelas'])
+            ->whereNull('hidden_from_student_at');
 
         if ($siswaId === null) {
             $query->whereRaw('1 = 0');

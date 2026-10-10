@@ -6,7 +6,7 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
   <title>Scan QR Presensi - SMP Muhammadiyah 44</title>
-  <link rel="stylesheet" href="{{ asset('siswa css/scanqrsiswa.css') }}?v=4">
+  <link rel="stylesheet" href="{{ asset('siswa css/scanqrsiswa.css') }}?v=5">
 </head>
 <body>
 
@@ -36,7 +36,7 @@
           </span>
           Dashboard
         </a>
-        <a href="{{ route('siswa.scan-qr') }}" class="nav-item active" style="--delay: 2">
+        <a href="{{ route('siswa.scan-qr') }}" class="nav-item active" aria-current="page" style="--delay: 2">
           <span class="nav-icon-box">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                  stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -280,6 +280,12 @@
     }
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') toggleSidebar(false);
+    });
+    document.querySelectorAll('.sidebar .nav-item.active').forEach(function (item) {
+      item.addEventListener('click', function (event) {
+        event.preventDefault();
+        toggleSidebar(false);
+      });
     });
   </script>
 

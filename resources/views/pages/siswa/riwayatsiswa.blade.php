@@ -7,6 +7,7 @@
     <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
     <title>Riwayat Absensi - SMP Muhammadiyah 44</title>
     <link rel="stylesheet" href="{{ asset('siswa css/riwayatsiswa.css') }}?v=8">
+    <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=2">
 </head>
 <body>
     <div class="page-loader" id="pageLoader">
@@ -94,7 +95,8 @@
             </div>
         </aside>
 
-        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <div class="notification-overlay" id="notificationOverlay" aria-hidden="true"></div>
 
         <header class="topbar">
             <div class="topbar-left">
@@ -102,33 +104,40 @@
                     <span></span><span></span><span></span>
                 </button>
                 <img class="topbar-logo" src="{{ asset('logo.jpg') }}" alt="Logo SMP Muhammadiyah 44">
-                <div class="portal-tag">Riwayat Presensi • SMP Muhammadiyah 44</div>
+                <div class="portal-tag"><span class="portal-tag-page">Riwayat Presensi</span><span class="portal-tag-separator"> • </span><span class="portal-tag-school">SMP Muhammadiyah 44</span></div>
             </div>
 
             <div class="topbar-right">
                 <div class="ta-badge" id="liveDatetime">Memuat waktu...</div>
-                <details style="position:relative;">
-                    <summary class="icon-btn" aria-label="Notifikasi" title="Notifikasi" style="list-style:none;cursor:pointer;">
+                <div class="notification-menu">
+                    <button class="icon-btn notification-toggle" id="notificationToggle" aria-label="Notifikasi" title="Notifikasi"
+                            type="button" aria-expanded="false" aria-haspopup="dialog" aria-controls="notificationPanel"
+                            data-seen-key="siswa-notifikasi-{{ auth()->id() }}">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                              stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/>
                             <path d="M10.3 21a2 2 0 0 0 3.4 0"/>
                         </svg>
-                        @if(count($notifikasiPresensi ?? []))
-                            <span class="badge-dot"></span>
-                        @endif
-                    </summary>
-                    <div style="position:absolute;z-index:20;right:0;top:calc(100% + 10px);width:290px;max-width:80vw;padding:14px;background:#fff;border:1px solid #e4eae6;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.14);">
-                        <strong style="display:block;margin-bottom:10px;">Presensi Terbaru</strong>
+                        <span class="badge-dot" hidden></span>
+                    </button>
+                    <div class="notification-panel" id="notificationPanel" role="dialog" aria-label="Notifikasi" hidden>
+                        <div class="notification-panel-header">Notifikasi</div>
+                        <div class="notification-list">
                         @forelse($notifikasiPresensi ?? [] as $notifikasi)
-                            <div style="padding:9px 0;border-top:1px solid #edf1ee;font-size:12px;line-height:1.5;">
-                                Presensi {{ $notifikasi['status'] }} untuk mata pelajaran {{ $notifikasi['mapel'] }} pada {{ $notifikasi['waktu'] }} ({{ $notifikasi['tanggal'] }})
+                            <div class="notification-item" data-notification-signature="{{ hash('sha256', json_encode($notifikasi)) }}">
+                                <span class="notification-status-dot {{ $notifikasi['status'] === 'Alfa' ? 'is-danger' : (in_array($notifikasi['status'], ['Izin', 'Sakit'], true) ? 'is-warning' : 'is-success') }}"></span>
+                                <div class="notification-copy">
+                                    <div>Presensi {{ $notifikasi['status'] }}</div>
+                                    <div class="notification-subject">{{ $notifikasi['mapel'] }}</div>
+                                    <div class="notification-datetime">{{ $notifikasi['tanggal'] }} • {{ $notifikasi['waktu'] }}</div>
+                                </div>
                             </div>
                         @empty
-                            <div style="padding-top:8px;font-size:12px;color:#64748b;">Belum ada riwayat presensi.</div>
+                            <div class="notification-empty">Belum ada notifikasi presensi.</div>
                         @endforelse
+                        </div>
                     </div>
-                </details>
+                </div>
                 <div class="user-mini">
                     <div class="avatar">{{ $siswa->inisial ?? 'AF' }}</div>
                     <div>
@@ -360,13 +369,9 @@
             burger.setAttribute('aria-label', open ? 'Tutup menu' : 'Buka menu');
         }
 
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') toggleSidebar(false);
-        });
         document.querySelectorAll('.sidebar .nav-item.active').forEach(function (item) {
             item.addEventListener('click', function (event) {
                 event.preventDefault();
-                toggleSidebar(false);
             });
         });
         window.addEventListener('resize', function () { if (window.innerWidth > 1024) toggleSidebar(false); });
@@ -520,18 +525,6 @@
             });
         })();
 
-        function updateLiveDatetime() {
-            var hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-            var bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-            var n = new Date();
-            var p = function (v) { return String(v).padStart(2, '0'); };
-            document.getElementById('liveDatetime').innerHTML =
-                '<span class="dt-date">' + hari[n.getDay()] + ', ' + n.getDate() + ' ' + bulan[n.getMonth()] + ' ' + n.getFullYear() + '</span>' +
-                '<span class="dt-sep"> | </span>' +
-                '<span class="dt-time">' + p(n.getHours()) + ':' + p(n.getMinutes()) + ':' + p(n.getSeconds()) + ' WIB</span>';
-        }
-        updateLiveDatetime();
-        setInterval(updateLiveDatetime, 1000);
-    </script>
+    <script src="{{ asset('siswa js/siswa-ui.js') }}?v=1"></script>
 </body>
 </html>

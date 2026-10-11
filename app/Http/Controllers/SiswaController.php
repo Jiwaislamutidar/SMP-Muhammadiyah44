@@ -228,6 +228,7 @@ class SiswaController extends Controller
             'ringkasan' => [
                 'hadir' => (int) $counts->get('Hadir', 0),
                 'izin' => (int) $counts->get('Izin', 0),
+                'sakit' => (int) $counts->get('Sakit', 0),
                 'alfa' => (int) $counts->get('Alfa', 0),
             ],
             'presensi' => [

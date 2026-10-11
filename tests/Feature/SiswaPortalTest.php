@@ -27,8 +27,16 @@ class SiswaPortalTest extends TestCase
         foreach (['siswa.dashboard', 'siswa.scan-qr', 'siswa.riwayat', 'siswa.profil'] as $routeName) {
             $this->get(route($routeName))
                 ->assertOk()
-                ->assertSee('Nadia Rahma QA');
+                ->assertSee('Nadia Rahma QA')
+                ->assertSee('siswa-ui.js?v=2')
+                ->assertSee('aria-haspopup="dialog"', false)
+                ->assertSee('Notifikasi')
+                ->assertSee('Belum ada notifikasi presensi.');
         }
+
+        $this->get(route('siswa.dashboard'))
+            ->assertOk()
+            ->assertSee('dashboardsiswa.css?v=11');
 
         $this->get(route('siswa.riwayat'))
             ->assertOk()
@@ -56,6 +64,22 @@ class SiswaPortalTest extends TestCase
             ->assertSessionHas('success', 'Kata sandi berhasil diperbarui!');
 
         $this->assertTrue(Hash::check('new-secret', $user->fresh()->password));
+    }
+
+    public function test_dashboard_attendance_rate_counts_sick_as_not_present(): void
+    {
+        [$user, $student] = $this->makeStudent();
+        $presentAttendance = $this->makeHistoryAttendance($student);
+        $sickAttendance = $this->makeHistoryAttendance($student);
+        $sickAttendance->update(['status' => 'Sakit']);
+
+        $this->actingAs($user)
+            ->get(route('siswa.dashboard'))
+            ->assertOk()
+            ->assertSee('ring-num">50<small>%</small>', false);
+
+        $this->assertSame('Hadir', $presentAttendance->fresh()->status);
+        $this->assertSame('Sakit', $sickAttendance->fresh()->status);
     }
 
     public function test_student_login_rejects_non_string_credentials(): void
@@ -136,6 +160,12 @@ class SiswaPortalTest extends TestCase
         $this->assertSame($studentA->id, $attendanceA->fresh()->siswa_id);
         $this->assertSame('Belum Absen', $attendanceB->fresh()->status);
         $this->assertSame($studentB->id, $attendanceB->fresh()->siswa_id);
+
+        $this->actingAs($userA)
+            ->get(route('siswa.dashboard'))
+            ->assertOk()
+            ->assertSee('notification-item', false)
+            ->assertSee($mapel->nama_mapel);
 
         $this->actingAs($userB)
             ->get(route('siswa.riwayat'))

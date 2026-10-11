@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
   <title>Dashboard Murid - SMP Muhammadiyah 44</title>
-  <link rel="stylesheet" href="{{ asset('siswa css/dashboardsiswa.css') }}?v=9">
+  <link rel="stylesheet" href="{{ asset('siswa css/dashboardsiswa.css') }}?v=11">
+  <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=3">
 </head>
 <body>
 
@@ -24,8 +25,9 @@ $status = $presensi['status'] ?? 'Belum Absen';
 
 $rHadir = (int) ($ringkasan['hadir'] ?? 0);
     $rIzin  = (int) ($ringkasan['izin']  ?? 0);
-    $rAlfa  = (int) ($ringkasan['alfa']  ?? 0);
-    $rTotal = $rHadir + $rIzin + $rAlfa;
+$rSakit = (int) ($ringkasan['sakit'] ?? 0);
+$rAlfa  = (int) ($ringkasan['alfa']  ?? 0);
+$rTotal = $rHadir + $rIzin + $rSakit + $rAlfa;
     $persen = $rTotal > 0 ? (int) round(($rHadir / $rTotal) * 100) : 0;
 
     $circumference = 2 * 3.14159265 * 52;
@@ -120,7 +122,8 @@ $rHadir = (int) ($ringkasan['hadir'] ?? 0);
       </div>
     </aside>
 
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="notification-overlay" id="notificationOverlay" aria-hidden="true"></div>
 
     <header class="topbar">
       <div class="topbar-left">
@@ -129,18 +132,39 @@ $rHadir = (int) ($ringkasan['hadir'] ?? 0);
           <span></span><span></span><span></span>
         </button>
         <img class="topbar-logo" src="{{ asset('logo.jpg') }}" alt="Logo SMP Muhammadiyah 44">
-        <div class="portal-tag">Dashboard • SMP Muhammadiyah 44</div>
+        <div class="portal-tag"><span class="portal-tag-page">Dashboard</span><span class="portal-tag-separator"> • </span><span class="portal-tag-school">SMP Muhammadiyah 44</span></div>
       </div>
       <div class="topbar-right">
         <div class="ta-badge" id="liveDatetime">Memuat waktu...</div>
-        <button class="icon-btn" aria-label="Notifikasi" type="button">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/>
-            <path d="M10.3 21a2 2 0 0 0 3.4 0"/>
-          </svg>
-          <span class="badge-dot"></span>
-        </button>
+        <div class="notification-menu">
+          <button class="icon-btn notification-toggle" id="notificationToggle" aria-label="Notifikasi" title="Notifikasi"
+                  type="button" aria-expanded="false" aria-haspopup="dialog" aria-controls="notificationPanel"
+                  data-seen-key="siswa-notifikasi-{{ auth()->id() }}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/>
+              <path d="M10.3 21a2 2 0 0 0 3.4 0"/>
+            </svg>
+            <span class="badge-dot" hidden></span>
+          </button>
+          <div class="notification-panel" id="notificationPanel" role="dialog" aria-label="Notifikasi" hidden>
+            <div class="notification-panel-header">Notifikasi</div>
+            <div class="notification-list">
+              @forelse($notifikasiPresensi ?? [] as $notifikasi)
+                <div class="notification-item" data-notification-signature="{{ hash('sha256', json_encode($notifikasi)) }}">
+                  <span class="notification-status-dot {{ $notifikasi['status'] === 'Alfa' ? 'is-danger' : (in_array($notifikasi['status'], ['Izin', 'Sakit'], true) ? 'is-warning' : 'is-success') }}"></span>
+                  <div class="notification-copy">
+                    <div>Presensi {{ $notifikasi['status'] }}</div>
+                    <div class="notification-subject">{{ $notifikasi['mapel'] }}</div>
+                    <div class="notification-datetime">{{ $notifikasi['tanggal'] }} • {{ $notifikasi['waktu'] }}</div>
+                  </div>
+                </div>
+              @empty
+                <div class="notification-empty">Belum ada notifikasi presensi.</div>
+              @endforelse
+            </div>
+          </div>
+        </div>
         <div class="user-mini">
           <div class="avatar">{{ $siswa->inisial ?? 'AF' }}</div>
           <div>
@@ -472,42 +496,13 @@ $rHadir = (int) ($ringkasan['hadir'] ?? 0);
       burger.setAttribute('aria-expanded', open ? 'true' : 'false');
       burger.setAttribute('aria-label', open ? 'Tutup menu' : 'Buka menu');
     }
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') toggleSidebar(false);
-    });
     document.querySelectorAll('.sidebar .nav-item.active').forEach(function (item) {
       item.addEventListener('click', function (event) {
         event.preventDefault();
-        toggleSidebar(false);
       });
     });
   </script>
 
-  <script>
-    (function () {
-      var hariList  = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-      var bulanList = ['Januari','Februari','Maret','April','Mei','Juni',
-                       'Juli','Agustus','September','Oktober','November','Desember'];
-
-      function updateLiveDatetime() {
-        var now     = new Date();
-        var hari    = hariList[now.getDay()];
-        var tanggal = now.getDate();
-        var bulan   = bulanList[now.getMonth()];
-        var tahun   = now.getFullYear();
-        var jam     = String(now.getHours()).padStart(2, '0');
-        var menit   = String(now.getMinutes()).padStart(2, '0');
-        var detik   = String(now.getSeconds()).padStart(2, '0');
-
-        document.getElementById('liveDatetime').innerHTML =
-          '<span class="dt-date">' + hari + ', ' + tanggal + ' ' + bulan + ' ' + tahun + '</span>' +
-          '<span class="dt-sep"> | </span>' +
-          '<span class="dt-time">' + jam + ':' + menit + ':' + detik + ' WIB</span>';
-      }
-
-      updateLiveDatetime();
-      setInterval(updateLiveDatetime, 1000);
-    })();
-  </script>
+  <script src="{{ asset('siswa js/siswa-ui.js') }}?v=2"></script>
 </body>
 </html>

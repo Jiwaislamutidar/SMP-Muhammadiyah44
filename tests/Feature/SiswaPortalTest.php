@@ -2,14 +2,15 @@
 
 namespace Tests\Feature;
 
-use App\Models\Kelas;
 use App\Models\Guru;
 use App\Models\JadwalPelajaran;
+use App\Models\Kelas;
 use App\Models\Mapel;
 use App\Models\PresensiPelajaran;
-use App\Models\Siswa;
 use App\Models\SesiPelajaran;
+use App\Models\Siswa;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -28,6 +29,13 @@ class SiswaPortalTest extends TestCase
                 ->assertOk()
                 ->assertSee('Nadia Rahma QA');
         }
+
+        $this->get(route('siswa.riwayat'))
+            ->assertOk()
+            ->assertSee('riwayatsiswa.css?v=8')
+            ->assertSee('name="periode"', false)
+            ->assertSee('name="mapel_id"', false)
+            ->assertSee('name="status"', false);
 
         $this->get(route('siswa.scan-qr'))
             ->assertDontSee('Ahmad Fauzan')
@@ -104,6 +112,105 @@ class SiswaPortalTest extends TestCase
         $this->assertNull($otherAttendance->fresh()->hidden_from_student_at);
     }
 
+    public function test_scanned_history_and_dashboard_are_scoped_to_the_logged_in_student(): void
+    {
+        $this->travelTo(now()->startOfDay()->addHours(10));
+        $kelas = Kelas::create(['nama_kelas' => 'QA-SAME-' . bin2hex(random_bytes(4))]);
+        [$userA, $studentA] = $this->makeStudent($kelas);
+        [$userB, $studentB] = $this->makeStudent($kelas);
+        $differentClass = Kelas::create(['nama_kelas' => 'QA-OTHER-' . bin2hex(random_bytes(4))]);
+        [$userC, $studentC] = $this->makeStudent($differentClass);
+
+        [$sesi, $mapel] = $this->makeOpenSession($kelas);
+        $attendanceA = $this->makeSessionAttendance($sesi, $studentA);
+        $attendanceB = $this->makeSessionAttendance($sesi, $studentB);
+        [$otherSesi, $otherMapel] = $this->makeOpenSession($differentClass);
+        $attendanceC = $this->makeSessionAttendance($otherSesi, $studentC);
+
+        $this->actingAs($userA)
+            ->postJson(route('siswa.scan'), ['token' => $sesi->qr_token])
+            ->assertOk()
+            ->assertJsonPath('status', 'Hadir');
+
+        $this->assertSame('Hadir', $attendanceA->fresh()->status);
+        $this->assertSame($studentA->id, $attendanceA->fresh()->siswa_id);
+        $this->assertSame('Belum Absen', $attendanceB->fresh()->status);
+        $this->assertSame($studentB->id, $attendanceB->fresh()->siswa_id);
+
+        $this->actingAs($userB)
+            ->get(route('siswa.riwayat'))
+            ->assertOk()
+            ->assertSee($mapel->nama_mapel)
+            ->assertSee('badge-belum-absen')
+            ->assertDontSee('badge-hadir')
+            ->assertDontSee($otherMapel->nama_mapel);
+
+        $this->actingAs($userB)
+            ->get(route('siswa.dashboard'))
+            ->assertOk()
+            ->assertSee('Belum Absen');
+
+        $this->actingAs($userB)
+            ->get(route('siswa.profil'))
+            ->assertOk()
+            ->assertSee('Presensi Belum Absen')
+            ->assertDontSee('Presensi Hadir');
+
+        $this->actingAs($userA)
+            ->post(route('siswa.riwayat.destroy'), [])
+            ->assertRedirect(route('siswa.riwayat'))
+            ->assertSessionHas('success');
+
+        $this->assertNotNull($attendanceA->fresh()->hidden_from_student_at);
+        $this->assertNull($attendanceB->fresh()->hidden_from_student_at);
+
+        $this->actingAs($userB)
+            ->get(route('siswa.riwayat'))
+            ->assertOk()
+            ->assertSee($mapel->nama_mapel)
+            ->assertSee('badge-belum-absen');
+
+        $this->actingAs($userC)
+            ->get(route('siswa.riwayat'))
+            ->assertOk()
+            ->assertSee($otherMapel->nama_mapel)
+            ->assertDontSee($mapel->nama_mapel);
+
+        $pdf = \Mockery::mock(\Barryvdh\DomPDF\PDF::class);
+        $pdf->shouldReceive('setPaper')->twice()->with('a4', 'landscape')->andReturnSelf();
+        $pdf->shouldReceive('download')->twice()->andReturn(response('PDF test'));
+        Pdf::shouldReceive('loadView')
+            ->once()
+            ->with('pages.siswa.rekap-presensi-pdf', \Mockery::on(function (array $data) use ($studentB, $attendanceB): bool {
+                $this->assertSame([$attendanceB->id], $data['riwayatPresensi']->modelKeys());
+                $this->assertSame($studentB->id, $data['riwayatPresensi']->first()->siswa_id);
+
+                return true;
+            }))
+            ->andReturn($pdf);
+        Pdf::shouldReceive('loadView')
+            ->once()
+            ->with('pages.siswa.rekap-presensi-pdf', \Mockery::on(function (array $data) use ($studentC, $attendanceC): bool {
+                $this->assertSame([$attendanceC->id], $data['riwayatPresensi']->modelKeys());
+                $this->assertSame($studentC->id, $data['riwayatPresensi']->first()->siswa_id);
+
+                return true;
+            }))
+            ->andReturn($pdf);
+
+        $this->actingAs($userB)
+            ->get(route('siswa.riwayat.export'))
+            ->assertOk()
+            ->assertSee('PDF test');
+
+        $this->actingAs($userC)
+            ->get(route('siswa.riwayat.export'))
+            ->assertOk()
+            ->assertSee('PDF test');
+
+        $this->travelBack();
+    }
+
     public function test_guest_cannot_hide_student_history(): void
     {
         [, $student] = $this->makeStudent();
@@ -148,7 +255,7 @@ class SiswaPortalTest extends TestCase
         ]);
     }
 
-    private function makeStudent(): array
+    private function makeStudent(?Kelas $kelas = null): array
     {
         $suffix = bin2hex(random_bytes(5));
         $user = User::create([
@@ -158,7 +265,7 @@ class SiswaPortalTest extends TestCase
             'role' => 'siswa',
             'password' => Hash::make('old-secret'),
         ]);
-        $kelas = Kelas::create(['nama_kelas' => 'QA-' . $suffix]);
+        $kelas ??= Kelas::create(['nama_kelas' => 'QA-' . $suffix]);
         $siswa = Siswa::create([
             'user_id' => $user->id,
             'nisn' => 'qa-' . $suffix,
@@ -168,5 +275,45 @@ class SiswaPortalTest extends TestCase
         ]);
 
         return [$user, $siswa];
+    }
+
+    private function makeOpenSession(Kelas $kelas): array
+    {
+        $suffix = bin2hex(random_bytes(5));
+        $guru = Guru::create([
+            'nama_lengkap' => 'Guru Scan QA ' . $suffix,
+            'status' => 'aktif',
+        ]);
+        $mapel = Mapel::create([
+            'kode' => 'SCAN-' . $suffix,
+            'nama_mapel' => 'Mapel Scan QA ' . $suffix,
+        ]);
+        $jadwal = JadwalPelajaran::create([
+            'guru_id' => $guru->id,
+            'kelas_id' => $kelas->id,
+            'mapel_id' => $mapel->id,
+            'hari' => now()->locale('id')->isoFormat('dddd'),
+            'jam_mulai' => '09:00:00',
+            'jam_selesai' => '11:00:00',
+        ]);
+        $sesi = SesiPelajaran::create([
+            'jadwal_id' => $jadwal->id,
+            'guru_id' => $guru->id,
+            'tanggal' => today()->toDateString(),
+            'qr_token' => 'scan-'.$suffix,
+            'qr_expires_at' => now()->addHour(),
+            'status_sesi' => 'Berlangsung',
+        ]);
+
+        return [$sesi, $mapel];
+    }
+
+    private function makeSessionAttendance(SesiPelajaran $sesi, Siswa $student): PresensiPelajaran
+    {
+        return PresensiPelajaran::create([
+            'sesi_pelajaran_id' => $sesi->id,
+            'siswa_id' => $student->id,
+            'status' => 'Belum Absen',
+        ]);
     }
 }

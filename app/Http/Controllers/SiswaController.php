@@ -33,8 +33,7 @@ class SiswaController extends Controller
         $data = $this->pageData();
         $filters = $this->validatedAttendanceFilters($request);
         $siswaModel = Auth::user()->siswa()->with('kelas')->first();
-        $siswaId = $siswaModel?->id;
-        $data['riwayatPresensi'] = $this->filteredAttendanceQuery($siswaId, $filters)
+        $data['riwayatPresensi'] = $this->filteredAttendanceQuery($siswaModel, $filters)
             ->orderByDesc('updated_at')
             ->paginate(10);
         $data['mataPelajaran'] = $siswaModel?->kelas_id
@@ -43,9 +42,8 @@ class SiswaController extends Controller
                 ->orderBy('nama_mapel')
                 ->get(['id', 'nama_mapel'])
             : collect();
-        $periods = $siswaId
-            ? PresensiPelajaran::query()
-                ->where('siswa_id', $siswaId)
+        $periods = $siswaModel
+            ? $siswaModel->presensiPelajarans()
                 ->whereNull('hidden_from_student_at')
                 ->whereHas('sesiPelajaran')
                 ->with('sesiPelajaran:id,tanggal')
@@ -69,7 +67,7 @@ class SiswaController extends Controller
     {
         $filters = $this->validatedAttendanceFilters($request);
         $siswaModel = Auth::user()->siswa()->with('kelas')->first();
-        $presensi = $this->filteredAttendanceQuery($siswaModel?->id, $filters)
+        $presensi = $this->filteredAttendanceQuery($siswaModel, $filters)
             ->orderByDesc('updated_at')
             ->get();
         $mapelTerpilih = $filters['mapel_id'] !== null && $siswaModel?->kelas_id
@@ -93,8 +91,8 @@ class SiswaController extends Controller
     public function deleteHistory(Request $request): RedirectResponse
     {
         $filters = $this->validatedAttendanceFilters($request);
-        $siswaId = Auth::user()->siswa()->value('id');
-        $deletedCount = $this->filteredAttendanceQuery($siswaId, $filters)
+        $siswaModel = Auth::user()->siswa()->first();
+        $deletedCount = $this->filteredAttendanceQuery($siswaModel, $filters)
             ->update(['hidden_from_student_at' => now()]);
         $redirect = redirect()->route(
             'siswa.riwayat',
@@ -285,16 +283,16 @@ class SiswaController extends Controller
         ];
     }
 
-    private function filteredAttendanceQuery(?int $siswaId, array $filters): Builder
+    private function filteredAttendanceQuery(?Siswa $siswa, array $filters): Builder
     {
         $query = PresensiPelajaran::query()
             ->with(['sesiPelajaran.jadwal.mapel', 'sesiPelajaran.jadwal.kelas'])
             ->whereNull('hidden_from_student_at');
 
-        if ($siswaId === null) {
+        if ($siswa === null) {
             $query->whereRaw('1 = 0');
         } else {
-            $query->where('siswa_id', $siswaId);
+            $query->where('siswa_id', $siswa->getKey());
         }
 
         if ($filters['periode'] !== null) {

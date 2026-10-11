@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#087443">
     <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
     <title>Riwayat Absensi - SMP Muhammadiyah 44</title>
-    <link rel="stylesheet" href="{{ asset('siswa css/riwayatsiswa.css') }}?v=6">
+    <link rel="stylesheet" href="{{ asset('siswa css/riwayatsiswa.css') }}?v=8">
 </head>
 <body>
     <div class="page-loader" id="pageLoader">
@@ -419,6 +419,23 @@
                 });
             }
 
+            function fitDropdown(dropdown) {
+                var trigger = dropdown.querySelector('.filter-select-trigger');
+                var options = dropdown.querySelector('.filter-options');
+                var triggerRect = trigger.getBoundingClientRect();
+                var spaceAbove = triggerRect.top - 13;
+                var spaceBelow = window.innerHeight - triggerRect.bottom - 13;
+                var preferredHeight = window.matchMedia('(max-width: 760px)').matches
+                    ? Math.min(220, window.innerHeight * 0.48)
+                    : 240;
+                var contentHeight = Math.min(options.scrollHeight, preferredHeight);
+                var opensUpward = spaceBelow < contentHeight && spaceAbove > spaceBelow;
+                var availableHeight = opensUpward ? spaceAbove : spaceBelow;
+
+                options.style.maxHeight = Math.max(0, Math.min(preferredHeight, availableHeight)) + 'px';
+                dropdown.classList.toggle('opens-upward', opensUpward);
+            }
+
             function openDropdown(dropdown, focusSelected) {
                 var trigger = dropdown.querySelector('.filter-select-trigger');
                 document.querySelectorAll('[data-filter-select].is-open').forEach(function (other) {
@@ -428,6 +445,7 @@
                 dropdown.classList.remove('is-closing');
                 dropdown.classList.add('is-open');
                 dropdown.querySelector('.filter-options').hidden = false;
+                fitDropdown(dropdown);
                 trigger.setAttribute('aria-expanded', 'true');
                 if (focusSelected) {
                     var selected = dropdown.querySelector('[role="option"][aria-selected="true"]');
@@ -496,6 +514,9 @@
                         closeDropdown(dropdown, true);
                     });
                 }
+            });
+            window.addEventListener('resize', function () {
+                document.querySelectorAll('[data-filter-select].is-open').forEach(fitDropdown);
             });
         })();
 

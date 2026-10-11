@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
     <title>Profil Murid - SMP Muhammadiyah 44</title>
-    <link rel="stylesheet" href="{{ asset('siswa css/profilsiswa.css') }}?v=3">
+    <link rel="stylesheet" href="{{ asset('siswa css/profilsiswa.css') }}?v=4">
 </head>
 <body>
     <div class="page-loader" id="pageLoader">

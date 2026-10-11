@@ -292,10 +292,10 @@ body::-webkit-scrollbar-thumb {
 
 .scanner-card {
   background: #fff;
-  border: 1px solid #e4eae6;
+  border: 1px solid #e3e8e5;
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  box-shadow: var(--shadow-3);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -422,19 +422,21 @@ body::-webkit-scrollbar-thumb {
   font-size: 13px;
   cursor: pointer;
   border: none;
-  transition: all 0.2s;
+  transition: background-color 160ms cubic-bezier(.22,.9,.35,1), border-color 160ms cubic-bezier(.22,.9,.35,1), box-shadow 160ms cubic-bezier(.22,.9,.35,1), transform 160ms cubic-bezier(.22,.9,.35,1);
 }
 
 .btn-primary { background: #087443; color: #fff; }
-.btn-primary:hover { background: #065c35; }
+.btn-primary:hover { background: #065c36; transform: translateY(-1px); box-shadow: var(--shadow-2); }
+.btn-primary:active { transform: translateY(0) scale(.98); }
 .btn-secondary { background: #f3f4f6; color: #17211c; border: 1px solid #e4eae6 !important; }
-.btn-secondary:hover { background: #e4eae6; }
+.btn-secondary:hover { background: #eaf5ef; border-color: #087443 !important; }
+.scanner-actions button:focus-visible { outline: 2px solid #087443; outline-offset: 2px; }
 
 .right-column { display: flex; flex-direction: column; gap: 20px; }
 
 .session-card, .steps-card, .info-note-card {
-  background: #fff; border: 1px solid #e4eae6; border-radius: 16px;
-  box-shadow: 0 1px 2px rgba(0,0,0,.05);
+  background: #fff; border: 1px solid #e3e8e5; border-radius: 16px;
+  box-shadow: var(--shadow-1);
 }
 .session-card, .steps-card { padding: 20px; }
 
@@ -780,9 +782,14 @@ body::-webkit-scrollbar-thumb {
   .nav-item,
   .nav-icon-box,
   .nav-icon-box svg { transition-duration: .001ms; }
+  .scanner-actions button:hover,
+  .scanner-actions button:active { transform: none; }
 }
 
 :root {
+  --shadow-1: 0 1px 2px rgba(10,40,25,.06), 0 1px 1px rgba(10,40,25,.04);
+  --shadow-2: 0 2px 4px rgba(10,40,25,.05), 0 8px 20px -8px rgba(10,40,25,.14);
+  --shadow-3: 0 4px 8px rgba(10,40,25,.06), 0 16px 32px -12px rgba(10,40,25,.20);
   --pop-top: 98px;
   --pop-left: 32px;
   --pop-ox: 40px;

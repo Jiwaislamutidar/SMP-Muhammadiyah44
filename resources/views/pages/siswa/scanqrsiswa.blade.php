@@ -6,7 +6,7 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
   <title>Scan QR Presensi - SMP Muhammadiyah 44</title>
-  <link rel="stylesheet" href="{{ asset('siswa css/scanqrsiswa.css') }}?v=5">
+  <link rel="stylesheet" href="{{ asset('siswa css/scanqrsiswa.css') }}?v=6">
 </head>
 <body>
 

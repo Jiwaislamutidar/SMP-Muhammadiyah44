@@ -1,15 +1,15 @@
 @extends('layouts.admin')
 @section('title', 'Data Guru')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/dataguru.css') }}?v=4">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/dataguru.css') }}?v=5">@endsection
 @section('content')
 <div class="admin-page-header">
 	<div>
 		<h1>Data Guru</h1>
-		<p>Kelola data guru dan staf pendidik SMP Muhammadiyah 44</p>
+		<p>Kelola guru &amp; staf pendidik</p>
 	</div>
 	<div class="admin-header-actions">
-		<button class="admin-action guru-import-trigger" type="button" data-open-modal="importGuruModal" aria-haspopup="dialog">Import Data Excel</button>
-		<button class="admin-action guru-manual-trigger" type="button" data-open-modal="addGuruModal">+ Tambah Guru Manual</button>
+		<button class="admin-action admin-action-outline guru-import-trigger" type="button" data-open-modal="importGuruModal" aria-haspopup="dialog">↑ Import Excel</button>
+		<button class="admin-action guru-manual-trigger" type="button" data-open-modal="addGuruModal">+ Tambah Guru</button>
 	</div>
 </div>
 
@@ -40,9 +40,9 @@
 		<thead>
 			<tr>
 				<th>Guru &amp; Identitas</th>
-				<th>Mata Pelajaran yang Diampu</th>
-				<th>Total Beban Mengajar</th>
-				<th>Status Kepegawaian</th>
+				<th>Mata Pelajaran</th>
+				<th>Beban Mengajar</th>
+				<th>Status</th>
 				<th>Aksi</th>
 			</tr>
 		</thead>
@@ -53,25 +53,29 @@
 					$totalJam = $guru->mapels->sum('pivot.jumlah_jam');
 				@endphp
 				<tr>
-					<td class="guru-identity">
-						<span class="initial">{{ mb_strtoupper($inisial) }}</span>
-						<strong>{{ $guru->nama_lengkap }}</strong>
-						<small>{{ $guru->nip ?: 'NIP/Kode belum diisi' }}</small>
+					<td>
+						<div class="guru-identity">
+							<span class="initial">{{ mb_strtoupper($inisial) }}</span>
+							<div>
+								<strong>{{ $guru->nama_lengkap }}</strong>
+								<small>{{ $guru->nip ?: 'NIP/Kode belum diisi' }}</small>
+							</div>
+						</div>
 					</td>
 					<td>
 						<div class="guru-subjects">
 							@forelse ($guru->mapels as $index => $mapel)
 								<span class="guru-subject subject-{{ $index % 6 }}">{{ $mapel->nama_mapel }}</span>
 							@empty
-								<span class="guru-muted">Belum ada mata pelajaran</span>
+								<span class="guru-muted">Belum ada mapel</span>
 							@endforelse
 						</div>
 					</td>
-					<td><strong class="guru-hours">{{ $totalJam }} JP/Minggu</strong></td>
+					<td><span class="guru-hours">{{ $totalJam }} JP/Minggu</span></td>
 					<td><span class="guru-status {{ $guru->status === 'aktif' ? 'is-active' : 'is-inactive' }}">{{ ucfirst($guru->status) }}</span></td>
 					<td>
 						<div class="guru-row-actions">
-							<button class="link-action guru-action-edit" type="button" data-edit-guru
+							<button class="guru-action-edit" type="button" data-edit-guru
 								data-id="{{ $guru->id }}"
 								data-nama="{{ $guru->nama_lengkap }}"
 								data-nip="{{ $guru->nip }}"
@@ -80,7 +84,7 @@
 							<form action="{{ route('admin.guru.destroy', $guru->id) }}" method="POST" onsubmit="return confirm('Ubah status guru ini?')">
 								@csrf
 								@method('DELETE')
-								<button class="link-action guru-action-toggle {{ $guru->status === 'aktif' ? 'is-destructive' : 'is-restore' }}" type="submit">{{ $guru->status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan' }}</button>
+								<button class="guru-action-toggle {{ $guru->status === 'aktif' ? 'is-destructive' : 'is-restore' }}" type="submit">{{ $guru->status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan' }}</button>
 							</form>
 						</div>
 					</td>
@@ -103,7 +107,7 @@
 <template id="guruMapelRowTemplate">
 	<div class="guru-mapel-row">
 		<div class="guru-mapel-row-fields">
-			<label>Mapel yang tersedia
+			<label>Pilih Mapel
 				<select class="admin-select" data-mapel-select name="mapel_items[__INDEX__][mapel_id]">
 					<option value="">Pilih mata pelajaran</option>
 					@foreach ($mapels as $mapel)
@@ -111,12 +115,12 @@
 					@endforeach
 				</select>
 			</label>
-			<label>Atau ketik mapel baru
+			<label>Atau Mapel Baru
 				<input class="admin-input" data-mapel-new type="text" name="mapel_items[__INDEX__][nama_baru]" maxlength="255" placeholder="Nama mata pelajaran">
 			</label>
 		</div>
 		<div class="guru-mapel-row-hours">
-			<label>Jumlah Jam (JP)
+			<label>Jam (JP)
 				<input class="admin-input" type="number" name="mapel_items[__INDEX__][jumlah_jam]" min="1" max="65535" step="1" placeholder="Contoh: 6">
 			</label>
 			<button class="guru-remove-mapel" type="button" data-remove-mapel aria-label="Hapus baris mapel">Hapus</button>
@@ -127,7 +131,7 @@
 <div class="guru-modal-backdrop" id="addGuruModal" hidden>
 	<section class="guru-modal" role="dialog" aria-modal="true" aria-labelledby="addGuruTitle">
 		<div class="guru-modal-heading">
-			<div><h2 id="addGuruTitle">Tambah Guru Manual</h2><p>Masukkan identitas dan mata pelajaran yang diampu.</p></div>
+			<div><h2 id="addGuruTitle">Tambah Guru</h2></div>
 			<button class="guru-modal-close" type="button" data-close-modal aria-label="Tutup">&times;</button>
 		</div>
 		<form action="{{ route('admin.guru.store') }}" method="POST" class="guru-form">
@@ -136,8 +140,7 @@
 			<label>Nama lengkap<input class="admin-input" type="text" name="nama_lengkap" value="{{ old('form_context') === 'add' ? old('nama_lengkap') : '' }}" required></label>
 			<label>NIP/Kode<input class="admin-input" type="text" name="nip" value="{{ old('form_context') === 'add' ? old('nip') : '' }}"></label>
 			<label>Status<select class="admin-select" name="status" required><option value="aktif">Aktif</option><option value="nonaktif" @selected (old('form_context') === 'add' && old('status') === 'nonaktif')>Nonaktif</option></select></label>
-			<fieldset class="guru-mapel-fieldset"><legend>Mata pelajaran &amp; beban mengajar</legend>
-				<p class="guru-mapel-help">Pilih mapel yang tersedia atau ketik mapel baru, lalu isi jumlah jam per minggu.</p>
+			<fieldset class="guru-mapel-fieldset"><legend>Mata Pelajaran &amp; Jam</legend>
 				<div class="guru-mapel-items" data-mapel-items data-next-index="0"></div>
 				<button class="guru-add-mapel" type="button" data-add-mapel>+ Tambah Baris Mapel &amp; Jam</button>
 			</fieldset>
@@ -149,24 +152,28 @@
 <div class="guru-modal-backdrop" id="importGuruModal" hidden>
 	<section class="guru-modal" role="dialog" aria-modal="true" aria-labelledby="importGuruTitle">
 		<div class="guru-modal-heading">
-			<div><h2 id="importGuruTitle">Import Data Excel</h2><p>Unggah file .xlsx atau .csv dengan kolom Kode, Mata Pelajaran, Nama Guru, dan Jml. Jam.</p></div>
+			<div><h2 id="importGuruTitle">Import Excel</h2><p>Kolom: Kode, Mata Pelajaran, Nama Guru, Jml. Jam</p></div>
 			<button class="guru-modal-close" type="button" data-close-modal aria-label="Tutup">&times;</button>
 		</div>
 		<form action="{{ route('admin.guru.import') }}" method="POST" enctype="multipart/form-data" class="guru-form">
 			@csrf
 			<input type="hidden" name="form_context" value="import">
 
-			<div style="display:grid;gap:8px;">
-				<label for="guruImportFile" style="font-size:12px;font-weight:600;">File Excel/CSV</label>
-				<input id="guruImportFile" type="file" name="file" accept=".xlsx,.csv" required style="width:100%;padding:10px;border:1px dashed #a9c7b3;border-radius:8px;background:#f7faf8;font-size:12px;">
-				<p id="guruImportFileName" aria-live="polite" style="margin:0;font-size:12px;color:#6b756f;">Belum ada file dipilih (.xlsx atau .csv, maksimal 10 MB)</p>
+			<label class="import-dropzone" for="guruImportFile">
+				<span class="dropzone-icon">📁</span>
+				<span class="dropzone-text">Pilih atau seret file Excel/CSV ke sini</span>
+				<span class="dropzone-hint">Format .xlsx atau .csv (maksimal 10 MB)</span>
+				<input id="guruImportFile" type="file" name="file" accept=".xlsx,.csv" required hidden>
+			</label>
+			<div class="file-preview" id="guruFilePreview" hidden>
+				📄 File terpilih: <strong id="guruImportFileName"></strong>
 			</div>
 
-			<a class="guru-template-link" href="{{ route('admin.guru.template') }}">Download template CSV</a>
+			<a class="guru-template-link" href="{{ route('admin.guru.template') }}">📥 Unduh Template CSV</a>
 
-			<div style="display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;">
+			<div class="guru-modal-actions">
 				<button class="guru-button-secondary" type="button" data-close-modal>Batal</button>
-				<button id="guruImportSubmit" type="submit" style="min-width:150px;min-height:44px;padding:0 22px;border:0;border-radius:8px;background:#087443;color:#fff;font-size:14px;font-weight:700;cursor:pointer;">Import Data</button>
+				<button class="admin-action" id="guruImportSubmit" type="submit">Import Data</button>
 			</div>
 		</form>
 	</section>
@@ -175,7 +182,7 @@
 <div class="guru-modal-backdrop" id="editGuruModal" hidden>
 	<section class="guru-modal" role="dialog" aria-modal="true" aria-labelledby="editGuruTitle">
 		<div class="guru-modal-heading">
-			<div><h2 id="editGuruTitle">Edit Data Guru</h2><p>Perbarui identitas, status, dan penugasan mata pelajaran.</p></div>
+			<div><h2 id="editGuruTitle">Edit Guru</h2></div>
 			<button class="guru-modal-close" type="button" data-close-modal aria-label="Tutup">&times;</button>
 		</div>
 		<form id="editGuruForm" method="POST" class="guru-form" data-update-url="{{ route('admin.guru.update', ':id') }}">
@@ -186,8 +193,7 @@
 			<label>Nama lengkap<input class="admin-input" id="editGuruName" type="text" name="nama_lengkap" required></label>
 			<label>NIP/Kode<input class="admin-input" id="editGuruNip" type="text" name="nip"></label>
 			<label>Status<select class="admin-select" id="editGuruStatus" name="status" required><option value="aktif">Aktif</option><option value="nonaktif">Nonaktif</option></select></label>
-			<fieldset class="guru-mapel-fieldset"><legend>Mata pelajaran &amp; beban mengajar</legend>
-				<p class="guru-mapel-help">Pilih mapel yang tersedia atau ketik mapel baru, lalu isi jumlah jam per minggu.</p>
+			<fieldset class="guru-mapel-fieldset"><legend>Mata Pelajaran &amp; Jam Mengajar</legend>
 				<div class="guru-mapel-items" data-mapel-items data-next-index="0"></div>
 				<button class="guru-add-mapel" type="button" data-add-mapel>+ Tambah Baris Mapel &amp; Jam</button>
 			</fieldset>
@@ -245,12 +251,33 @@
 
 		const importFile = document.getElementById('guruImportFile');
 		const importFileName = document.getElementById('guruImportFileName');
-		importFile.addEventListener('change', () => {
-			const file = importFile.files[0];
-			importFileName.textContent = file
-				? `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`
-				: 'Belum ada file dipilih (.xlsx atau .csv, maksimal 10 MB)';
-		});
+		const importPreview = document.getElementById('guruFilePreview');
+		const importDropzone = document.querySelector('label[for="guruImportFile"]');
+
+		const updateImportFile = (file) => {
+			if (file) {
+				importFileName.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+				if (importPreview) importPreview.hidden = false;
+			} else {
+				if (importPreview) importPreview.hidden = true;
+			}
+		};
+
+		if (importFile) {
+			importFile.addEventListener('change', () => updateImportFile(importFile.files[0]));
+		}
+		if (importDropzone && importFile) {
+			importDropzone.addEventListener('dragover', (e) => { e.preventDefault(); importDropzone.classList.add('is-dragging'); });
+			importDropzone.addEventListener('dragleave', () => importDropzone.classList.remove('is-dragging'));
+			importDropzone.addEventListener('drop', (e) => {
+				e.preventDefault();
+				importDropzone.classList.remove('is-dragging');
+				if (e.dataTransfer.files.length) {
+					importFile.files = e.dataTransfer.files;
+					updateImportFile(e.dataTransfer.files[0]);
+				}
+			});
+		}
 
 		const editForm = document.getElementById('editGuruForm');
 		document.querySelectorAll('[data-edit-guru]').forEach((button) => {

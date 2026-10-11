@@ -1,1 +1,34 @@
-@import url("admin-page.css");
+/* =====================================================
+   DATA KELAS – Page-Specific Styles
+   Shared utilities: admin-shell.css + admin-page.css
+   ===================================================== */
+
+.class-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.class-pill-badge {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: var(--green-100);
+  color: var(--green-700);
+  font-weight: 800;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.class-room-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2.5px 8px;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: #475569;
+  font-size: 11.5px;
+  font-weight: 600;
+}

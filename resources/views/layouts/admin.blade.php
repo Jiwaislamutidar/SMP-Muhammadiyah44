@@ -7,7 +7,9 @@
   <title>@yield('title') - SMP Muhammadiyah 44</title>
 
   {{-- Global admin shell styles (sidebar + topbar + base) --}}
-  <link rel="stylesheet" href="{{ asset('admin css/admin-shell.css') }}?v=1">
+  <link rel="stylesheet" href="{{ asset('admin css/admin-shell.css') }}?v=5">
+  {{-- Shared page-level utilities --}}
+  <link rel="stylesheet" href="{{ asset('admin css/admin-page.css') }}?v=5">
   {{-- Page-specific styles --}}
   @yield('styles')
 </head>
@@ -139,13 +141,13 @@
     @yield('content')
 
     <footer class="footer">
-      <div>Sistem Presensi &amp; Akademik Terpadu SMP Muhammadiyah 44 Tangerang Selatan</div>
-      <div>&copy; {{ date('Y') }} SMP Muhammadiyah 44 Tangerang Selatan. Seluruh hak cipta dilindungi.</div>
+      <div>SMP Muhammadiyah 44 &mdash; Portal Admin</div>
+      <div>&copy; {{ date('Y') }} Sistem Presensi &amp; Akademik</div>
     </footer>
   </main>
 
 </div>{{-- /.admin-app --}}
 
-<script src="{{ asset('admin css/admin.js') }}?v=2"></script>
+<script src="{{ asset('admin css/admin.js') }}?v=5"></script>
 </body>
 </html>

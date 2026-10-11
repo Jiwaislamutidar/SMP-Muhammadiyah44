@@ -1,15 +1,15 @@
 @extends('layouts.admin')
 @section('title', 'Data Murid')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/datamurid.css') }}?v=3">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/datamurid.css') }}?v=4">@endsection
 @section('content')
 <div class="admin-page-header">
 	<div>
 		<h1>Data Murid</h1>
-		<p>Kelola data murid SMP Muhammadiyah 44 Tangerang Selatan</p>
+		<p>Kelola data siswa terdaftar</p>
 	</div>
 	<div class="admin-header-actions">
-		<button class="admin-action admin-manual-trigger" type="button" id="openManualImportModal">+ Tambah Manual</button>
-		<button class="admin-action admin-import-trigger" type="button" id="openImportModal">Import Excel</button>
+		<button class="admin-action admin-action-outline admin-manual-trigger" type="button" id="openManualImportModal">+ Tambah Manual</button>
+		<button class="admin-action admin-import-trigger" type="button" id="openImportModal">↑ Import Excel</button>
 	</div>
 </div>
 
@@ -60,11 +60,19 @@
 					$inisial = collect(explode(' ', $nama))->filter()->take(2)->map(fn ($bagian) => mb_substr($bagian, 0, 1))->implode('');
 				@endphp
 				<tr>
-					<td><span class="initial">{{ mb_strtoupper($inisial) }}</span><strong style="display:inline">{{ $nama }}</strong><small>{{ $siswa->user->username }}</small></td>
-					<td>{{ $siswa->nisn }}</td>
-					<td><span class="badge blue">{{ $siswa->kelas->nama_kelas ?? 'Belum ditentukan' }}</span></td>
-					<td><span class="badge">{{ ucfirst($siswa->status) }}</span></td>
-					<td><span class="link-action">Detail</span></td>
+					<td>
+						<div class="student-identity">
+							<span class="initial">{{ mb_strtoupper($inisial) }}</span>
+							<div>
+								<strong>{{ $nama }}</strong>
+								<small>{{ $siswa->user->username }}</small>
+							</div>
+						</div>
+					</td>
+					<td><span class="student-nisn">{{ $siswa->nisn }}</span></td>
+					<td><span class="badge blue">{{ $siswa->kelas->nama_kelas ?? 'Belum ada kelas' }}</span></td>
+					<td><span class="badge {{ $siswa->status === 'aktif' ? '' : 'red' }}">{{ ucfirst($siswa->status) }}</span></td>
+					<td><button class="link-action" type="button">Detail</button></td>
 				</tr>
 			@empty
 				<tr><td class="admin-empty-row" colspan="5">Belum ada data murid yang sesuai.</td></tr>
@@ -84,7 +92,7 @@
 <div class="admin-modal-backdrop" id="importModal" hidden>
 	<section class="admin-import-modal" role="dialog" aria-modal="true" aria-labelledby="importModalTitle">
 		<div class="admin-modal-heading">
-			<div><h2 id="importModalTitle">Import Data Murid</h2><p>Unggah file Excel daftar siswa resmi dari sekolah (.xlsx / .xls / .csv).</p></div>
+			<div><h2 id="importModalTitle">Import Data Murid</h2><p>.xlsx / .xls / .csv &mdash; maks. 2 MB</p></div>
 			<button type="button" class="admin-modal-close" id="closeImportModal" aria-label="Tutup">&times;</button>
 		</div>
 		<form action="{{ route('admin.siswa.import') }}" method="POST" enctype="multipart/form-data">
@@ -111,11 +119,11 @@
 		<div class="admin-modal-heading">
 			<div>
 				<h2 id="manualImportModalTitle">Input Siswa Manual</h2>
-				<p>Tambahkan hingga 50 siswa sekaligus. Nama dan NIS/NISN wajib diisi; kelas boleh ditentukan nanti.</p>
+				<p>Tambah hingga 50 siswa sekaligus.</p>
 			</div>
 			<button type="button" class="admin-modal-close" id="closeManualImportModal" aria-label="Tutup">&times;</button>
 		</div>
-		<div class="admin-manual-account-note"><strong>Akun login dibuat otomatis.</strong> NIS/NISN menjadi username sekaligus password awal siswa.</div>
+		<div class="admin-manual-account-note"><strong>Akun login otomatis.</strong> NIS/NISN = username &amp; password awal.</div>
 		<form action="{{ route('admin.siswa.manual-import') }}" method="POST">
 			@csrf
 			<div class="admin-manual-rows" id="manualStudentRows">

@@ -28,7 +28,7 @@ class SiswaPortalTest extends TestCase
             $this->get(route($routeName))
                 ->assertOk()
                 ->assertSee('Nadia Rahma QA')
-                ->assertSee('siswa-ui.js?v=1')
+                ->assertSee('siswa-ui.js?v=2')
                 ->assertSee('aria-haspopup="dialog"', false)
                 ->assertSee('Notifikasi')
                 ->assertSee('Belum ada notifikasi presensi.');

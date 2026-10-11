@@ -35,7 +35,9 @@
         partValue(dateParts, 'year') + '</span>' +
         '<span class="dt-sep"> | </span>' +
         '<span class="dt-time">' + partValue(timeParts, 'hour') + ':' +
-        partValue(timeParts, 'minute') + ':' + partValue(timeParts, 'second') + ' WIB</span>';
+        partValue(timeParts, 'minute') + '</span>' +
+        '<span class="dt-seconds">:' + partValue(timeParts, 'second') + '</span>' +
+        '<span class="dt-zone"> WIB</span>';
     }
 
     updateLiveDatetime();

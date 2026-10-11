@@ -164,6 +164,17 @@
 }
 
 @media (max-width: 480px) {
+  .topbar-right .ta-badge {
+    max-width: none;
+    overflow: visible;
+    text-overflow: clip;
+  }
+
+  .topbar-right .dt-date,
+  .topbar-right .dt-sep,
+  .topbar-right .dt-seconds,
+  .topbar-right .dt-zone { display: none; }
+
   .topbar-left .portal-tag {
     display: flex;
     flex-direction: column;
@@ -201,13 +212,6 @@
 
   .portal-tag-separator { display: none; }
 
-  .topbar-right .ta-badge {
-    max-width: 80px;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
 }
 
 @media (max-width: 360px) {
@@ -219,15 +223,7 @@
   .topbar-left .portal-tag { padding: 2px 4px; }
   .portal-tag-page { font-size: 9px; }
   .portal-tag-school { font-size: 8px; }
-  .topbar-right .ta-badge {
-    max-width: 64px;
-    min-width: 0;
-    overflow: hidden;
-    padding: 4px 5px;
-    font-size: 9px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+  .topbar-right .ta-badge { display: none; }
 }
 
 @keyframes notification-popover-in {

@@ -7,7 +7,7 @@
   <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
   <title>Scan QR Presensi - SMP Muhammadiyah 44</title>
   <link rel="stylesheet" href="{{ asset('siswa css/scanqrsiswa.css') }}?v=6">
-  <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=2">
+  <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=3">
 </head>
 <body>
 
@@ -450,6 +450,6 @@
 
     }
   </script>
-  <script src="{{ asset('siswa js/siswa-ui.js') }}?v=1"></script>
+  <script src="{{ asset('siswa js/siswa-ui.js') }}?v=2"></script>
 </body>
 </html>

@@ -30,9 +30,9 @@ class SiswaController extends Controller
 
     public function riwayat(Request $request): View
     {
-        $data = $this->pageData();
-        $filters = $this->validatedAttendanceFilters($request);
         $siswaModel = Auth::user()->siswa()->with('kelas')->first();
+        $data = $this->pageData($siswaModel);
+        $filters = $this->validatedAttendanceFilters($request);
         $data['riwayatPresensi'] = $this->filteredAttendanceQuery($siswaModel, $filters)
             ->orderByDesc('updated_at')
             ->paginate(10);
@@ -133,10 +133,10 @@ class SiswaController extends Controller
         return redirect()->route('siswa.profil')->with('success', 'Kata sandi berhasil diperbarui!');
     }
 
-    private function pageData(): array
+    private function pageData(?Siswa $siswaModel = null): array
     {
         $user = Auth::user();
-        $siswaModel = Siswa::where('user_id', $user->id)->with('kelas')->first();
+        $siswaModel ??= Siswa::where('user_id', $user->id)->with('kelas')->first();
         $nama = $siswaModel->nama_lengkap ?? $user->name;
         $namaParts = preg_split('/\s+/', trim($nama), -1, PREG_SPLIT_NO_EMPTY);
         $inisial = collect($namaParts)

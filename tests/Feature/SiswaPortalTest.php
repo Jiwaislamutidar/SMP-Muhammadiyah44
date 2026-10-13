@@ -13,6 +13,8 @@ use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
+use Symfony\Component\Process\ExecutableFinder;
+use Symfony\Component\Process\Process;
 use Tests\TestCase;
 
 class SiswaPortalTest extends TestCase
@@ -28,7 +30,7 @@ class SiswaPortalTest extends TestCase
             $this->get(route($routeName))
                 ->assertOk()
                 ->assertSee('Nadia Rahma QA')
-                ->assertSee('siswa-ui.js?v=2')
+                ->assertSee('siswa-ui.js?v=3')
                 ->assertSee('aria-haspopup="dialog"', false)
                 ->assertSee('Notifikasi')
                 ->assertSee('Belum ada notifikasi presensi.');
@@ -47,7 +49,46 @@ class SiswaPortalTest extends TestCase
 
         $this->get(route('siswa.scan-qr'))
             ->assertDontSee('Ahmad Fauzan')
-            ->assertSee('NR');
+            ->assertSee('NR')
+            ->assertSee('html5-qrcode.min.js?v=2.3.8');
+    }
+
+    public function test_inline_scripts_on_student_pages_are_valid_javascript(): void
+    {
+        $node = (new ExecutableFinder())->find('node');
+        if ($node === null) {
+            $this->markTestSkipped('Node.js is required to validate rendered inline scripts.');
+        }
+
+        [$user] = $this->makeStudent();
+        $this->actingAs($user);
+
+        foreach (['siswa.dashboard', 'siswa.scan-qr', 'siswa.riwayat', 'siswa.profil'] as $routeName) {
+            $html = $this->get(route($routeName))->assertOk()->getContent();
+            preg_match_all('~<script\b(?![^>]*\bsrc\s*=)[^>]*>(.*?)</script\s*>~is', $html, $matches);
+            $this->assertNotEmpty($matches[1], "No inline scripts found for {$routeName}.");
+
+            foreach ($matches[1] as $scriptIndex => $script) {
+                $temporaryFile = tempnam(sys_get_temp_dir(), 'student-inline-script-');
+                $this->assertNotFalse($temporaryFile);
+                $javascriptFile = $temporaryFile.'.cjs';
+                $this->assertTrue(rename($temporaryFile, $javascriptFile));
+
+                try {
+                    $this->assertNotFalse(file_put_contents($javascriptFile, $script));
+                    $process = new Process([$node, '--check', $javascriptFile]);
+                    $process->run();
+                    $this->assertTrue(
+                        $process->isSuccessful(),
+                        "{$routeName} inline script {$scriptIndex}: ".$process->getErrorOutput()
+                    );
+                } finally {
+                    if (is_file($javascriptFile)) {
+                        unlink($javascriptFile);
+                    }
+                }
+            }
+        }
     }
 
     public function test_student_can_change_password_with_the_current_password(): void

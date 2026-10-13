@@ -5,6 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#087443">
     <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
+    <script>
+        (function () {
+            function hidePageLoader() {
+                document.getElementById('pageLoader').classList.add('hide');
+                document.getElementById('riwayatMurid').classList.add('loaded');
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', hidePageLoader, { once: true });
+            } else {
+                hidePageLoader();
+            }
+            window.setTimeout(hidePageLoader, 800);
+        })();
+    </script>
     <title>Riwayat Absensi - SMP Muhammadiyah 44</title>
     <link rel="stylesheet" href="{{ asset('siswa css/riwayatsiswa.css') }}?v=8">
     <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=3">
@@ -349,13 +364,6 @@
     </div>
 
     <script>
-        function showPage() {
-            document.getElementById('pageLoader').classList.add('hide');
-            document.getElementById('riwayatMurid').classList.add('loaded');
-        }
-        window.addEventListener('load', function () { setTimeout(showPage, 700); });
-        setTimeout(showPage, 4000);
-
         function toggleSidebar(force) {
             var sidebar = document.getElementById('sidebar');
             var overlay = document.getElementById('sidebarOverlay');
@@ -525,6 +533,7 @@
             });
         })();
 
-    <script src="{{ asset('siswa js/siswa-ui.js') }}?v=2"></script>
+    </script>
+    <script src="{{ asset('siswa js/siswa-ui.js') }}?v=3" defer></script>
 </body>
 </html>

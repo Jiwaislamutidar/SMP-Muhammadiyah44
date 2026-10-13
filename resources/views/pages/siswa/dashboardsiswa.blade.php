@@ -4,6 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
+  <script>
+    (function () {
+      function hidePageLoader() {
+        document.getElementById('pageLoader').classList.add('hide');
+        document.getElementById('dashboardMurid').classList.add('loaded');
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', hidePageLoader, { once: true });
+      } else {
+        hidePageLoader();
+      }
+      window.setTimeout(hidePageLoader, 800);
+    })();
+  </script>
   <title>Dashboard Siswa - SMP Muhammadiyah 44</title>
   <link rel="stylesheet" href="{{ asset('siswa css/dashboardsiswa.css') }}?v=11">
   <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=3">
@@ -475,15 +490,6 @@ $rTotal = $rHadir + $rIzin + $rSakit + $rAlfa;
   </div>
 
   <script>
-    window.addEventListener('load', function () {
-      setTimeout(function () {
-        document.getElementById('pageLoader').classList.add('hide');
-        document.getElementById('dashboardMurid').classList.add('loaded');
-      }, 1000);
-    });
-  </script>
-
-  <script>
     function toggleSidebar(force) {
       var sidebar = document.getElementById('sidebar');
       var overlay = document.getElementById('sidebarOverlay');
@@ -503,6 +509,6 @@ $rTotal = $rHadir + $rIzin + $rSakit + $rAlfa;
     });
   </script>
 
-  <script src="{{ asset('siswa js/siswa-ui.js') }}?v=2"></script>
+  <script src="{{ asset('siswa js/siswa-ui.js') }}?v=3" defer></script>
 </body>
 </html>

@@ -21,8 +21,8 @@
     })();
   </script>
   <title>Scan QR Presensi - SMP Muhammadiyah 44</title>
-  <link rel="stylesheet" href="{{ asset('siswa css/scanqrsiswa.css') }}?v=6">
-  <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=3">
+  <link rel="stylesheet" href="{{ asset('siswa css/scanqrsiswa.css') }}?v=7">
+  <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=4">
 </head>
 <body>
 

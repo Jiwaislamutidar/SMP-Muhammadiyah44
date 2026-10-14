@@ -6,6 +6,7 @@ use App\Models\Siswa;
 use App\Models\JadwalPelajaran;
 use App\Models\Mapel;
 use App\Models\PresensiPelajaran;
+use App\Support\SiswaScheduleGrouper;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -44,7 +45,7 @@ class SiswaController extends Controller
             : collect();
         $periods = $siswaModel
             ? $siswaModel->presensiPelajarans()
-                ->whereNull('hidden_from_student_at')
+                ->visibleToStudent()
                 ->whereHas('sesiPelajaran')
                 ->with('sesiPelajaran:id,tanggal')
                 ->get(['sesi_pelajaran_id'])
@@ -59,6 +60,9 @@ class SiswaController extends Controller
             $periode => Carbon::createFromFormat('Y-m', $periode)->locale('id')->translatedFormat('F Y'),
         ]);
         $data['filters'] = $filters;
+        $data['deletableHistoryCount'] = $this->filteredAttendanceQuery($siswaModel, $filters)
+            ->whereIn('status', ['Hadir', 'Izin'])
+            ->count();
 
         return view('pages.siswa.riwayatsiswa', $data);
     }
@@ -93,6 +97,7 @@ class SiswaController extends Controller
         $filters = $this->validatedAttendanceFilters($request);
         $siswaModel = Auth::user()->siswa()->first();
         $deletedCount = $this->filteredAttendanceQuery($siswaModel, $filters)
+            ->whereIn('status', ['Hadir', 'Izin'])
             ->update(['hidden_from_student_at' => now()]);
         $redirect = redirect()->route(
             'siswa.riwayat',
@@ -100,10 +105,10 @@ class SiswaController extends Controller
         );
 
         if ($deletedCount === 0) {
-            return $redirect->with('error', 'Tidak ada riwayat yang cocok dengan filter untuk dihapus.');
+            return $redirect->with('error', 'Tidak ada riwayat yang dapat dihapus.');
         }
 
-        return $redirect->with('success', 'Riwayat presensi berhasil dihapus dari daftar Anda.');
+        return $redirect->with('success', "{$deletedCount} riwayat presensi disembunyikan dari daftar Anda.");
     }
 
     public function profil(): View
@@ -164,22 +169,7 @@ class SiswaController extends Controller
                 ->get();
         }
 
-        $jadwalHariIni = $jadwalRecords->map(function (JadwalPelajaran $jadwal) {
-            $sesi = $jadwal->sesiPelajarans->first();
-            $status = match ($sesi?->status_sesi) {
-                'Selesai' => 'Selesai',
-                'Berlangsung' => 'Berlangsung',
-                default => $jadwal->jam_mulai > now()->format('H:i:s') ? 'Akan Datang' : 'Belum',
-            };
-
-            return [
-                'jam' => substr($jadwal->jam_mulai, 0, 5).' - '.substr($jadwal->jam_selesai, 0, 5),
-                'mapel' => $jadwal->mapel->nama_mapel,
-                'guru' => $jadwal->guru->nama_lengkap,
-                'kelas' => $jadwal->kelas->nama_kelas,
-                'status' => $status,
-            ];
-        })->all();
+        $jadwalHariIni = (new SiswaScheduleGrouper)->merge($jadwalRecords, now())->all();
 
         $waktuSekarang = now()->format('H:i:s');
         $jadwalAktif = $jadwalRecords->first(function (JadwalPelajaran $jadwal) use ($waktuSekarang): bool {
@@ -190,6 +180,7 @@ class SiswaController extends Controller
 
         $counts = $siswaModel
             ? $siswaModel->presensiPelajarans()
+                ->visibleToStudent()
                 ->selectRaw('status, COUNT(*) as total')
                 ->groupBy('status')
                 ->pluck('total', 'status')
@@ -198,6 +189,7 @@ class SiswaController extends Controller
         $absensiTerbaru = $siswaModel
             ? PresensiPelajaran::with('sesiPelajaran.jadwal.mapel')
                 ->where('siswa_id', $siswaModel->id)
+                ->visibleToStudent()
                 ->latest('updated_at')
                 ->take(5)
                 ->get()
@@ -288,7 +280,7 @@ class SiswaController extends Controller
     {
         $query = PresensiPelajaran::query()
             ->with(['sesiPelajaran.jadwal.mapel', 'sesiPelajaran.jadwal.kelas'])
-            ->whereNull('hidden_from_student_at');
+            ->visibleToStudent();
 
         if ($siswa === null) {
             $query->whereRaw('1 = 0');

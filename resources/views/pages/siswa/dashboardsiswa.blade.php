@@ -20,8 +20,8 @@
     })();
   </script>
   <title>Dashboard Siswa - SMP Muhammadiyah 44</title>
-  <link rel="stylesheet" href="{{ asset('siswa css/dashboardsiswa.css') }}?v=11">
-  <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=3">
+  <link rel="stylesheet" href="{{ asset('siswa css/dashboardsiswa.css') }}?v=12">
+  <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=4">
 </head>
 <body>
 
@@ -444,7 +444,7 @@ $rTotal = $rHadir + $rIzin + $rSakit + $rAlfa;
               <tbody>
                 @forelse($jadwalHariIni ?? [] as $j)
                   <tr class="{{ $j['status'] === 'Berlangsung' ? 'berlangsung' : '' }}">
-                    <td data-label="Jam">{{ $j['jam'] }}</td>
+                    <td data-label="Jam">{{ $j['jam'] }}<small class="jadwal-duration">{{ $j['durasi'] }}</small></td>
                     <td data-label="Mapel">{{ $j['mapel'] }}</td>
                     <td data-label="Guru">{{ $j['guru'] ?? '-' }}</td>
                     <td data-label="Kelas">

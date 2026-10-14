@@ -687,7 +687,7 @@ body::-webkit-scrollbar-thumb {
   :root { --pop-top: 84px; --pop-left: 12px; --pop-ox: 30px; --pop-oy: -40px; }
 }
 @media (max-width: 480px) {
-  :root { --pop-ox: 26px; }
+  :root { --pop-ox: 27px; }
   .sidebar { width: min(232px, calc(100vw - 24px)); }
 }
 @media (prefers-reduced-motion: reduce) {

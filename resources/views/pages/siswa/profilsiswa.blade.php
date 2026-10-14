@@ -20,8 +20,8 @@
         })();
     </script>
     <title>Profil Murid - SMP Muhammadiyah 44</title>
-    <link rel="stylesheet" href="{{ asset('siswa css/profilsiswa.css') }}?v=4">
-    <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=3">
+    <link rel="stylesheet" href="{{ asset('siswa css/profilsiswa.css') }}?v=5">
+    <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=4">
 </head>
 <body>
     <div class="page-loader" id="pageLoader">

@@ -12,6 +12,7 @@
   <div class="dash-title-group">
     <h1 class="dash-title">Dashboard</h1>
     <p class="dash-subtitle">Kehadiran & aktivitas hari ini</p>
+    <p>SMP Muhammadiyah 44 Tangerang Selatan</p>
   </div>
   <div class="dash-quick-actions">
     <a class="dash-btn-outline" href="{{ route('admin.dataguru') }}">

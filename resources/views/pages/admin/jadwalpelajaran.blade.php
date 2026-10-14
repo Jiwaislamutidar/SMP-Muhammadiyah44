@@ -113,7 +113,22 @@
 			@endforelse
 		</tbody>
 	</table>
-	<div class="admin-pagination">{{ $jadwals->links() }}</div>
+	<div class="admin-pagination">
+		<span>Menampilkan {{ $jadwals->firstItem() ?? 0 }}–{{ $jadwals->lastItem() ?? 0 }} dari {{ $jadwals->total() }} jadwal</span>
+		<div class="admin-page-links">
+			@if ($jadwals->onFirstPage())
+				<span class="disabled" aria-disabled="true">‹</span>
+			@else
+				<a href="{{ $jadwals->previousPageUrl() }}" aria-label="Halaman sebelumnya">‹</a>
+			@endif
+			<span>Halaman {{ $jadwals->currentPage() }} dari {{ $jadwals->lastPage() }}</span>
+			@if ($jadwals->hasMorePages())
+				<a href="{{ $jadwals->nextPageUrl() }}" aria-label="Halaman berikutnya">›</a>
+			@else
+				<span class="disabled" aria-disabled="true">›</span>
+			@endif
+		</div>
+	</div>
 </section>
 
 <script>

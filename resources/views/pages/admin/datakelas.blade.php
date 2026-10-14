@@ -67,10 +67,10 @@
   </table>
   <div class="admin-pagination">
     <span>Menampilkan 1–5 dari 18 kelas</span>
-    <div>
-      <button class="active">1</button>
-      <button>2</button>
-      <button>3</button>
+    <div class="admin-page-links">
+      <span class="disabled" aria-disabled="true">‹</span>
+      <span>Halaman 1 dari 4</span>
+      <button type="button" onclick="showAdminToast('Halaman 2')" aria-label="Halaman berikutnya">›</button>
     </div>
   </div>
 </section>

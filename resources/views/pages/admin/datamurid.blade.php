@@ -82,9 +82,17 @@
 	<div class="admin-pagination">
 		<span>Menampilkan {{ $siswas->firstItem() ?? 0 }}–{{ $siswas->lastItem() ?? 0 }} dari {{ $siswas->total() }} murid</span>
 		<div class="admin-page-links">
-			@if($siswas->previousPageUrl())<a href="{{ $siswas->previousPageUrl() }}" aria-label="Halaman sebelumnya">‹</a>@endif
+			@if ($siswas->onFirstPage())
+				<span class="disabled" aria-disabled="true">‹</span>
+			@else
+				<a href="{{ $siswas->previousPageUrl() }}" aria-label="Halaman sebelumnya">‹</a>
+			@endif
 			<span>Halaman {{ $siswas->currentPage() }} dari {{ $siswas->lastPage() }}</span>
-			@if($siswas->nextPageUrl())<a href="{{ $siswas->nextPageUrl() }}" aria-label="Halaman berikutnya">›</a>@endif
+			@if ($siswas->hasMorePages())
+				<a href="{{ $siswas->nextPageUrl() }}" aria-label="Halaman berikutnya">›</a>
+			@else
+				<span class="disabled" aria-disabled="true">›</span>
+			@endif
 		</div>
 	</div>
 </section>

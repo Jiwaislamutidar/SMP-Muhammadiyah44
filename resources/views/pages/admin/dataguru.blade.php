@@ -97,9 +97,17 @@
 	<div class="admin-pagination">
 		<span>Menampilkan {{ $gurus->firstItem() ?? 0 }}–{{ $gurus->lastItem() ?? 0 }} dari {{ $gurus->total() }} guru</span>
 		<div class="admin-page-links">
-			@if ($gurus->previousPageUrl())<a href="{{ $gurus->previousPageUrl() }}" aria-label="Halaman sebelumnya">‹</a>@endif
+			@if ($gurus->onFirstPage())
+				<span class="disabled" aria-disabled="true">‹</span>
+			@else
+				<a href="{{ $gurus->previousPageUrl() }}" aria-label="Halaman sebelumnya">‹</a>
+			@endif
 			<span>Halaman {{ $gurus->currentPage() }} dari {{ $gurus->lastPage() }}</span>
-			@if ($gurus->nextPageUrl())<a href="{{ $gurus->nextPageUrl() }}" aria-label="Halaman berikutnya">›</a>@endif
+			@if ($gurus->hasMorePages())
+				<a href="{{ $gurus->nextPageUrl() }}" aria-label="Halaman berikutnya">›</a>
+			@else
+				<span class="disabled" aria-disabled="true">›</span>
+			@endif
 		</div>
 	</div>
 </section>

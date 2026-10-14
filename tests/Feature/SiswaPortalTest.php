@@ -13,6 +13,8 @@ use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
+use Symfony\Component\Process\ExecutableFinder;
+use Symfony\Component\Process\Process;
 use Tests\TestCase;
 
 class SiswaPortalTest extends TestCase
@@ -28,7 +30,14 @@ class SiswaPortalTest extends TestCase
             $this->get(route($routeName))
                 ->assertOk()
                 ->assertSee('Nadia Rahma QA')
-                ->assertSee('siswa-ui.js?v=2')
+                ->assertSee('siswa-ui.css?v=4')
+                ->assertSee(match ($routeName) {
+                    'siswa.dashboard' => 'dashboardsiswa.css?v=12',
+                    'siswa.scan-qr' => 'scanqrsiswa.css?v=7',
+                    'siswa.riwayat' => 'riwayatsiswa.css?v=9',
+                    'siswa.profil' => 'profilsiswa.css?v=5',
+                })
+                ->assertSee('siswa-ui.js?v=3')
                 ->assertSee('aria-haspopup="dialog"', false)
                 ->assertSee('Notifikasi')
                 ->assertSee('Belum ada notifikasi presensi.');
@@ -36,18 +45,57 @@ class SiswaPortalTest extends TestCase
 
         $this->get(route('siswa.dashboard'))
             ->assertOk()
-            ->assertSee('dashboardsiswa.css?v=11');
+            ->assertSee('dashboardsiswa.css?v=12');
 
         $this->get(route('siswa.riwayat'))
             ->assertOk()
-            ->assertSee('riwayatsiswa.css?v=8')
+            ->assertSee('riwayatsiswa.css?v=9')
             ->assertSee('name="periode"', false)
             ->assertSee('name="mapel_id"', false)
             ->assertSee('name="status"', false);
 
         $this->get(route('siswa.scan-qr'))
             ->assertDontSee('Ahmad Fauzan')
-            ->assertSee('NR');
+            ->assertSee('NR')
+            ->assertSee('html5-qrcode.min.js?v=2.3.8');
+    }
+
+    public function test_inline_scripts_on_student_pages_are_valid_javascript(): void
+    {
+        $node = (new ExecutableFinder())->find('node');
+        if ($node === null) {
+            $this->markTestSkipped('Node.js is required to validate rendered inline scripts.');
+        }
+
+        [$user] = $this->makeStudent();
+        $this->actingAs($user);
+
+        foreach (['siswa.dashboard', 'siswa.scan-qr', 'siswa.riwayat', 'siswa.profil'] as $routeName) {
+            $html = $this->get(route($routeName))->assertOk()->getContent();
+            preg_match_all('~<script\b(?![^>]*\bsrc\s*=)[^>]*>(.*?)</script\s*>~is', $html, $matches);
+            $this->assertNotEmpty($matches[1], "No inline scripts found for {$routeName}.");
+
+            foreach ($matches[1] as $scriptIndex => $script) {
+                $temporaryFile = tempnam(sys_get_temp_dir(), 'student-inline-script-');
+                $this->assertNotFalse($temporaryFile);
+                $javascriptFile = $temporaryFile.'.cjs';
+                $this->assertTrue(rename($temporaryFile, $javascriptFile));
+
+                try {
+                    $this->assertNotFalse(file_put_contents($javascriptFile, $script));
+                    $process = new Process([$node, '--check', $javascriptFile]);
+                    $process->run();
+                    $this->assertTrue(
+                        $process->isSuccessful(),
+                        "{$routeName} inline script {$scriptIndex}: ".$process->getErrorOutput()
+                    );
+                } finally {
+                    if (is_file($javascriptFile)) {
+                        unlink($javascriptFile);
+                    }
+                }
+            }
+        }
     }
 
     public function test_student_can_change_password_with_the_current_password(): void
@@ -129,11 +177,125 @@ class SiswaPortalTest extends TestCase
         $this->actingAs($user)
             ->post(route('siswa.riwayat.destroy'), [])
             ->assertRedirect(route('siswa.riwayat'))
-            ->assertSessionHas('success', 'Riwayat presensi berhasil dihapus dari daftar Anda.');
+            ->assertSessionHas('success', '1 riwayat presensi disembunyikan dari daftar Anda.');
 
         $this->assertDatabaseHas('presensi_pelajarans', ['id' => $studentAttendance->id]);
         $this->assertNotNull($studentAttendance->fresh()->hidden_from_student_at);
         $this->assertNull($otherAttendance->fresh()->hidden_from_student_at);
+    }
+
+    public function test_student_history_delete_hides_only_hadir_and_izin(): void
+    {
+        [$user, $student] = $this->makeStudent();
+        $attendances = collect(['Hadir', 'Izin', 'Sakit', 'Alfa'])
+            ->map(function (string $status) use ($student): PresensiPelajaran {
+                $attendance = $this->makeHistoryAttendance($student);
+                $attendance->update(['status' => $status]);
+
+                return $attendance;
+            });
+
+        $this->actingAs($user)
+            ->post(route('siswa.riwayat.destroy'), [])
+            ->assertRedirect(route('siswa.riwayat'))
+            ->assertSessionHas('success', '2 riwayat presensi disembunyikan dari daftar Anda.');
+
+        foreach ($attendances as $attendance) {
+            $this->assertSame(
+                in_array($attendance->status, ['Hadir', 'Izin'], true),
+                $attendance->fresh()->hidden_from_student_at !== null
+            );
+        }
+
+        $this->get(route('siswa.dashboard'))
+            ->assertOk()
+            ->assertSee('class="ring-num">0<small>%</small>', false)
+            ->assertViewHas('ringkasan', fn (array $summary): bool => $summary['hadir'] === 0
+                && $summary['izin'] === 0
+                && $summary['sakit'] === 1
+                && $summary['alfa'] === 1);
+    }
+
+    public function test_hidden_sick_and_alfa_remain_visible_and_included_in_student_summaries_and_pdf(): void
+    {
+        [$user, $student] = $this->makeStudent();
+        $hiddenPresent = $this->makeHistoryAttendance($student);
+        $hiddenPresent->forceFill(['hidden_from_student_at' => now()])->save();
+        $hiddenSick = $this->makeHistoryAttendance($student);
+        $hiddenSick->forceFill(['status' => 'Sakit', 'hidden_from_student_at' => now()])->save();
+        $hiddenAlfa = $this->makeHistoryAttendance($student);
+        $hiddenAlfa->forceFill(['status' => 'Alfa', 'hidden_from_student_at' => now()])->save();
+
+        $this->actingAs($user)
+            ->get(route('siswa.dashboard'))
+            ->assertOk()
+            ->assertSee('class="ring-num">0<small>%</small>', false)
+            ->assertViewHas('ringkasan', fn (array $summary): bool => $summary['sakit'] === 1 && $summary['alfa'] === 1)
+            ->assertViewHas('notifikasiPresensi', fn (array $notifications): bool => collect($notifications)->pluck('status')->sort()->values()->all() === ['Alfa', 'Sakit']);
+
+        $this->get(route('siswa.riwayat'))
+            ->assertOk()
+            ->assertSee('badge-sakit')
+            ->assertSee('badge-alfa')
+            ->assertSee('Tidak ada riwayat yang dapat dihapus.')
+            ->assertSee('disabled', false)
+            ->assertViewHas('ringkasan', fn (array $summary): bool => $summary['sakit'] === 1 && $summary['alfa'] === 1);
+
+        $pdf = \Mockery::mock(\Barryvdh\DomPDF\PDF::class);
+        $pdf->shouldReceive('setPaper')->once()->with('a4', 'landscape')->andReturnSelf();
+        $pdf->shouldReceive('download')->once()->andReturn(response('PDF test'));
+        Pdf::shouldReceive('loadView')
+            ->once()
+            ->with('pages.siswa.rekap-presensi-pdf', \Mockery::on(function (array $data) use ($student, $hiddenSick, $hiddenAlfa): bool {
+                $this->assertSame([$hiddenSick->id, $hiddenAlfa->id], $data['riwayatPresensi']->modelKeys());
+                $this->assertSame($student->id, $data['riwayatPresensi']->first()->siswa_id);
+
+                return true;
+            }))
+            ->andReturn($pdf);
+
+        $this->get(route('siswa.riwayat.export'))
+            ->assertOk()
+            ->assertSee('PDF test');
+    }
+
+    public function test_student_cannot_hide_sick_or_alfa_by_filtering_history(): void
+    {
+        [$user, $student] = $this->makeStudent();
+        $sickAttendance = $this->makeHistoryAttendance($student);
+        $sickAttendance->update(['status' => 'Sakit']);
+
+        $this->actingAs($user)
+            ->from(route('siswa.riwayat', ['status' => 'Sakit']))
+            ->post(route('siswa.riwayat.destroy'), ['status' => 'Sakit'])
+            ->assertRedirect(route('siswa.riwayat', ['status' => 'Sakit']))
+            ->assertSessionHas('error', 'Tidak ada riwayat yang dapat dihapus.');
+
+        $this->assertNull($sickAttendance->fresh()->hidden_from_student_at);
+    }
+
+    public function test_hidden_hadir_still_blocks_scanning_again_for_the_same_session(): void
+    {
+        $this->travelTo(now()->startOfDay()->addHours(10));
+        $kelas = Kelas::create(['nama_kelas' => 'QA-HIDDEN-SCAN-' . bin2hex(random_bytes(4))]);
+        [$user, $student] = $this->makeStudent($kelas);
+        [$sesi] = $this->makeOpenSession($kelas);
+        $attendance = $this->makeSessionAttendance($sesi, $student);
+        $attendance->forceFill([
+            'status' => 'Hadir',
+            'waktu_scan' => now()->subMinute(),
+            'hidden_from_student_at' => now(),
+        ])->save();
+
+        $this->actingAs($user)
+            ->postJson(route('siswa.scan'), ['token' => $sesi->qr_token])
+            ->assertOk()
+            ->assertJsonPath('message', 'Presensi Anda sudah tercatat.')
+            ->assertJsonPath('status', 'Hadir');
+
+        $this->assertSame('Hadir', $attendance->fresh()->status);
+        $this->assertNotNull($attendance->fresh()->hidden_from_student_at);
+        $this->travelBack();
     }
 
     public function test_scanned_history_and_dashboard_are_scoped_to_the_logged_in_student(): void

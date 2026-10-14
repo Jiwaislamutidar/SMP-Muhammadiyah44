@@ -5,9 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#087443">
     <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
+    <script>
+        (function () {
+            function hidePageLoader() {
+                document.getElementById('pageLoader').classList.add('hide');
+                document.getElementById('riwayatMurid').classList.add('loaded');
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', hidePageLoader, { once: true });
+            } else {
+                hidePageLoader();
+            }
+            window.setTimeout(hidePageLoader, 800);
+        })();
+    </script>
     <title>Riwayat Absensi - SMP Muhammadiyah 44</title>
-    <link rel="stylesheet" href="{{ asset('siswa css/riwayatsiswa.css') }}?v=8">
-    <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=3">
+    <link rel="stylesheet" href="{{ asset('siswa css/riwayatsiswa.css') }}?v=9">
+    <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=4">
 </head>
 <body>
     <div class="page-loader" id="pageLoader">
@@ -272,10 +287,13 @@
                             <input type="hidden" name="status" value="{{ $filters['status'] }}">
                             <button class="btn-export" type="submit">Unduh Rekap (PDF)</button>
                         </form>
-                        <button class="btn-delete-history" type="button" id="openDeleteHistoryModal">Hapus Riwayat</button>
+                        <button class="btn-delete-history" type="button" id="openDeleteHistoryModal" @disabled($deletableHistoryCount === 0)>Hapus Riwayat</button>
                     </div>
                 </div>
 
+                @if($deletableHistoryCount === 0)
+                    <div class="history-alert" role="status">Tidak ada riwayat yang dapat dihapus.</div>
+                @endif
                 @if(session('success'))
                     <div class="history-alert history-alert-success" role="status">{{ session('success') }}</div>
                 @endif
@@ -325,7 +343,7 @@
             <section class="history-modal" role="dialog" aria-modal="true" aria-labelledby="deleteHistoryTitle" aria-describedby="deleteHistoryDescription">
                 <div class="history-modal-icon" aria-hidden="true">!</div>
                 <h2 id="deleteHistoryTitle">Hapus riwayat presensi?</h2>
-                <p id="deleteHistoryDescription">Riwayat yang sesuai dengan filter aktif akan disembunyikan dari daftar dan rekap Anda. Data presensi tetap tersimpan untuk keperluan sekolah.</p>
+                <p id="deleteHistoryDescription">Riwayat Hadir dan Izin yang sesuai dengan filter aktif akan disembunyikan dari daftar dan rekap Anda. Riwayat Sakit dan Alfa tidak ikut dihapus. Data presensi tetap tersimpan untuk keperluan sekolah.</p>
                 <form method="POST" action="{{ route('siswa.riwayat.destroy') }}" class="history-modal-form">
                     @csrf
                     <input type="hidden" name="periode" value="{{ $filters['periode'] }}">
@@ -349,13 +367,6 @@
     </div>
 
     <script>
-        function showPage() {
-            document.getElementById('pageLoader').classList.add('hide');
-            document.getElementById('riwayatMurid').classList.add('loaded');
-        }
-        window.addEventListener('load', function () { setTimeout(showPage, 700); });
-        setTimeout(showPage, 4000);
-
         function toggleSidebar(force) {
             var sidebar = document.getElementById('sidebar');
             var overlay = document.getElementById('sidebarOverlay');
@@ -525,6 +536,7 @@
             });
         })();
 
-    <script src="{{ asset('siswa js/siswa-ui.js') }}?v=2"></script>
+    </script>
+    <script src="{{ asset('siswa js/siswa-ui.js') }}?v=3" defer></script>
 </body>
 </html>

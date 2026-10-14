@@ -1860,7 +1860,7 @@ table.jadwal tbody tr.berlangsung:hover { background: #e0ebfd; }
 :root {
   --pop-top: 98px;
   --pop-left: 32px;
-  --pop-ox: 39px;
+  --pop-ox: 38px;
   --pop-oy: -44px;
 }
 
@@ -1920,10 +1920,10 @@ table.jadwal tbody tr.berlangsung:hover { background: #e0ebfd; }
 }
 
 @media (max-width: 1024px) {
-  :root { --pop-left: 20px; --pop-ox: 35px; }
+  :root { --pop-left: 20px; --pop-ox: 34px; }
 }
 @media (max-width: 768px) {
-  :root { --pop-top: 84px; --pop-left: 12px; --pop-ox: 31px; --pop-oy: -40px; }
+  :root { --pop-top: 84px; --pop-left: 12px; --pop-ox: 30px; --pop-oy: -40px; }
 }
 @media (max-width: 480px) {
   :root { --pop-ox: 27px; }

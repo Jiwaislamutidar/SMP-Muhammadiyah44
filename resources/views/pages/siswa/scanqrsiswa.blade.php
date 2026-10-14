@@ -5,9 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
+  <script>
+    (function () {
+      function hidePageLoader() {
+        document.getElementById('pageLoader').classList.add('hide');
+        document.getElementById('dashboardMurid').classList.add('loaded');
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', hidePageLoader, { once: true });
+      } else {
+        hidePageLoader();
+      }
+      window.setTimeout(hidePageLoader, 800);
+    })();
+  </script>
   <title>Scan QR Presensi - SMP Muhammadiyah 44</title>
-  <link rel="stylesheet" href="{{ asset('siswa css/scanqrsiswa.css') }}?v=6">
-  <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=3">
+  <link rel="stylesheet" href="{{ asset('siswa css/scanqrsiswa.css') }}?v=7">
+  <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=4">
 </head>
 <body>
 
@@ -265,16 +280,9 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="{{ asset('siswa js/html5-qrcode.min.js') }}?v=2.3.8" defer></script>
 
   <script>
-    window.addEventListener('load', function () {
-      setTimeout(function () {
-        document.getElementById('pageLoader').classList.add('hide');
-        document.getElementById('dashboardMurid').classList.add('loaded');
-      }, 1000);
-    });
-
     function toggleSidebar(force) {
       var sidebar = document.getElementById('sidebar');
       var overlay = document.getElementById('sidebarOverlay');
@@ -450,6 +458,6 @@
 
     }
   </script>
-  <script src="{{ asset('siswa js/siswa-ui.js') }}?v=2"></script>
+  <script src="{{ asset('siswa js/siswa-ui.js') }}?v=3" defer></script>
 </body>
 </html>

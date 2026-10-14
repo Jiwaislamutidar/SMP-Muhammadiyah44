@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -19,6 +20,14 @@ class PresensiPelajaran extends Model
         'waktu_scan' => 'datetime',
         'hidden_from_student_at' => 'datetime',
     ];
+
+    public function scopeVisibleToStudent(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query) {
+            $query->whereNull('hidden_from_student_at')
+                ->orWhereIn('status', ['Sakit', 'Alfa']);
+        });
+    }
 
     public function sesiPelajaran(): BelongsTo
     {

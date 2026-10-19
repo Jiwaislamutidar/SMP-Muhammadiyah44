@@ -62,19 +62,19 @@
 
 <form class="admin-toolbar" method="GET" action="{{ route('admin.jadwalpelajaran') }}">
 	<input class="admin-search" name="search" value="{{ request('search') }}" placeholder="Cari guru, mapel, atau kelas..." aria-label="Cari jadwal">
-	<select class="admin-select" name="hari" onchange="this.form.submit()">
+	<select class="admin-select" name="hari">
 		<option value="">Semua Hari</option>
 		@foreach($hariList as $hari)
 			<option value="{{ $hari }}" @selected(request('hari') === $hari)>{{ $hari }}</option>
 		@endforeach
 	</select>
-	<select class="admin-select" name="kelas_id" onchange="this.form.submit()">
+	<select class="admin-select" name="kelas_id">
 		<option value="">Semua Kelas</option>
 		@foreach($kelasList as $kelas)
 			<option value="{{ $kelas->id }}" @selected((string) request('kelas_id') === (string) $kelas->id)>{{ $kelas->nama_kelas }}</option>
 		@endforeach
 	</select>
-	<select class="admin-select" name="mapel_id" onchange="this.form.submit()">
+	<select class="admin-select" name="mapel_id">
 		<option value="">Semua Mapel</option>
 		@foreach($mapelList as $mapel)
 			<option value="{{ $mapel->id }}" @selected((string) request('mapel_id') === (string) $mapel->id)>{{ $mapel->nama_mapel }}</option>

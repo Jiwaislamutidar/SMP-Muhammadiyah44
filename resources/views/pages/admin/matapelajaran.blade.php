@@ -34,7 +34,6 @@
     <option value="Aktif" @selected(request('status') === 'Aktif')>Aktif</option>
     <option value="Nonaktif" @selected(request('status') === 'Nonaktif')>Nonaktif</option>
   </select>
-  <button class="admin-filter-submit" type="submit">Filter</button>
   <span class="admin-total">Total {{ $mapelList->count() }} Mapel</span>
 </form>
 

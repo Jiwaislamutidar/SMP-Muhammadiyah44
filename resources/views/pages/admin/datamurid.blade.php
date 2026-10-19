@@ -44,7 +44,6 @@
 			<option value="{{ $kelas->id }}" @selected((string) request('kelas_id') === (string) $kelas->id)>{{ $kelas->nama_kelas }}</option>
 		@endforeach
 	</select>
-	<button class="admin-filter-submit" type="submit">Cari</button>
 	<span class="admin-total">Total {{ $totalSiswa }} Murid</span>
 </form>
 

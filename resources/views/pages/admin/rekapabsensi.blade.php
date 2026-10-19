@@ -49,13 +49,13 @@
 
 <form class="admin-toolbar" method="GET">
   <input class="admin-search" name="search" value="{{ request('search') }}" placeholder="Cari nama atau NISN murid..." aria-label="Cari murid">
-  <select class="admin-select" name="kelas" onchange="this.form.submit()">
+  <select class="admin-select" name="kelas">
     <option value="">Semua Kelas</option>
     @foreach (['7A', '7B', '8A', '8B', '9A', '9B'] as $k)
       <option value="{{ $k }}" @selected(request('kelas') === $k)>{{ $k }}</option>
     @endforeach
   </select>
-  <select class="admin-select" name="status" onchange="this.form.submit()">
+  <select class="admin-select" name="status">
     <option value="">Semua Status</option>
     @foreach (['Hadir', 'Izin', 'Alfa'] as $s)
       <option value="{{ $s }}" @selected(request('status') === $s)>{{ $s }}</option>

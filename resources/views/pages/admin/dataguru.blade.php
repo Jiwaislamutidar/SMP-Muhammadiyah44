@@ -31,7 +31,6 @@
 		<option value="aktif" @selected (request('status') === 'aktif')>Aktif</option>
 		<option value="nonaktif" @selected (request('status') === 'nonaktif')>Nonaktif</option>
 	</select>
-	<button class="admin-filter-submit" type="submit">Cari</button>
 	<span class="admin-total">Total {{ $totalGuru }} Guru</span>
 </form>
 

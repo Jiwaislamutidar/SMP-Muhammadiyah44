@@ -32,7 +32,6 @@
     <option value="VIII" @selected(request('tingkat') === 'VIII')>VIII</option>
     <option value="IX" @selected(request('tingkat') === 'IX')>IX</option>
   </select>
-  <button class="admin-filter-submit" type="submit">Filter</button>
   <span class="admin-total">Total {{ $kelasList->count() }} Kelas</span>
 </form>
 

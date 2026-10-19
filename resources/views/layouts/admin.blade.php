@@ -204,6 +204,6 @@
 
 </div>{{-- /.admin-app --}}
 
-<script src="{{ asset('admin css/admin.js') }}?v=5"></script>
+<script src="{{ asset('admin css/admin.js') }}?v={{ filemtime(public_path('admin css/admin.js')) }}"></script>
 </body>
 </html>

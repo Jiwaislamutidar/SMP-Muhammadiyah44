@@ -100,16 +100,6 @@
     });
   });
 
-  // ── Admin toolbar select auto-submit ──────────
-  document.querySelectorAll('form.admin-toolbar select.admin-select').forEach((sel) => {
-    const form = sel.form;
-    if (form && form.querySelectorAll('select.admin-select').length > 1) {
-      return;
-    }
-    sel.addEventListener('change', () => {
-      if (sel.form) sel.form.submit();
-    });
-  });
 
   // ── Admin pagination (stub pages) ────────────
   document.querySelectorAll('.admin-pagination').forEach((pagination) => {

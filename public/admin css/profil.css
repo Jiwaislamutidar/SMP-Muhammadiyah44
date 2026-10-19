@@ -38,6 +38,10 @@
   transition: all .15s ease;
 }
 
+.settings-menu button svg {
+  flex-shrink: 0;
+}
+
 .settings-menu button:hover {
   background: var(--surface);
   color: var(--ink);

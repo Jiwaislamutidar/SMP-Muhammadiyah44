@@ -11,16 +11,29 @@
   <button class="admin-action" type="button" onclick="showAdminToast('Fitur Tambah Kelas siap digunakan setelah sinkronisasi')">+ Tambah Kelas</button>
 </div>
 
+@php
+  $rawKelas = [
+    ['7A', 'Kelas 7A', 'Tingkat VII', 'Ahmad Fauzi, S.Pd.',    '32', 'Ruang 101', 'Gedung A Lt. 1'],
+    ['7B', 'Kelas 7B', 'Tingkat VII', 'Siti Rahma, S.Pd.',     '30', 'Ruang 102', 'Gedung A Lt. 1'],
+    ['8A', 'Kelas 8A', 'Tingkat VIII','Budi Santoso, M.Pd.',   '31', 'Ruang 201', 'Gedung B Lt. 2'],
+    ['8B', 'Kelas 8B', 'Tingkat VIII','Dewi Lestari, S.Pd.',   '29', 'Ruang 202', 'Gedung B Lt. 2'],
+    ['9A', 'Kelas 9A', 'Tingkat IX',  'Rizky Maulana, S.Pd.',  '30', 'Ruang 301', 'Gedung C Lt. 3'],
+  ];
+  $kelasList = collect($rawKelas)
+    ->when(request('tingkat'), fn($c, $t) => $c->filter(fn($k) => str_contains($k[2], $t)))
+    ->when(request('search'), fn($c, $s) => $c->filter(fn($k) => str_contains(strtolower($k[1].' '.$k[3]), strtolower($s))));
+@endphp
+
 <form class="admin-toolbar" method="GET">
-  <input class="admin-search" placeholder="Cari nama kelas atau wali kelas..." aria-label="Cari kelas">
-  <select class="admin-select" name="tingkat">
+  <input class="admin-search" name="search" value="{{ request('search') }}" placeholder="Cari nama kelas atau wali kelas..." aria-label="Cari kelas">
+  <select class="admin-select" name="tingkat" onchange="this.form.submit()">
     <option value="">Semua Tingkat</option>
-    <option>VII</option>
-    <option>VIII</option>
-    <option>IX</option>
+    <option value="VII" @selected(request('tingkat') === 'VII')>VII</option>
+    <option value="VIII" @selected(request('tingkat') === 'VIII')>VIII</option>
+    <option value="IX" @selected(request('tingkat') === 'IX')>IX</option>
   </select>
   <button class="admin-filter-submit" type="submit">Filter</button>
-  <span class="admin-total">Total 18 Kelas</span>
+  <span class="admin-total">Total {{ $kelasList->count() }} Kelas</span>
 </form>
 
 <section class="panel admin-table-wrap">
@@ -36,13 +49,7 @@
       </tr>
     </thead>
     <tbody>
-      @foreach ([
-        ['7A', 'Kelas 7A', 'Tingkat VII', 'Ahmad Fauzi, S.Pd.',    '32', 'Ruang 101', 'Gedung A Lt. 1'],
-        ['7B', 'Kelas 7B', 'Tingkat VII', 'Siti Rahma, S.Pd.',     '30', 'Ruang 102', 'Gedung A Lt. 1'],
-        ['8A', 'Kelas 8A', 'Tingkat VIII','Budi Santoso, M.Pd.',   '31', 'Ruang 201', 'Gedung B Lt. 2'],
-        ['8B', 'Kelas 8B', 'Tingkat VIII','Dewi Lestari, S.Pd.',   '29', 'Ruang 202', 'Gedung B Lt. 2'],
-        ['9A', 'Kelas 9A', 'Tingkat IX',  'Rizky Maulana, S.Pd.',  '30', 'Ruang 301', 'Gedung C Lt. 3'],
-      ] as $kelas)
+      @forelse ($kelasList as $kelas)
         <tr>
           <td>
             <div class="class-identity">
@@ -62,7 +69,9 @@
           <td><span class="badge">Aktif</span></td>
           <td><button class="link-action" type="button" onclick="showAdminToast('Detail {{ $kelas[1] }}')">Detail</button></td>
         </tr>
-      @endforeach
+      @empty
+        <tr><td class="admin-empty-row" colspan="6">Belum ada data kelas yang sesuai.</td></tr>
+      @endforelse
     </tbody>
   </table>
   <div class="admin-pagination">

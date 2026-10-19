@@ -100,6 +100,13 @@
     });
   });
 
+  // ── Admin toolbar select auto-submit ──────────
+  document.querySelectorAll('form.admin-toolbar select.admin-select').forEach((sel) => {
+    sel.addEventListener('change', () => {
+      if (sel.form) sel.form.submit();
+    });
+  });
+
   // ── Admin pagination (stub pages) ────────────
   document.querySelectorAll('.admin-pagination').forEach((pagination) => {
     pagination.querySelectorAll('button').forEach((btn) => {

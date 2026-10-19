@@ -29,7 +29,7 @@
         .input-field { width: 100%; height: 44px; padding: 0 14px; background: #ffffff; border: 1px solid #e4eae6; border-radius: 8px; font-size: 14px; color: #17211c; outline: none; transition: border-color 0.3s ease, box-shadow 0.3s ease; }
         .input-field:focus { border-color: #087443; box-shadow: 0 0 0 3px rgba(8, 116, 67, 0.1); }
         .input-field:focus ~ .label, .input-field:not(:placeholder-shown) ~ .label { top: 0; color: #087443; transform: translateY(-50%) scale(0.86); }
-        .password-header { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 6px; }
+        .password-header { display: flex; justify-content: flex-end; align-items: center; margin-top: 8px; }
         .forgot-link { color: #087443; font-size: 12px; text-decoration: none; font-weight: 500; }
         .password-wrapper { position: relative; }
         .toggle-password-btn { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #6b756f; font-size: 18px; display: flex; align-items: center; }
@@ -83,15 +83,15 @@
             </div>
 
             <div>
-                <div class="password-header">
-                    <a href="#" class="forgot-link">Lupa sandi?</a>
-                </div>
                 <div class="password-wrapper floating-field">
                     <input type="password" id="password" name="password" class="input-field" placeholder=" " required />
                     <label class="label" for="password">Kata Sandi</label>
                     <button type="button" class="toggle-password-btn" onclick="togglePassword()">
                         <i class="bi bi-eye-slash" id="toggleIcon"></i>
                     </button>
+                </div>
+                <div class="password-header">
+                    <a href="#" class="forgot-link">Lupa sandi?</a>
                 </div>
             </div>
 

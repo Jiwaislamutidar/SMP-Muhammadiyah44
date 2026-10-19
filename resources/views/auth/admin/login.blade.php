@@ -188,7 +188,7 @@
             display: flex;
             justify-content: flex-end;
             align-items: center;
-            margin-bottom: 6px;
+            margin-top: 8px;
         }
 
         .forgot-link {
@@ -375,9 +375,6 @@
 
             <!-- Password -->
             <div>
-                <div class="password-header">
-                    <a href="#" class="forgot-link">Lupa sandi?</a>
-                </div>
                 <div class="password-wrapper floating-field">
                     <input 
                         type="password" 
@@ -391,6 +388,9 @@
                     <button type="button" class="toggle-password-btn" onclick="togglePassword()">
                         <i class="bi bi-eye-slash" id="toggleIcon"></i>
                     </button>
+                </div>
+                <div class="password-header">
+                    <a href="#" class="forgot-link">Lupa sandi?</a>
                 </div>
             </div>
 

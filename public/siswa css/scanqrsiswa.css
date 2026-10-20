@@ -864,3 +864,16 @@ body::-webkit-scrollbar-thumb {
 @media (prefers-reduced-motion: reduce) {
   .sidebar { transform: none; }
 }
+
+@media (max-width: 640px) {
+  .page-header h1 { font-size: clamp(20px, 5.5vw, 24px); }
+  .page-header p { font-size: 13px; line-height: 1.5; }
+  .role-status { flex-wrap: wrap; gap: 8px; }
+  .status-pill,
+  .class-pill { padding: 6px 10px; font-size: 12px; white-space: nowrap; }
+  .scanner-card { padding: 16px; }
+  .scanner-header { margin-bottom: 14px; font-size: 14px; }
+  .camera-frame { width: min(100%, 300px); max-height: 300px; margin-inline: auto; }
+  .scanner-actions { margin-top: 16px; }
+  .scanner-actions button { min-height: 44px; padding: 10px 12px; font-size: 14px; }
+}

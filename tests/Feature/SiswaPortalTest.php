@@ -32,10 +32,10 @@ class SiswaPortalTest extends TestCase
                 ->assertSee('Nadia Rahma QA')
                 ->assertSee('siswa-ui.css?v=4')
                 ->assertSee(match ($routeName) {
-                    'siswa.dashboard' => 'dashboardsiswa.css?v=12',
-                    'siswa.scan-qr' => 'scanqrsiswa.css?v=7',
+                    'siswa.dashboard' => 'dashboardsiswa.css?v=13',
+                    'siswa.scan-qr' => 'scanqrsiswa.css?v=8',
                     'siswa.riwayat' => 'riwayatsiswa.css?v=9',
-                    'siswa.profil' => 'profilsiswa.css?v=5',
+                    'siswa.profil' => 'profilsiswa.css?v=6',
                 })
                 ->assertSee('siswa-ui.js?v=3')
                 ->assertSee('aria-haspopup="dialog"', false)
@@ -45,7 +45,7 @@ class SiswaPortalTest extends TestCase
 
         $this->get(route('siswa.dashboard'))
             ->assertOk()
-            ->assertSee('dashboardsiswa.css?v=12');
+            ->assertSee('dashboardsiswa.css?v=13');
 
         $this->get(route('siswa.riwayat'))
             ->assertOk()
@@ -58,6 +58,23 @@ class SiswaPortalTest extends TestCase
             ->assertDontSee('Ahmad Fauzan')
             ->assertSee('NR')
             ->assertSee('html5-qrcode.min.js?v=2.3.8');
+    }
+
+    public function test_password_change_modal_renders_three_visibility_toggles_without_changing_input_attributes(): void
+    {
+        [$user] = $this->makeStudent();
+
+        $html = $this->actingAs($user)
+            ->get(route('siswa.profil'))
+            ->assertOk()
+            ->assertSee('profilsiswa.css?v=6')
+            ->getContent();
+
+        $this->assertSame(3, substr_count($html, 'class="password-visibility-toggle"'));
+        $this->assertSame(3, substr_count($html, 'aria-label="Tampilkan kata sandi" aria-pressed="false"'));
+        $this->assertStringContainsString('id="current_password" name="current_password" type="password" autocomplete="current-password" required', $html);
+        $this->assertStringContainsString('id="password" name="password" type="password" autocomplete="new-password" minlength="6" required', $html);
+        $this->assertStringContainsString('id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" minlength="6" required', $html);
     }
 
     public function test_inline_scripts_on_student_pages_are_valid_javascript(): void

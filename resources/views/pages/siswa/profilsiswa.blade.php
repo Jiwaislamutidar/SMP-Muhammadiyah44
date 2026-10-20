@@ -20,7 +20,7 @@
         })();
     </script>
     <title>Profil Murid - SMP Muhammadiyah 44</title>
-    <link rel="stylesheet" href="{{ asset('siswa css/profilsiswa.css') }}?v=5">
+    <link rel="stylesheet" href="{{ asset('siswa css/profilsiswa.css') }}?v=6">
     <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=4">
 </head>
 <body>
@@ -254,17 +254,53 @@
 
                     <div class="password-form-field">
                         <label for="current_password">Kata sandi saat ini</label>
-                        <input id="current_password" name="current_password" type="password" autocomplete="current-password" required>
+                        <div class="password-input-wrap">
+                            <input id="current_password" name="current_password" type="password" autocomplete="current-password" required>
+                            <button type="button" class="password-visibility-toggle" aria-label="Tampilkan kata sandi" aria-pressed="false">
+                                <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8"/>
+                                    <path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a14.8 14.8 0 0 1-3.1 3.8M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7c1.1 0 2.1-.2 3-.5"/>
+                                </svg>
+                            </button>
+                        </div>
                         @error('current_password')<span class="password-field-error">{{ $message }}</span>@enderror
                     </div>
                     <div class="password-form-field">
                         <label for="password">Kata sandi baru</label>
-                        <input id="password" name="password" type="password" autocomplete="new-password" minlength="6" required>
+                        <div class="password-input-wrap">
+                            <input id="password" name="password" type="password" autocomplete="new-password" minlength="6" required>
+                            <button type="button" class="password-visibility-toggle" aria-label="Tampilkan kata sandi" aria-pressed="false">
+                                <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8"/>
+                                    <path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a14.8 14.8 0 0 1-3.1 3.8M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7c1.1 0 2.1-.2 3-.5"/>
+                                </svg>
+                            </button>
+                        </div>
                         @error('password')<span class="password-field-error">{{ $message }}</span>@enderror
                     </div>
                     <div class="password-form-field">
                         <label for="password_confirmation">Konfirmasi kata sandi baru</label>
-                        <input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" minlength="6" required>
+                        <div class="password-input-wrap">
+                            <input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" minlength="6" required>
+                            <button type="button" class="password-visibility-toggle" aria-label="Tampilkan kata sandi" aria-pressed="false">
+                                <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8"/>
+                                    <path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a14.8 14.8 0 0 1-3.1 3.8M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7c1.1 0 2.1-.2 3-.5"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                     <div class="password-modal-actions">
                         <button type="button" class="password-modal-cancel" id="cancelPasswordModal">Batal</button>
@@ -305,11 +341,40 @@
         const openPasswordModal = document.getElementById('openPasswordModal');
         const closePasswordModal = document.getElementById('closePasswordModal');
         const cancelPasswordModal = document.getElementById('cancelPasswordModal');
+        const passwordForm = document.querySelector('.password-form');
+        const passwordFields = passwordForm.querySelectorAll('input[type="password"], input[type="text"]');
 
         function closePasswordDialog() {
+            resetPasswordVisibility();
             passwordModal.hidden = true;
             openPasswordModal.focus();
         }
+
+        function resetPasswordVisibility() {
+            passwordFields.forEach(function (field) {
+                field.type = 'password';
+                const toggle = field.parentElement.querySelector('.password-visibility-toggle');
+                toggle.setAttribute('aria-label', 'Tampilkan kata sandi');
+                toggle.setAttribute('aria-pressed', 'false');
+            });
+        }
+
+        passwordModal.querySelectorAll('.password-visibility-toggle').forEach(function (toggle) {
+            toggle.addEventListener('pointerdown', function (event) {
+                event.preventDefault();
+            });
+            toggle.addEventListener('mousedown', function (event) {
+                event.preventDefault();
+            });
+            toggle.addEventListener('click', function () {
+                const field = toggle.parentElement.querySelector('input');
+                const isVisible = field.type === 'password';
+                field.type = isVisible ? 'text' : 'password';
+                toggle.setAttribute('aria-label', isVisible ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi');
+                toggle.setAttribute('aria-pressed', isVisible ? 'true' : 'false');
+            });
+        });
+        passwordForm.addEventListener('submit', resetPasswordVisibility);
 
         openPasswordModal.addEventListener('click', function () {
             passwordModal.hidden = false;

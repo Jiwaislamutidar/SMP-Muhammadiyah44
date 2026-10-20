@@ -424,8 +424,17 @@ body::-webkit-scrollbar-thumb {
 .password-form { display: flex; flex-direction: column; gap: 16px; }
 .password-form-field { display: flex; flex-direction: column; gap: 7px; }
 .password-form-field label { color: #17211c; font-size: 13px; font-weight: 600; }
-.password-form-field input { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #d8e1db; border-radius: 8px; background: #fff; color: #17211c; font: inherit; font-size: 14px; }
+.password-input-wrap { position: relative; }
+.password-form-field input { width: 100%; min-height: 44px; padding: 10px 52px 10px 12px; border: 1px solid #d8e1db; border-radius: 8px; background: #fff; color: #17211c; font: inherit; font-size: 14px; }
 .password-form-field input:focus { border-color: #087443; outline: 3px solid rgba(8, 116, 67, .12); }
+.password-form-field input[type="password"]::-ms-reveal { display: none; }
+.password-visibility-toggle { position: absolute; top: 2px; right: 2px; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: #5f6b65; cursor: pointer; }
+.password-visibility-toggle:hover, .password-visibility-toggle:focus-visible { color: #087443; }
+.password-visibility-toggle:focus-visible { outline: 2px solid rgba(8, 116, 67, .3); outline-offset: -2px; }
+.password-visibility-toggle svg { width: 20px; height: 20px; }
+.password-visibility-toggle .eye-off-icon { display: none; }
+.password-visibility-toggle[aria-pressed="true"] .eye-icon { display: none; }
+.password-visibility-toggle[aria-pressed="true"] .eye-off-icon { display: block; }
 .password-field-error { color: #b42318; font-size: 12px; }
 .password-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
 .password-modal-cancel, .password-modal-submit { min-height: 42px; padding: 10px 16px; border: 1px solid transparent; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease; }

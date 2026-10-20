@@ -185,7 +185,8 @@ class AttendancePortalTest extends TestCase
         foreach ($routeNames as $routeName) {
             $this->actingAs($guruUser)
                 ->get(route($routeName))
-                ->assertOk();
+                ->assertOk()
+                ->assertSee('aria-current="page"', false);
         }
 
         $this->actingAs($guruUser)
@@ -198,6 +199,81 @@ class AttendancePortalTest extends TestCase
             ->assertSee('Batalkan Presensi')
             ->assertDontSee($mapelLain->nama_mapel)
             ->assertDontSee('Ust. Ahmad Fauzi');
+    }
+
+    public function test_guru_notifications_cover_upcoming_ongoing_and_finished_sessions_for_the_owner(): void
+    {
+        [$guruUser, , $jadwal, $kelas] = $this->makeSchedule();
+        [, $siswa] = $this->makeStudent($kelas);
+        [, $siswaBelumAbsen] = $this->makeStudent($kelas);
+        [$guruLainUser, , $jadwalGuruLain] = $this->makeSchedule();
+        $jadwalGuruLain->mapel->update(['nama_mapel' => 'Mapel Rahasia Guru Lain QA']);
+
+        $hariIni = now('Asia/Jakarta')->startOfDay();
+        $this->travelTo($hariIni->copy()->setTime(6, 30));
+
+        $this->actingAs($guruUser)
+            ->get(route('guru.dashboard'))
+            ->assertOk()
+            ->assertSee('Jadwal mengajar berikutnya')
+            ->assertSee($jadwal->mapel->nama_mapel)
+            ->assertSee('dalam 30 menit')
+            ->assertDontSee('Mapel Rahasia Guru Lain QA');
+
+        $sesi = SesiPelajaran::create([
+            'jadwal_id' => $jadwal->id,
+            'guru_id' => $jadwal->guru_id,
+            'tanggal' => $hariIni->toDateString(),
+            'status_sesi' => 'Berlangsung',
+        ]);
+        PresensiPelajaran::create([
+            'sesi_pelajaran_id' => $sesi->id,
+            'siswa_id' => $siswa->id,
+            'status' => 'Hadir',
+        ]);
+        PresensiPelajaran::create([
+            'sesi_pelajaran_id' => $sesi->id,
+            'siswa_id' => $siswaBelumAbsen->id,
+            'status' => 'Belum Absen',
+        ]);
+
+        $this->travelTo($hariIni->copy()->setTime(7, 30));
+        $this->actingAs($guruUser)
+            ->get(route('guru.dashboard'))
+            ->assertOk()
+            ->assertSee('Sesi sedang berlangsung')
+            ->assertSee('1 dari 2 siswa sudah absen')
+            ->assertDontSee('Mapel Rahasia Guru Lain QA');
+
+        PresensiPelajaran::where('sesi_pelajaran_id', $sesi->id)
+            ->where('siswa_id', $siswaBelumAbsen->id)
+            ->update(['status' => 'Alfa']);
+        $sesi->update(['status_sesi' => 'Selesai']);
+
+        $this->actingAs($guruUser)
+            ->get(route('guru.dashboard'))
+            ->assertOk()
+            ->assertSee('Sesi selesai, presensi perlu diperiksa')
+            ->assertSee('1 siswa belum absen atau Alfa')
+            ->assertDontSee('Mapel Rahasia Guru Lain QA');
+
+        $this->actingAs($guruLainUser)
+            ->get(route('guru.dashboard'))
+            ->assertOk()
+            ->assertSee('Mapel Rahasia Guru Lain QA')
+            ->assertDontSee($jadwal->mapel->nama_mapel);
+
+        $this->travelBack();
+    }
+
+    public function test_guru_notifications_show_a_clean_empty_state(): void
+    {
+        [$guruUser] = $this->makeTeacher();
+
+        $this->actingAs($guruUser)
+            ->get(route('guru.dashboard'))
+            ->assertOk()
+            ->assertSee('Belum ada notifikasi mengajar hari ini.');
     }
 
     public function test_student_pages_show_all_todays_schedules_and_the_schedule_active_by_time(): void

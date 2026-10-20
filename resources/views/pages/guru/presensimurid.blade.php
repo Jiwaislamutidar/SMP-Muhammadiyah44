@@ -6,6 +6,7 @@
   <title>Presensi Murid - SMP Muhammadiyah 44</title>
   <link rel="stylesheet" href="{{ asset('guru css/presensimurid.css') }}?v=3">
   <link rel="stylesheet" href="{{ asset('guru css/portal-responsive.css') }}?v=1">
+  <link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=1">
 </head>
 <body>
 @php
@@ -17,10 +18,8 @@
 @endphp
 <div class="page-loader" id="pageLoader"><div class="loader-logo-wrap"><div class="loader-spinner"></div><div class="loader-logo"><img src="{{ asset('logo.jpg') }}" alt="Logo sekolah"></div></div><div class="loader-text">SMP Muhammadiyah 44</div><div class="loader-subtext">Memuat presensi murid...</div></div>
 <div class="guru-page" id="guruPage">
-  <aside class="sidebar" id="sidebar"><div class="sidebar-header"><div class="sidebar-brand"><div class="sidebar-logo"><img src="{{ asset('logo.jpg') }}" alt="Logo sekolah"></div><div><div class="sidebar-title">SMP Muhammadiyah 44</div><div class="sidebar-subtitle">Portal Guru</div></div></div><button class="sidebar-close-btn" onclick="toggleSidebar()">✕</button></div><div class="sidebar-section-label">Menu</div><nav class="sidebar-nav">
-    <a class="nav-item" style="--delay:1" href="{{ route('guru.dashboard') }}"><span class="nav-icon-box">🏠</span>Dashboard</a><a class="nav-item" style="--delay:2" href="{{ route('guru.presensi-guru') }}"><span class="nav-icon-box">🧾</span>Presensi Guru</a><a class="nav-item" style="--delay:3" href="{{ route('guru.jadwal') }}"><span class="nav-icon-box">📅</span>Jadwal Mengajar</a><a class="nav-item active" style="--delay:4" href="{{ route('guru.presensi-murid') }}"><span class="nav-icon-box">👥</span>Presensi Murid</a><a class="nav-item" style="--delay:5" href="{{ route('guru.riwayat-presensi') }}"><span class="nav-icon-box">🕘</span>Riwayat Presensi</a><a class="nav-item" style="--delay:6" href="{{ route('guru.profil') }}"><span class="nav-icon-box">👤</span>Profil</a>
-  </nav><div class="sidebar-footer"><div class="sidebar-footer-user"><div class="avatar">{{ mb_strtoupper($guruInitials) }}</div><div><div class="name">{{ $guru->nama_lengkap }}</div><div class="role">{{ $mapelGuru ?: 'Guru Mata Pelajaran' }}</div></div></div><form action="{{ route('guru.logout') }}" method="POST">@csrf<button class="nav-item logout-item" type="submit"><span class="nav-icon-box">🚪</span>Keluar</button></form></div></aside><div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-  <header class="topbar"><div class="topbar-left"><button class="burger-btn" id="burgerBtn" onclick="toggleSidebar()"><span></span><span></span><span></span></button><div class="brand-wrap"><span class="brand-dot"></span><span class="portal-tag">Portal Guru • SMP Muhammadiyah 44</span></div></div><div class="topbar-right"><div class="date-pill" id="liveDatetime">Memuat waktu...</div><div class="bell-btn" aria-hidden="true">🔔<span class="badge"></span></div><div class="profile-pill"><div class="avatar">{{ mb_strtoupper($guruInitials) }}</div><div class="profile-meta"><div class="name">{{ $guru->nama_lengkap }}</div><div class="role">{{ $mapelGuru ?: 'Guru Mata Pelajaran' }}</div></div></div></div></header>
+  @include('pages.guru.partials.sidebar', ['activePage' => 'presensi-murid', 'sidebarRole' => $mapelGuru ?: 'Guru Mata Pelajaran', 'guruInitials' => mb_strtoupper($guruInitials)])
+  @include('pages.guru.partials.topbar', ['profileRole' => $mapelGuru ?: 'Guru Mata Pelajaran', 'guruInitials' => mb_strtoupper($guruInitials)])
   <main class="content">
     <div class="page-header"><div><h1>Presensi Murid</h1><p>Kelola sesi mengajar dan kehadiran kelas hari ini.</p></div><span class="term-chip">{{ now()->locale('id')->translatedFormat('l, j F Y') }}</span></div>
     @if(session('success'))<div class="panel" role="status">{{ session('success') }}</div>@endif
@@ -70,9 +69,6 @@
 <dialog class="session-confirm" id="cancelConfirm" aria-labelledby="cancelConfirmTitle"><div class="confirm-content"><span class="confirm-icon">!</span><h2 id="cancelConfirmTitle">Batalkan presensi?</h2><p>Sesi dan seluruh data presensi murid di dalamnya akan <strong>dihapus permanen</strong>. Tindakan ini tidak dapat dibatalkan.</p><div class="confirm-actions"><button class="btn" id="dismissCancel" type="button">Kembali</button><button class="btn btn-cancel-session" id="confirmCancel" type="button">Ya, Hapus Sesi</button></div></div></dialog>
 <script>
 window.addEventListener('load',()=>setTimeout(()=>{pageLoader.classList.add('hide');guruPage.classList.add('loaded')},500));
-function toggleSidebar(){sidebar.classList.toggle('open');sidebarOverlay.classList.toggle('show');burgerBtn.classList.toggle('active')}
-function updateLiveDatetime(){const n=new Date(),d=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'],m=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'],p=x=>String(x).padStart(2,'0');liveDatetime.textContent=`${d[n.getDay()]}, ${n.getDate()} ${m[n.getMonth()]} ${n.getFullYear()} | ${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())} WIB`}
-updateLiveDatetime();setInterval(updateLiveDatetime,1000);
 const panel=document.getElementById('sessionPanel'),feedback=document.getElementById('feedback'),csrf=document.querySelector('meta[name="csrf-token"]')?.content,closeConfirm=document.getElementById('closeConfirm'),startConfirm=document.getElementById('startConfirm'),cancelConfirm=document.getElementById('cancelConfirm');
 let lastRowsFingerprint='',pollingTimer=null,expiryTimer=null,feedbackTimer=null,pendingOpenButton=null;
 async function requestJson(url,method='GET',body=null){const response=await fetch(url,{method,headers:{'Accept':'application/json','Content-Type':'application/json','X-CSRF-TOKEN':csrf},body:body?JSON.stringify(body):undefined});const data=await response.json();if(!response.ok)throw new Error(data.message||Object.values(data.errors||{}).flat()[0]||'Permintaan gagal.');return data}
@@ -100,4 +96,5 @@ document.getElementById('dismissCancel').addEventListener('click',()=>cancelConf
 document.getElementById('confirmCancel').addEventListener('click',async()=>{const button=document.getElementById('confirmCancel');button.disabled=true;try{const data=await requestJson(panel.dataset.deleteTemplate.replace('__ID__',panel.dataset.sessionId),'DELETE');resetCancelledSession(data);cancelConfirm.close();showSuccess('Presensi dibatalkan. Sesi dan seluruh data murid telah dihapus permanen.')}catch(error){cancelConfirm.close();showError(error)}finally{button.disabled=false}});
 if(panel.dataset.statusUrl){refreshStatus();startPolling()}setExpiry(panel.dataset.qrExpiresAt);expiryTimer=setInterval(updateCountdown,1000);
 </script>
+<script src="{{ asset('guru css/guru-ui.js') }}?v=1"></script>
 </body></html>

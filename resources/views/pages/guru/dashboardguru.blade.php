@@ -7,6 +7,7 @@
   <title>Dashboard Guru - SMP Muhammadiyah 44</title>
   <link rel="stylesheet" href="{{ asset('guru css/dashboard.css') }}?v=2">
   <link rel="stylesheet" href="{{ asset('guru css/portal-responsive.css') }}?v=1">
+  <link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=1">
 </head>
 <body>
   <div class="page-loader" id="pageLoader">
@@ -21,92 +22,8 @@
   </div>
 
   <div class="dashboard-guru" id="dashboardGuru">
-    <div class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <div class="sidebar-brand">
-          <div class="sidebar-logo">
-            <img src="{{ asset('logo.jpg') }}" alt="Logo SMP Muhammadiyah 44">
-          </div>
-          <div>
-            <div class="sidebar-title">SMP Muhammadiyah 44</div>
-            <div class="sidebar-subtitle">Portal Guru</div>
-          </div>
-        </div>
-        <button class="sidebar-close-btn" onclick="toggleSidebar()" aria-label="Tutup menu">✕</button>
-      </div>
-
-      <div class="sidebar-section-label">Menu</div>
-      <nav class="sidebar-nav">
-        <a href="{{ route('guru.dashboard') }}" class="nav-item active" style="--delay: 1">
-          <span class="nav-icon-box">🏠</span> Dashboard
-        </a>
-        <a href="{{ route('guru.presensi-guru') }}" class="nav-item" style="--delay: 2">
-          <span class="nav-icon-box">🧾</span> Presensi Guru
-        </a>
-        <a href="{{ route('guru.jadwal') }}" class="nav-item" style="--delay: 3">
-          <span class="nav-icon-box">📅</span> Jadwal Mengajar
-        </a>
-        <a href="{{ route('guru.presensi-murid') }}" class="nav-item" style="--delay: 4">
-          <span class="nav-icon-box">👥</span> Presensi Murid
-        </a>
-        <a href="{{ route('guru.riwayat-presensi') }}" class="nav-item" style="--delay: 5">
-          <span class="nav-icon-box">🕘</span> Riwayat Presensi
-        </a>
-        <a href="{{ route('guru.profil') }}" class="nav-item" style="--delay: 6">
-          <span class="nav-icon-box">👤</span> Profil
-        </a>
-      </nav>
-
-      <div class="sidebar-footer">
-        <div class="sidebar-footer-user">
-          <div class="avatar">{{ mb_strtoupper(mb_substr($guru->nama_lengkap, 0, 1)) }}</div>
-          <div>
-            <div class="name">{{ $guru->nama_lengkap }}</div>
-            <div class="role">Guru Mata Pelajaran</div>
-          </div>
-        </div>
-        <form action="{{ route('guru.logout') }}" method="POST" style="margin:0;">
-          @csrf
-          <button type="submit" class="nav-item logout-item" style="width:100%; border:none; background:transparent; text-align:left; cursor:pointer;">
-            <span class="nav-icon-box">🚪</span> Keluar
-          </button>
-        </form>
-      </div>
-    </div>
-
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-
-    <header class="topbar">
-      <div class="topbar-left">
-        <button class="burger-btn" id="burgerBtn" onclick="toggleSidebar()" aria-label="Buka menu">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-
-        <div class="brand-wrap">
-          <div class="brand-dot"></div>
-          <div class="portal-tag">Portal Guru • SMP Muhammadiyah 44</div>
-        </div>
-      </div>
-
-      <div class="topbar-right">
-        <div class="date-pill" id="liveDatetime">Memuat waktu...</div>
-
-        <div class="bell-btn" aria-label="Notifikasi">
-          🔔
-          <span class="badge"></span>
-        </div>
-
-        <div class="profile-pill">
-          <div class="avatar">{{ mb_strtoupper(mb_substr($guru->nama_lengkap, 0, 1)) }}</div>
-          <div class="profile-meta">
-            <div class="name">{{ $guru->nama_lengkap }}</div>
-            <div class="role">Guru Mata Pelajaran</div>
-          </div>
-        </div>
-      </div>
-    </header>
+    @include('pages.guru.partials.sidebar', ['activePage' => 'dashboard', 'sidebarRole' => 'Guru Mata Pelajaran'])
+    @include('pages.guru.partials.topbar', ['profileRole' => 'Guru Mata Pelajaran'])
 
     <main class="content">
       <div class="page-header">
@@ -221,6 +138,7 @@
     </main>
   </div>
 
+  <script src="{{ asset('guru css/guru-ui.js') }}?v=1"></script>
   <script>
     window.addEventListener('load', function () {
       setTimeout(function () {
@@ -228,40 +146,6 @@
         document.getElementById('dashboardGuru').classList.add('loaded');
       }, 600);
     });
-
-    function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      const overlay = document.getElementById('sidebarOverlay');
-      const burger = document.getElementById('burgerBtn');
-
-      if (!sidebar || !overlay || !burger) return;
-
-      sidebar.classList.toggle('open');
-      overlay.classList.toggle('show');
-      burger.classList.toggle('active');
-    }
-
-    function updateLiveDatetime() {
-      const now = new Date();
-      const hariList = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-      const bulanList = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-
-      const hari = hariList[now.getDay()];
-      const tanggal = now.getDate();
-      const bulan = bulanList[now.getMonth()];
-      const tahun = now.getFullYear();
-      const jam = String(now.getHours()).padStart(2, '0');
-      const menit = String(now.getMinutes()).padStart(2, '0');
-      const detik = String(now.getSeconds()).padStart(2, '0');
-
-      const el = document.getElementById('liveDatetime');
-      if (el) {
-        el.innerHTML = `<span class="date-html">${hari}, ${tanggal} ${bulan} ${tahun}</span><span class="sep"> | </span><span class="time-html">${jam}:${menit}:${detik} WIB</span>`;
-      }
-    }
-
-    updateLiveDatetime();
-    setInterval(updateLiveDatetime, 1000);
   </script>
 </body>
 </html>

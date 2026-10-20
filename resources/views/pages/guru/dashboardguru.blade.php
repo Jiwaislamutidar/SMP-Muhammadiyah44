@@ -7,7 +7,7 @@
   <title>Dashboard Guru - SMP Muhammadiyah 44</title>
   <link rel="stylesheet" href="{{ asset('guru css/dashboard.css') }}?v=2">
   <link rel="stylesheet" href="{{ asset('guru css/portal-responsive.css') }}?v=1">
-  <link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=1">
+  <link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=2">
 </head>
 <body>
   <div class="page-loader" id="pageLoader">
@@ -62,6 +62,7 @@
             <div class="mini-label">{{ $jadwals->count() }} Sesi KBM</div>
           </div>
 
+          <div class="table-wrap">
           <table class="schedule-table">
             <thead>
               <tr>
@@ -83,6 +84,7 @@
               @empty<tr><td colspan="4">Tidak ada jadwal mengajar hari ini.</td></tr>@endforelse
             </tbody>
           </table>
+          </div>
 
           <div class="session-footer">
             <span>Ruang kelas: {{ $sesiAktif?->ruangan ?? '-' }}</span>

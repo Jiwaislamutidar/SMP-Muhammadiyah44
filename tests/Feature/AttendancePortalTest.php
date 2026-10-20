@@ -276,6 +276,23 @@ class AttendancePortalTest extends TestCase
             ->assertSee('Belum ada notifikasi mengajar hari ini.');
     }
 
+    public function test_teacher_attendance_navbar_renders_long_teacher_names_and_role(): void
+    {
+        [$guruUser, $guru] = $this->makeTeacher();
+
+        foreach (['Nurlailatul Jannah, L.C', 'Maryadi Saputra, S.Pd'] as $name) {
+            $name .= ' QA '.bin2hex(random_bytes(3));
+            $guru->update(['nama_lengkap' => $name]);
+
+            $this->actingAs($guruUser)
+                ->get(route('guru.presensi-guru'))
+                ->assertOk()
+                ->assertSee('class="profile-meta"', false)
+                ->assertSee('class="name">'.$name.'</div>', false)
+                ->assertSee('class="role">Guru</div>', false);
+        }
+    }
+
     public function test_student_pages_show_all_todays_schedules_and_the_schedule_active_by_time(): void
     {
         [, $guru, $jadwal, $kelas] = $this->makeSchedule();

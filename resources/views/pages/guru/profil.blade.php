@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg"><title>Profil Guru - SMP Muhammadiyah 44</title><link rel="stylesheet" href="{{ asset('guru css/profil.css') }}?v=2"><link rel="stylesheet" href="{{ asset('guru css/portal-responsive.css') }}?v=1"><link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=1"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg"><title>Profil Guru - SMP Muhammadiyah 44</title><link rel="stylesheet" href="{{ asset('guru css/profil.css') }}?v=2"><link rel="stylesheet" href="{{ asset('guru css/portal-responsive.css') }}?v=1"><link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=2"></head>
 <body>
 <div class="guru-page" id="guruPage">
 @include('pages.guru.partials.sidebar', ['activePage' => 'profil', 'sidebarRole' => 'Guru'])

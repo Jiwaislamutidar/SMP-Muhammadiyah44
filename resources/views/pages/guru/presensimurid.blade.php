@@ -6,7 +6,7 @@
   <title>Presensi Murid - SMP Muhammadiyah 44</title>
   <link rel="stylesheet" href="{{ asset('guru css/presensimurid.css') }}?v=3">
   <link rel="stylesheet" href="{{ asset('guru css/portal-responsive.css') }}?v=1">
-  <link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=1">
+  <link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=2">
 </head>
 <body>
 @php

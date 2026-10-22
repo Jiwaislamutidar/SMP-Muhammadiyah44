@@ -203,3 +203,63 @@
 	.content { padding-right:8px; padding-left:8px; }
 	.dashboard-guru .content { padding-right:8px; padding-left:8px; }
 }
+.topbar .brand-wrap { min-width:0; }
+@media (max-width:760px) {
+	.topbar { gap:6px; }
+	.topbar .topbar-left { flex:1 1 auto; gap:6px; }
+	.topbar .topbar-right { flex:0 0 auto; gap:6px; }
+	.topbar .topbar-logo { width:32px; height:32px; }
+	.topbar .portal-tag {
+		display:block;
+		min-width:0;
+		max-width:none;
+		flex:0 1 auto;
+		overflow:visible;
+		padding:3px 6px;
+		font-size:10px;
+		letter-spacing:0;
+		line-height:1.2;
+		text-overflow:clip;
+		text-transform:none;
+		white-space:normal;
+	}
+	.topbar .portal-tag-name,.topbar .portal-tag-separator { white-space:nowrap; }
+	.topbar .portal-tag-school { display:block; white-space:nowrap; }
+	.topbar .date-pill { display:none; }
+	.topbar .profile-pill { display:flex; max-width:none; gap:0; padding-left:0; border-left:0; }
+	.topbar .profile-meta { display:none; }
+	.topbar .profile-pill .avatar { width:32px; height:32px; font-size:11px; }
+}
+@media (max-width:380px) {
+	.topbar { gap:4px; }
+	.topbar .topbar-left,.topbar .topbar-right { gap:4px; }
+	.topbar .topbar-logo { width:28px; height:28px; }
+	.topbar .burger-btn { width:30px; height:30px; }
+	.topbar .portal-tag { padding:2px 4px; font-size:9px; }
+	.topbar .profile-pill .avatar { width:28px; height:28px; font-size:10px; }
+}
+.dashboard-guru .page-header h1 { font-size:clamp(21px,2vw,26px); }
+.attendance-page .page-header h1 { font-size:clamp(21px,1.8vw,24px); }
+.schedule-page .page-header h1 { font-size:clamp(21px,1.7vw,23px); }
+.schedule-page .schedule-table th,.schedule-page .schedule-table td { white-space:nowrap; overflow-wrap:normal; }
+.schedule-page .schedule-table td { font-size:12px; }
+@media (max-width:760px) {
+	.dashboard-guru .content { --pita-overlap:0px; --pita-clearance:20px; }
+	.dashboard-guru .page-header { margin-bottom:var(--pita-clearance); }
+	.dashboard-guru .page-header h1,.attendance-page .page-header h1,.schedule-page .page-header h1 { font-size:clamp(20px,4vw,24px); }
+	.dashboard-guru .stats-row { grid-template-columns:minmax(0,1fr); gap:12px; }
+	.dashboard-guru .stat-card { align-items:center; flex-direction:row; gap:10px; padding:12px; border-radius:14px; }
+	.dashboard-guru .stat-meta .value { font-size:16px; }
+	.dashboard-guru .status-badge { padding:5px 8px; font-size:10px; }
+	.attendance-page .attendance-card { padding:14px; border-radius:12px; }
+	.attendance-page .card-top { display:flex; flex-direction:column; align-items:stretch; gap:10px; }
+	.attendance-page .attendance-card-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+	.attendance-page .attendance-card-heading .muted { font-size:10px; }
+	.attendance-page .attendance-card-copy h3 { font-size:16px; }
+	.attendance-page .big-time { font-size:20px; }
+	.schedule-page .schedule-table th { font-size:10px; }
+	.schedule-page .schedule-table td { font-size:11px; }
+}
+@media (max-width:640px) {
+	.dashboard-guru .page-header h1,.attendance-page .page-header h1,.schedule-page .page-header h1 { font-size:21px; }
+}

@@ -5,22 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
   <title>Dashboard Guru - SMP Muhammadiyah 44</title>
-  <link rel="stylesheet" href="{{ asset('guru css/dashboard.css') }}?v=3">
+  <link rel="stylesheet" href="{{ asset('guru css/dashboard.css') }}?v=4">
   <link rel="stylesheet" href="{{ asset('guru css/portal-responsive.css') }}?v=1">
-  <link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=2">
+  <link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=3">
   <style>
-    .stat-meta .label { font-size: 14px; }
-    .stat-meta .value { font-size: 22px; }
-    .status-badge { font-size: 14px; padding: 8px 12px; }
-    .session-label, .live-status { font-size: 15px; }
-    .session-main h3 { font-size: 24px; }
-    .session-main .meta { font-size: 15px; }
-    .active-session .primary-btn { min-height: 48px; font-size: 16px; }
+    .stat-meta .label { font-size: 12px; }
+    .stat-meta .value { font-size: 18px; }
+    .status-badge { font-size: 11px; padding: 6px 10px; }
+    .session-label, .live-status { font-size: 12px; }
+    .session-main h3 { font-size: 19px; }
+    .session-main .meta { font-size: 12px; }
+    .active-session .primary-btn { min-height: 44px; font-size: 14px; }
     .live-status.inactive { color: #59636e; }
     .live-status.inactive .dot { background: #9ca3af; }
     @media (max-width: 760px) {
-      .stat-meta .value { font-size: 20px; }
-      .session-main { gap: 12px; }
+      .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .stat-card { align-items: flex-start; flex-direction: column; gap: 8px; padding: 14px 12px; }
+      .stat-meta { min-width: 0; }
+      .stat-meta .label { font-size: 11px; }
+      .stat-meta .value { font-size: 17px; }
+      .status-badge { align-self: flex-start; gap: 5px; padding: 4px 7px; font-size: 9px; }
+      .status-badge .dot { width: 6px; height: 6px; }
+      .session-main { gap: 10px; }
+    }
+    @media (max-width: 480px) {
+      .stat-meta .value { font-size: 14px; white-space: nowrap; }
     }
   </style>
 </head>

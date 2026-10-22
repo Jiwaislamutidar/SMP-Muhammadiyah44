@@ -5,7 +5,11 @@
             <span></span><span></span><span></span>
         </button>
         <img class="topbar-logo" src="{{ asset('logo.jpg') }}" alt="Logo SMP Muhammadiyah 44">
-        <div class="brand-wrap"><span class="portal-tag">Portal Guru • SMP Muhammadiyah 44</span></div>
+        <div class="brand-wrap">
+            <span class="portal-tag">
+                <span class="portal-tag-name">Portal Guru</span><span class="portal-tag-separator"> • </span><span class="portal-tag-school">SMP Muhammadiyah 44</span>
+            </span>
+        </div>
     </div>
     <div class="topbar-right">
         <div class="date-pill" id="liveDatetime">Memuat waktu...</div>

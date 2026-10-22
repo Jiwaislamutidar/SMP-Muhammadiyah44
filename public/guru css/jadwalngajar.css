@@ -20,3 +20,16 @@ html::-webkit-scrollbar,body::-webkit-scrollbar { width:10px; } html::-webkit-sc
 @media (max-width:1100px) { .filter-bar { flex-wrap:wrap; } .filter-group { flex:1 1 220px; } .total-badge { margin-left:auto; } }
 @media (max-width:760px) { .topbar { top:12px; left:12px; width:calc(100% - 24px); height:64px; padding:0 12px; border-radius:20px; } .content { gap:16px; padding:88px 16px 20px; } .portal-tag,.profile-pill { display:none; } .topbar-right { gap:8px; } .page-header { align-items:flex-start; flex-direction:column; } .filter-bar { align-items:stretch; flex-direction:column; } .filter-group { justify-content:space-between; flex:initial; } select { flex:1; } .total-badge { margin:0; text-align:center; } .table-heading,.table-footer,.footer { align-items:flex-start; flex-direction:column; padding:14px 16px; } .schedule-table th,.schedule-table td { padding:13px 16px; } }
 @media (max-width:480px) { .sidebar { width:82vw; } .date-pill .date-html,.date-pill .sep { display:none; } .date-pill { color:var(--green-700); font-weight:700; } }
+.schedule-page .schedule-table { min-width:900px; table-layout:auto; }
+.schedule-page .schedule-table th,.schedule-page .schedule-table td { white-space:nowrap; overflow-wrap:normal; }
+.schedule-page .schedule-table th { font-size:11px; }
+.schedule-page .schedule-table td { font-size:12px; }
+.schedule-page .schedule-table th:nth-child(1),.schedule-page .schedule-table td:nth-child(1) { min-width:90px; }
+.schedule-page .schedule-table th:nth-child(2),.schedule-page .schedule-table td:nth-child(2) { min-width:140px; }
+.schedule-page .schedule-table th:nth-child(3),.schedule-page .schedule-table td:nth-child(3) { min-width:260px; }
+.schedule-page .schedule-table th:nth-child(4),.schedule-page .schedule-table td:nth-child(4) { min-width:120px; }
+.schedule-page .schedule-table th:nth-child(5),.schedule-page .schedule-table td:nth-child(5) { min-width:140px; }
+.schedule-page .schedule-table th:nth-child(6),.schedule-page .schedule-table td:nth-child(6) { min-width:150px; }
+@media (max-width:760px) {
+  .schedule-page .schedule-table th,.schedule-page .schedule-table td { padding:12px 14px; font-size:11px; }
+}

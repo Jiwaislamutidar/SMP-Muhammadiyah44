@@ -5,9 +5,9 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
 	<title>Jadwal Mengajar Guru - SMP Muhammadiyah 44</title>
-	<link rel="stylesheet" href="{{ asset('guru css/jadwalngajar.css') }}?v=3">
+	<link rel="stylesheet" href="{{ asset('guru css/jadwalngajar.css') }}?v=4">
 	<link rel="stylesheet" href="{{ asset('guru css/portal-responsive.css') }}?v=1">
-	<link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=2">
+	<link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=3">
 </head>
 <body>
 	<div class="page-loader" id="pageLoader">
@@ -15,7 +15,7 @@
 		<div class="loader-text">SMP Muhammadiyah 44</div>
 		<div class="loader-subtext">Memuat jadwal mengajar...</div>
 	</div>
-	<div class="guru-page" id="guruPage">
+	<div class="guru-page schedule-page" id="guruPage">
 		@include('pages.guru.partials.sidebar', ['activePage' => 'jadwal', 'sidebarRole' => 'Guru'])
 		@include('pages.guru.partials.topbar', ['profileRole' => 'Guru'])
 		<main class="content">

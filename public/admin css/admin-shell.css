@@ -356,10 +356,12 @@ button { font: inherit; border: 0; cursor: pointer; background: transparent; }
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fff;
-  font-size: 15px;
-  transition: background .15s ease;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
 }
-.bell-btn:hover { background: var(--surface); }
+.bell-btn:hover { background: var(--surface); color: var(--green-700); }
+.bell-btn svg { display: block; }
 .bell-btn .badge {
   position: absolute; top: 7px; right: 7px;
   width: 8px; height: 8px;

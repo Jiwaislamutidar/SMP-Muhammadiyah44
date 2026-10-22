@@ -178,8 +178,11 @@
     </div>
     <div class="topbar-right">
       <div class="date-pill" id="liveDatetime">Memuat waktu...</div>
-      <button class="bell-btn" aria-label="Notifikasi">
-        🔔
+      <button class="bell-btn" type="button" aria-label="Notifikasi">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/>
+          <path d="M10.3 21a2 2 0 0 0 3.4 0"/>
+        </svg>
         <span class="badge"></span>
       </button>
       <div class="profile-pill">

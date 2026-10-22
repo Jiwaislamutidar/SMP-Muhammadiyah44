@@ -20,10 +20,21 @@ class PortalGuruController extends Controller
 
         $jadwals = $this->jadwalsHariIni($guru);
         $jadwalBloks = (new SiswaScheduleGrouper)->blocks($jadwals, now());
-        $jadwalSaatIni = $jadwals->first(fn (JadwalPelajaran $jadwal) =>
-            $jadwal->jam_mulai <= now()->format('H:i:s') && $jadwal->jam_selesai >= now()->format('H:i:s')
-        );
-        $sesiAktif = $jadwals->first(fn (JadwalPelajaran $jadwal) => $jadwal->sesiPelajarans->first()?->status_sesi === 'Berlangsung');
+        $waktuSekarang = now()->format('H:i:s');
+        $hariIni = now()->locale('id')->translatedFormat('l');
+        $jadwalSaatIni = JadwalPelajaran::with(['kelas', 'mapel'])
+            ->where('guru_id', $guru->id)
+            ->whereRaw('LOWER(hari) = ?', [mb_strtolower($hariIni)])
+            ->whereTime('jam_mulai', '<=', $waktuSekarang)
+            ->whereTime('jam_selesai', '>=', $waktuSekarang)
+            ->get()
+            ->sortBy(fn (JadwalPelajaran $jadwal) => Carbon::parse($jadwal->jam_mulai)
+                ->diffInSeconds(Carbon::parse($jadwal->jam_selesai)))
+            ->first();
+        $sesiAktif = $jadwalSaatIni
+            ? $jadwals->first(fn (JadwalPelajaran $jadwal) => $jadwal->id === $jadwalSaatIni->id
+                && $jadwal->sesiPelajarans->first()?->status_sesi === 'Berlangsung')
+            : null;
         $sesiBerlangsung = $sesiAktif?->sesiPelajarans->first();
 
         return view('pages.guru.dashboardguru', [
@@ -34,7 +45,6 @@ class PortalGuruController extends Controller
             'sesiAktif' => $sesiAktif,
             'sesiBerlangsung' => $sesiBerlangsung,
             'jadwalSaatIni' => $jadwalSaatIni,
-            'belumAbsenCount' => $sesiBerlangsung?->presensiPelajarans->where('status', 'Belum Absen')->count() ?? 0,
         ]);
     }
 
@@ -129,7 +139,7 @@ class PortalGuruController extends Controller
         return JadwalPelajaran::with([
             'kelas',
             'mapel',
-            'sesiPelajarans' => fn ($query) => $query->with('presensiPelajarans')->whereDate('tanggal', today()),
+            'sesiPelajarans' => fn ($query) => $query->whereDate('tanggal', today()),
         ])
             ->where('guru_id', $guru->id)
             ->whereRaw('LOWER(hari) = ?', [mb_strtolower($hari)])

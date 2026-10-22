@@ -8,6 +8,21 @@
   <link rel="stylesheet" href="{{ asset('guru css/dashboard.css') }}?v=3">
   <link rel="stylesheet" href="{{ asset('guru css/portal-responsive.css') }}?v=1">
   <link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=2">
+  <style>
+    .stat-meta .label { font-size: 14px; }
+    .stat-meta .value { font-size: 22px; }
+    .status-badge { font-size: 14px; padding: 8px 12px; }
+    .session-label, .live-status { font-size: 15px; }
+    .session-main h3 { font-size: 24px; }
+    .session-main .meta { font-size: 15px; }
+    .active-session .primary-btn { min-height: 48px; font-size: 16px; }
+    .live-status.inactive { color: #59636e; }
+    .live-status.inactive .dot { background: #9ca3af; }
+    @media (max-width: 760px) {
+      .stat-meta .value { font-size: 20px; }
+      .session-main { gap: 12px; }
+    }
+  </style>
 </head>
 <body>
   <div class="page-loader" id="pageLoader">
@@ -34,24 +49,22 @@
       <section class="stats-row">
         <div class="stat-card">
           <div class="stat-left">
-            <div class="icon-wrap">🏫</div>
             <div class="stat-meta">
               <div class="label">Masuk Sekolah</div>
-              <div class="value">{{ $presensiHariIni?->jam_masuk ? substr($presensiHariIni->jam_masuk, 0, 5).' WIB' : '07:00' }}</div>
+              <div class="value">{{ $presensiHariIni?->jam_masuk ? substr($presensiHariIni->jam_masuk, 0, 5).' WIB' : 'Belum tercatat' }}</div>
             </div>
           </div>
-          <div class="status-badge"><span class="dot"></span> {{ $presensiHariIni?->jam_masuk ? 'Sudah Absen' : 'Belum Absen' }}</div>
+          <div class="status-badge {{ $presensiHariIni?->jam_masuk ? '' : 'pending' }}"><span class="dot"></span> {{ $presensiHariIni?->jam_masuk ? 'Sudah Absen' : 'Belum Absen' }}</div>
         </div>
 
         <div class="stat-card">
           <div class="stat-left">
-            <div class="icon-wrap alt">🏠</div>
             <div class="stat-meta">
               <div class="label">Pulang Sekolah</div>
-              <div class="value">{{ $presensiHariIni?->jam_pulang ? substr($presensiHariIni->jam_pulang, 0, 5).' WIB' : '16:00' }}</div>
+              <div class="value">{{ $presensiHariIni?->jam_pulang ? substr($presensiHariIni->jam_pulang, 0, 5).' WIB' : 'Belum tercatat' }}</div>
             </div>
           </div>
-          <div class="status-badge pending"><span class="dot"></span> {{ $presensiHariIni?->jam_pulang ? 'Sudah Absen' : 'Belum Absen' }}</div>
+          <div class="status-badge {{ $presensiHariIni?->jam_pulang ? '' : 'pending' }}"><span class="dot"></span> {{ $presensiHariIni?->jam_pulang ? 'Sudah Absen' : 'Belum Absen' }}</div>
         </div>
       </section>
 
@@ -93,8 +106,8 @@
           </div>
 
           <div class="session-footer">
-            <span>Ruang kelas: {{ $sesiAktif?->ruangan ?? '-' }}</span>
-            <strong>Sesi aktif otomatis tersinkron</strong>
+            <span>Ruang kelas: {{ $jadwalSaatIni?->ruangan ?? '-' }}</span>
+            <strong>{{ $sesiBerlangsung ? 'Sesi aktif otomatis tersinkron' : 'Jadwal hari ini' }}</strong>
           </div>
         </div>
 
@@ -102,39 +115,24 @@
           <div class="active-session">
             <div class="session-header">
               <div class="session-label">Sesi Mengajar Saat Ini</div>
-              <div class="live-status"><span class="dot"></span> {{ $sesiAktif ? 'Sedang Berlangsung' : 'Tidak ada sesi aktif' }}</div>
+              <div class="live-status {{ $jadwalSaatIni ? '' : 'inactive' }}"><span class="dot"></span> {{ $jadwalSaatIni ? 'Sedang Berlangsung' : 'Tidak ada sesi aktif' }}</div>
             </div>
 
             <div class="session-main">
               <div>
-                <h3>{{ $sesiAktif?->mapel?->nama_mapel ?? '-' }}</h3>
+                <h3>{{ $jadwalSaatIni?->mapel?->nama_mapel ?? 'Tidak ada sesi aktif' }}</h3>
                 <div class="meta">
-                  <span>{{ $sesiAktif?->kelas?->nama_kelas ?? '-' }}</span>
-                  <span>•</span>
-                  <span>{{ $sesiAktif ? substr($sesiAktif->jam_mulai, 0, 5).'-'.substr($sesiAktif->jam_selesai, 0, 5).' WIB' : '-' }}</span>
+                  @if($jadwalSaatIni)
+                    <span>Kelas: {{ $jadwalSaatIni->kelas->nama_kelas }}</span>
+                    <span>Jam: {{ substr($jadwalSaatIni->jam_mulai, 0, 5) }}–{{ substr($jadwalSaatIni->jam_selesai, 0, 5) }} WIB</span>
+                  @else
+                    <span>Tidak ada jadwal yang berlangsung saat ini.</span>
+                  @endif
                 </div>
               </div>
-              <div class="session-icon">📚</div>
             </div>
 
-            <a class="primary-btn" href="{{ route('guru.presensi-murid', $sesiBerlangsung ? ['sesi' => $sesiBerlangsung->id] : []) }}">▶ {{ $sesiBerlangsung ? 'Buka Sesi Berlangsung' : ($jadwalSaatIni ? 'Mulai Sesi Jam Ini' : 'Lihat Jadwal Mengajar') }}</a>
-          </div>
-
-          <div class="summary-panel">
-            <div class="summary-top">
-              <h4>Presensi Murid</h4>
-              <span class="green-badge">{{ $sesiAktif ? $sesiAktif->mapel->nama_mapel.' • '.$sesiAktif->kelas->nama_kelas : '-' }}</span>
-            </div>
-
-            <div class="summary-body">
-              @php($activeSession = $sesiAktif?->sesiPelajarans->first())
-              @php($presentCount = $activeSession?->presensiPelajarans->where('status', 'Hadir')->count() ?? 0)
-              @php($totalCount = $activeSession?->presensiPelajarans->count() ?? 0)
-              <div class="attendance-counts"><div class="count"><strong>{{ $presentCount }}</strong><span>dari {{ $totalCount }} murid hadir</span></div><div class="count pending-count"><strong>{{ $belumAbsenCount }}</strong><span>murid belum absen</span></div></div>
-              <div class="progress"><span style="width:{{ $totalCount ? round($presentCount / $totalCount * 100) : 0 }}%"></span></div>
-            </div>
-
-            <button class="secondary-btn" onclick="window.location.href='{{ route('guru.presensi-murid') }}'">Kelola Presensi Murid</button>
+            <a class="primary-btn" href="{{ route('guru.presensi-murid', $sesiBerlangsung ? ['sesi' => $sesiBerlangsung->id] : []) }}">{{ $sesiBerlangsung ? 'Buka Sesi Berlangsung' : ($jadwalSaatIni ? 'Mulai Sesi Jam Ini' : 'Lihat Jadwal Mengajar') }}</a>
           </div>
         </div>
       </section>

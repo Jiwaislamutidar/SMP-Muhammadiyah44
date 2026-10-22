@@ -65,6 +65,7 @@ Route::domain('guru.'.$domain)->group(function () {
         Route::get('/dashboard', [PortalGuruController::class, 'dashboard'])->name('guru.dashboard');
         Route::get('/jadwal-mengajar', [PortalGuruController::class, 'jadwal'])->name('guru.jadwal');
         Route::get('/presensi', [PresensiGuruController::class, 'index'])->name('guru.presensi-guru');
+        Route::delete('/presensi/riwayat', [PresensiGuruController::class, 'resetHistory'])->name('guru.presensi-riwayat.reset');
         Route::post('/presensi/masuk', [PresensiGuruController::class, 'masuk'])->name('guru.presensi.masuk');
         Route::post('/presensi/pulang', [PresensiGuruController::class, 'pulang'])->name('guru.presensi.pulang');
         Route::get('/presensi-murid', [SesiPelajaranController::class, 'index'])->name('guru.presensi-murid');

@@ -29,7 +29,7 @@ class AdminGuruController extends Controller
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')));
 
         return view('pages.admin.dataguru', [
-            'gurus' => $query->orderBy('nama_lengkap')->paginate(10)->withQueryString(),
+            'gurus' => $query->orderBy('nama_lengkap')->get(),
             'mapels' => Mapel::orderBy('nama_mapel')->get(),
             'totalGuru' => Guru::count(),
         ]);

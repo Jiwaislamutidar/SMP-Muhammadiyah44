@@ -20,8 +20,8 @@
     })();
   </script>
   <title>Dashboard Siswa - SMP Muhammadiyah 44</title>
-  <link rel="stylesheet" href="{{ asset('siswa css/dashboardsiswa.css') }}?v=13">
-  <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=4">
+  <link rel="stylesheet" href="{{ asset('siswa css/dashboardsiswa.css') }}?v=15">
+  <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=5">
 </head>
 <body>
   @php
@@ -33,6 +33,7 @@ $status = $presensi['status'] ?? 'Belum Absen';
     $statusKey = match($status) {
       'Hadir' => 'hadir',
       'Izin'  => 'izin',
+      'Sakit' => 'sakit',
       'Alfa'  => 'alfa',
       default => 'belum',
     };
@@ -166,7 +167,6 @@ $rTotal = $rHadir + $rIzin + $rSakit + $rAlfa;
             <div class="notification-list">
               @forelse($notifikasiPresensi ?? [] as $notifikasi)
                 <div class="notification-item" data-notification-signature="{{ hash('sha256', json_encode($notifikasi)) }}">
-                  <span class="notification-status-dot {{ $notifikasi['status'] === 'Alfa' ? 'is-danger' : (in_array($notifikasi['status'], ['Izin', 'Sakit'], true) ? 'is-warning' : 'is-success') }}"></span>
                   <div class="notification-copy">
                     <div>Presensi {{ $notifikasi['status'] }}</div>
                     <div class="notification-subject">{{ $notifikasi['mapel'] }}</div>
@@ -198,9 +198,9 @@ $rTotal = $rHadir + $rIzin + $rSakit + $rAlfa;
         </div>
         <div class="role-status">
           <div class="status-pill">
-            <span class="dot"></span> Status Siswa: <strong>{{ $siswa->status ?? 'Aktif' }}</strong>
+            Status Siswa: <strong>{{ $siswa->status ?? 'Aktif' }}</strong>
           </div>
-          <div class="class-pill">{{ $siswa->kelas ?? '-' }} • {{ $semester ?? '-' }}</div>
+          <div class="class-pill">{{ $siswa->kelas ?? '-' }} - {{ $semester ?? '-' }}</div>
         </div>
       </div>
 
@@ -221,7 +221,6 @@ $rTotal = $rHadir + $rIzin + $rSakit + $rAlfa;
             <div class="status-hero-content">
               <div class="status-label">Status Presensi</div>
               <div class="status-badge {{ $statusKey }}">
-                <span class="dot"></span>
                 {{ $status }}
               </div>
               <div class="status-note">
@@ -245,6 +244,11 @@ $rTotal = $rHadir + $rIzin + $rSakit + $rAlfa;
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                      stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M6 6 18 18M18 6 6 18"/>
+                </svg>
+              @elseif($statusKey === 'sakit')
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10 3h4v7h7v4h-7v7h-4v-7H3v-4h7z"/>
                 </svg>
               @else
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -399,7 +403,7 @@ $rTotal = $rHadir + $rIzin + $rSakit + $rAlfa;
                     <div class="mapel">{{ $absen['mapel'] }}</div>
                     <div class="meta">{{ $absen['tanggal'] }} • {{ $absen['waktu'] }}</div>
                   </div>
-                  <span class="pill-{{ strtolower($absen['status']) }}">● {{ $absen['status'] }}</span>
+                  <span class="pill-{{ strtolower($absen['status']) }}">{{ $absen['status'] }}</span>
                 </div>
               @empty
                 <div class="empty-state">
@@ -425,7 +429,7 @@ $rTotal = $rHadir + $rIzin + $rSakit + $rAlfa;
               <h2>Jadwal Hari Ini</h2>
             </div>
             <div class="date-chip">
-              {{ $siswa->kelas ?? '-' }} • {{ count($jadwalHariIni ?? []) }} Sesi Pembelajaran
+              {{ $siswa->kelas ?? '-' }} • {{ collect($jadwalHariIni ?? [])->where('kind', 'lesson')->count() }} Sesi Pembelajaran
             </div>
           </div>
 
@@ -442,23 +446,29 @@ $rTotal = $rHadir + $rIzin + $rSakit + $rAlfa;
               </thead>
               <tbody>
                 @forelse($jadwalHariIni ?? [] as $j)
-                  <tr class="{{ $j['status'] === 'Berlangsung' ? 'berlangsung' : ($j['status'] === 'Selesai' ? 'selesai' : '') }}">
-                    <td data-label="Jam">{{ $j['jam'] }}<small class="jadwal-duration">{{ $j['durasi'] }}</small></td>
-                    <td data-label="Mapel">{{ $j['mapel'] }}</td>
-                    <td data-label="Guru">{{ $j['guru'] ?? '-' }}</td>
-                    <td data-label="Kelas">
-                      <span class="kelas-chip">{{ $j['kelas'] ?? $siswa->kelas ?? '-' }}</span>
-                    </td>
-                    <td data-label="Status">
-                      @if($j['status'] === 'Selesai')
-                        <span class="status-selesai">Selesai</span>
-                      @elseif($j['status'] === 'Berlangsung')
-                        <span class="status-berlangsung">Berlangsung</span>
-                      @else
-                        <span class="status-netral">{{ $j['status'] }}</span>
-                      @endif
-                    </td>
-                  </tr>
+                  @if(($j['kind'] ?? 'lesson') === 'break')
+                    <tr class="jadwal-break">
+                      <td colspan="5"><span>{{ $j['label'] }}</span><span>{{ $j['jam'] }}</span></td>
+                    </tr>
+                  @else
+                    <tr class="{{ $j['status'] === 'Berlangsung' ? 'berlangsung' : ($j['status'] === 'Selesai' ? 'selesai' : '') }}">
+                      <td data-label="Jam">{{ $j['jam'] }}<small class="jadwal-duration">{{ $j['durasi'] }}</small></td>
+                      <td data-label="Mapel">{{ $j['mapel'] }}</td>
+                      <td data-label="Guru">{{ $j['guru'] ?? '-' }}</td>
+                      <td data-label="Kelas">
+                        <span class="kelas-chip">{{ $j['kelas'] ?? $siswa->kelas ?? '-' }}</span>
+                      </td>
+                      <td data-label="Status">
+                        @if($j['status'] === 'Selesai')
+                          <span class="status-selesai">Selesai</span>
+                        @elseif($j['status'] === 'Berlangsung')
+                          <span class="status-berlangsung">Berlangsung</span>
+                        @else
+                          <span class="status-netral">{{ $j['status'] }}</span>
+                        @endif
+                      </td>
+                    </tr>
+                  @endif
                 @empty
                   <tr>
                     <td colspan="5" data-label="Info">

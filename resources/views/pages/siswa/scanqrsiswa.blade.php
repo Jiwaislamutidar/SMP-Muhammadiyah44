@@ -21,8 +21,8 @@
     })();
   </script>
   <title>Scan QR Presensi - SMP Muhammadiyah 44</title>
-  <link rel="stylesheet" href="{{ asset('siswa css/scanqrsiswa.css') }}?v=8">
-  <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=4">
+  <link rel="stylesheet" href="{{ asset('siswa css/scanqrsiswa.css') }}?v=9">
+  <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=5">
 </head>
 <body>
 
@@ -141,7 +141,6 @@
             <div class="notification-list">
             @forelse($notifikasiPresensi ?? [] as $notifikasi)
               <div class="notification-item" data-notification-signature="{{ hash('sha256', json_encode($notifikasi)) }}">
-                <span class="notification-status-dot {{ $notifikasi['status'] === 'Alfa' ? 'is-danger' : (in_array($notifikasi['status'], ['Izin', 'Sakit'], true) ? 'is-warning' : 'is-success') }}"></span>
                 <div class="notification-copy">
                   <div>Presensi {{ $notifikasi['status'] }}</div>
                   <div class="notification-subject">{{ $notifikasi['mapel'] }}</div>
@@ -172,7 +171,7 @@
         </div>
         <div class="role-status">
           <div class="status-pill">
-            <span class="dot"></span> Status Siswa: <strong>{{ $siswa->status ?? 'Aktif' }}</strong>
+            Status Siswa: <strong>{{ $siswa->status ?? 'Aktif' }}</strong>
           </div>
           <div class="class-pill">{{ $siswa->kelas ?? '-' }} • {{ $semester ?? '-' }}</div>
         </div>
@@ -209,8 +208,8 @@
 
           <div class="session-card">
             <div class="session-card-header">
-              <span class="session-title"><span class="dot-title"></span> Sesi Saat Ini</span>
-              <span class="session-status-badge">● {{ $sesi['status'] ?? 'Tidak ada sesi aktif' }}</span>
+              <span class="session-title">Sesi Saat Ini</span>
+              <span class="session-status-badge">{{ $sesi['status'] ?? 'Tidak ada sesi aktif' }}</span>
             </div>
             <div class="session-rows">
               <div class="session-row">
@@ -234,7 +233,7 @@
 
           <div class="steps-card">
             <div class="steps-card-header">
-              <span class="steps-title"><span class="dot-title"></span> Cara Absensi</span>
+              <span class="steps-title">Cara Absensi</span>
               <p>Langkah mudah melakukan presensi kelas:</p>
             </div>
             <div class="steps-list">

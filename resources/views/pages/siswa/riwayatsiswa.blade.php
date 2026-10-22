@@ -21,8 +21,8 @@
         })();
     </script>
     <title>Riwayat Absensi - SMP Muhammadiyah 44</title>
-    <link rel="stylesheet" href="{{ asset('siswa css/riwayatsiswa.css') }}?v=9">
-    <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=4">
+    <link rel="stylesheet" href="{{ asset('siswa css/riwayatsiswa.css') }}?v=10">
+    <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=5">
 </head>
 <body>
     <div class="page-loader" id="pageLoader">
@@ -140,7 +140,6 @@
                         <div class="notification-list">
                         @forelse($notifikasiPresensi ?? [] as $notifikasi)
                             <div class="notification-item" data-notification-signature="{{ hash('sha256', json_encode($notifikasi)) }}">
-                                <span class="notification-status-dot {{ $notifikasi['status'] === 'Alfa' ? 'is-danger' : (in_array($notifikasi['status'], ['Izin', 'Sakit'], true) ? 'is-warning' : 'is-success') }}"></span>
                                 <div class="notification-copy">
                                     <div>Presensi {{ $notifikasi['status'] }}</div>
                                     <div class="notification-subject">{{ $notifikasi['mapel'] }}</div>
@@ -171,7 +170,6 @@
                 </div>
                 <div class="header-status">
                     <div class="status-pill">
-                        <span class="dot"></span>
                         <span>Status Siswa: {{ $siswa->status }}</span>
                     </div>
                     <div class="class-pill">{{ $siswa->kelas }} • {{ $semesterInfo }}</div>
@@ -359,7 +357,6 @@
 
         <footer class="footer">
             <div class="footer-left">
-                <span class="footer-dot"></span>
                 <span>Sistem Presensi &amp; Manajemen Akademik SMP Muhammadiyah 44 Tangerang Selatan</span>
             </div>
             <span>© 2026 SMP Muhammadiyah 44 Tangerang Selatan. Seluruh hak cipta dilindungi.</span>

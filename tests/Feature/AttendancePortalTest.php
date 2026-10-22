@@ -12,6 +12,7 @@ use App\Models\SesiPelajaran;
 use App\Models\Siswa;
 use App\Models\User;
 use Database\Seeders\GuruSeeder;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
@@ -199,6 +200,85 @@ class AttendancePortalTest extends TestCase
             ->assertSee('Batalkan Presensi')
             ->assertDontSee($mapelLain->nama_mapel)
             ->assertDontSee('Ust. Ahmad Fauzi');
+    }
+
+    public function test_guru_schedule_displays_each_presence_block_once_and_opens_canonical_schedule(): void
+    {
+        $this->travelTo(Carbon::parse('2026-10-21 10:30:00'));
+        [$guruUser, $guru, $jadwal, $kelas] = $this->makeSchedule();
+        $hari = $jadwal->hari;
+        $jadwal->update(['jam_mulai' => '09:20:00', 'jam_selesai' => '09:55:00']);
+        $jadwalIstirahatKedua = JadwalPelajaran::create([
+            'guru_id' => $guru->id,
+            'kelas_id' => $kelas->id,
+            'mapel_id' => $jadwal->mapel_id,
+            'hari' => $hari,
+            'jam_mulai' => '10:15:00',
+            'jam_selesai' => '10:45:00',
+            'ruangan' => 'Ruang QA',
+        ]);
+
+        $mapelDuplikat = Mapel::create(['kode' => 'QA-'.bin2hex(random_bytes(4)), 'nama_mapel' => 'Mapel Duplikat QA']);
+        $duplikat = collect([
+            ['jam_mulai' => '10:45:00', 'jam_selesai' => '11:20:00'],
+            ['jam_mulai' => '11:20:00', 'jam_selesai' => '11:55:00'],
+            ['jam_mulai' => '10:45:00', 'jam_selesai' => '11:55:00'],
+        ])->map(fn (array $jam) => JadwalPelajaran::create([
+            'guru_id' => $guru->id,
+            'kelas_id' => $kelas->id,
+            'mapel_id' => $mapelDuplikat->id,
+            'hari' => $hari,
+            ...$jam,
+        ]));
+
+        $mapelDzuhur = Mapel::create(['kode' => 'QA-'.bin2hex(random_bytes(4)), 'nama_mapel' => 'Mapel Dzuhur QA']);
+        $jadwalDzuhurPertama = JadwalPelajaran::create([
+            'guru_id' => $guru->id,
+            'kelas_id' => $kelas->id,
+            'mapel_id' => $mapelDzuhur->id,
+            'hari' => $hari,
+            'jam_mulai' => '11:20:00',
+            'jam_selesai' => '11:55:00',
+        ]);
+        JadwalPelajaran::create([
+            'guru_id' => $guru->id,
+            'kelas_id' => $kelas->id,
+            'mapel_id' => $mapelDzuhur->id,
+            'hari' => $hari,
+            'jam_mulai' => '13:00:00',
+            'jam_selesai' => '13:30:00',
+        ]);
+
+        $this->actingAs($guruUser)->get(route('guru.jadwal'))->assertOk()
+            ->assertSee('href="'.route('guru.presensi-murid', ['jadwal' => $jadwal->id]).'"', false)
+            ->assertSee('3 jadwal hari ini');
+
+        $response = $this->actingAs($guruUser)->get(route('guru.presensi-murid'))->assertOk()
+            ->assertSee('3 jadwal dari database')
+            ->assertSee('09:20 - 09:55, 10:15 - 10:45')
+            ->assertSee('1 jam 5 menit')
+            ->assertSee('10:45 - 11:55')
+            ->assertSee('11:20 - 11:55, 13:00 - 13:30')
+            ->assertSee('Mapel Duplikat QA')
+            ->assertSee('Mapel Dzuhur QA');
+
+        $this->assertSame(1, substr_count(
+            $response->getContent(),
+            'data-url="'.route('guru.sesi.open', ['jadwal' => $jadwal->id]).'"'
+        ));
+        $this->assertSame(0, substr_count(
+            $response->getContent(),
+            'data-url="'.route('guru.sesi.open', ['jadwal' => $jadwalIstirahatKedua->id]).'"'
+        ));
+        $this->assertSame(1, substr_count(
+            $response->getContent(),
+            'data-url="'.route('guru.sesi.open', ['jadwal' => $duplikat[2]->id]).'"'
+        ));
+        $this->assertSame(1, substr_count(
+            $response->getContent(),
+            'data-url="'.route('guru.sesi.open', ['jadwal' => $jadwalDzuhurPertama->id]).'"'
+        ));
+        $this->travelBack();
     }
 
     public function test_guru_notifications_cover_upcoming_ongoing_and_finished_sessions_for_the_owner(): void

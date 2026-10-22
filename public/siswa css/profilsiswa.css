@@ -90,10 +90,9 @@ body::-webkit-scrollbar-thumb {
 .header-copy p { color: #6b756f; font-size: 14px; margin: 2px 0 0; }
 .status-badge {
   background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 9999px;
-  padding: 6px 14px; display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 14px; display: inline-flex; align-items: center;
   color: #087443; font-weight: 600; font-size: 12px;
 }
-.status-badge .dot { background: #10b981; border-radius: 9999px; width: 8px; height: 8px; }
 
 .profile-card {
   background: #fff; border: 1px solid #e3e8e5; border-radius: 16px;

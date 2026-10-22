@@ -12,12 +12,12 @@
 	<section class="panel"><div class="panel-head"><div class="panel-title">Kehadiran Sekolah</div></div>
 		<div class="cards-two attendance-cards">
 			<div class="attendance-card"><div class="card-top"><div><span class="muted">ABSEN DATANG</span><h3>Absen Masuk Sekolah</h3><small>{{ $presensi?->jam_masuk ? 'Presensi tersimpan hari ini.' : 'Ambil foto sebagai bukti kehadiran.' }}</small></div><span class="status-pill {{ $presensi?->jam_masuk ? 'hadir' : 'izin' }}">{{ $presensi?->jam_masuk ? 'Tercatat' : 'Belum Absen' }}</span></div>
-				<div class="big-time">{{ $presensi?->jam_masuk ? substr($presensi->jam_masuk, 0, 5) : '--:--' }} <small>WIB</small></div>
+				<div class="big-time">{{ $presensi?->jam_masuk ? substr($presensi->jam_masuk, 0, 5) : '07:00' }} <small>WIB</small></div>
 				@if($presensi?->foto_masuk)<p><a href="{{ asset('storage/'.$presensi->foto_masuk) }}" target="_blank" rel="noopener">Lihat foto bukti</a></p>@endif
 				@if($presensi?->jam_masuk)<button class="attendance-action attendance-done" type="button" disabled>✓ Sudah Absen ({{ substr($presensi->jam_masuk, 0, 5) }} WIB)</button>@else<button class="attendance-action" type="button" data-title="Absen Masuk Sekolah" data-url="{{ route('guru.presensi.masuk') }}">📸 Absen Masuk Sekolah</button>@endif
 			</div>
 			<div class="attendance-card"><div class="card-top"><div><span class="muted">ABSEN KEPULANGAN</span><h3>Absen Pulang Sekolah</h3><small>{{ $presensi?->jam_pulang ? 'Presensi tersimpan hari ini.' : ($presensi?->jam_masuk ? 'Ambil foto sebagai bukti kepulangan.' : 'Absen masuk lebih dahulu.') }}</small></div><span class="status-pill {{ $presensi?->jam_pulang ? 'hadir' : 'izin' }}">{{ $presensi?->jam_pulang ? 'Tercatat' : 'Belum Absen' }}</span></div>
-				<div class="big-time">{{ $presensi?->jam_pulang ? substr($presensi->jam_pulang, 0, 5) : '--:--' }} <small>WIB</small></div>
+				<div class="big-time">{{ $presensi?->jam_pulang ? substr($presensi->jam_pulang, 0, 5) : '16:00' }} <small>WIB</small></div>
 				@if($presensi?->foto_pulang)<p><a href="{{ asset('storage/'.$presensi->foto_pulang) }}" target="_blank" rel="noopener">Lihat foto bukti</a></p>@endif
 				@if($presensi?->jam_pulang)<button class="attendance-action attendance-done" type="button" disabled>✓ Sudah Absen ({{ substr($presensi->jam_pulang, 0, 5) }} WIB)</button>@else<button class="attendance-action" type="button" data-title="Absen Pulang Sekolah" data-url="{{ route('guru.presensi.pulang') }}" {{ $presensi?->jam_masuk ? '' : 'disabled' }}>📸 Absen Pulang Sekolah</button>@endif
 			</div>

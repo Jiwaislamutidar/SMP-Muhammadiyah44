@@ -91,10 +91,9 @@ body::-webkit-scrollbar-thumb {
 .role-status { display: flex; gap: 10px; }
 .status-pill {
   background: #fff; border: 1px solid #e4eae6; border-radius: 8px;
-  padding: 6px 12px; display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px; display: flex; align-items: center;
   font-size: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.05);
 }
-.status-pill .dot { background: #16a66a; border-radius: 9999px; width: 8px; height: 8px; }
 .status-pill strong { color: #087443; }
 .class-pill {
   background: #e8f6ef;
@@ -311,6 +310,8 @@ body::-webkit-scrollbar-thumb {
   color: #087443;
 }
 
+.scanner-header .status-indicator { display: none; }
+
 .status-indicator.live {
   width: 10px;
   height: 10px;
@@ -450,12 +451,8 @@ body::-webkit-scrollbar-thumb {
 .steps-card-header p { font-size: 11px; color: #6b756f; margin: 0; }
 
 .session-title, .steps-title {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center;
   font-size: 14px; font-weight: 600; color: #17211c;
-}
-.dot-title {
-  width: 10px; height: 20px; border-radius: 9999px;
-  background: #087443; display: inline-block;
 }
 
 .session-status-badge {

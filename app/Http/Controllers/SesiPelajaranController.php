@@ -6,6 +6,7 @@ use App\Models\Guru;
 use App\Models\JadwalPelajaran;
 use App\Models\SesiPelajaran;
 use App\Models\Siswa;
+use App\Support\SiswaScheduleGrouper;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -32,12 +33,27 @@ class SesiPelajaranController extends Controller
             ->whereRaw('LOWER(hari) = ?', [mb_strtolower($hari)])
             ->orderBy('jam_mulai')
             ->get();
+        $jadwalBloks = (new SiswaScheduleGrouper)->blocks($jadwals, now());
         $sesiId = request()->integer('sesi');
-        $sesi = $sesiId
-            ? SesiPelajaran::with(['jadwal.mapel', 'jadwal.kelas', 'presensiPelajarans.siswa'])
-                ->where('guru_id', $guru->id)->whereDate('tanggal', today())->find($sesiId)
-            : $jadwals->first(fn (JadwalPelajaran $jadwal) => $jadwal->sesiPelajarans->first()?->status_sesi === 'Berlangsung')
+        $jadwalId = request()->integer('jadwal');
+        $selectedBlock = $jadwalBloks->first(fn (array $block): bool => $block['jadwal']->id === $jadwalId);
+
+        if ($sesiId) {
+            $sesi = SesiPelajaran::with(['jadwal.mapel', 'jadwal.kelas', 'presensiPelajarans.siswa'])
+                ->where('guru_id', $guru->id)
+                ->whereDate('tanggal', today())
+                ->find($sesiId);
+        } elseif ($selectedBlock) {
+            $sesi = $selectedBlock['jadwals']
+                ->flatMap(fn (JadwalPelajaran $jadwal) => $jadwal->sesiPelajarans)
+                ->first(fn (SesiPelajaran $session) => $session->status_sesi === 'Berlangsung');
+            $sesi ??= $selectedBlock['jadwals']
+                ->flatMap(fn (JadwalPelajaran $jadwal) => $jadwal->sesiPelajarans)
+                ->first();
+        } else {
+            $sesi = $jadwals->first(fn (JadwalPelajaran $jadwal) => $jadwal->sesiPelajarans->first()?->status_sesi === 'Berlangsung')
                 ?->sesiPelajarans->first();
+        }
 
         $mapelGuru = $guru->mapels->pluck('nama_mapel')
             ->merge($jadwals->pluck('mapel.nama_mapel'))
@@ -45,7 +61,7 @@ class SesiPelajaranController extends Controller
             ->unique()
             ->implode(' • ');
 
-        return view('pages.guru.presensimurid', compact('guru', 'jadwals', 'sesi', 'mapelGuru'));
+        return view('pages.guru.presensimurid', compact('guru', 'jadwals', 'jadwalBloks', 'sesi', 'mapelGuru'));
     }
 
     public function open(Request $request, JadwalPelajaran $jadwal): JsonResponse

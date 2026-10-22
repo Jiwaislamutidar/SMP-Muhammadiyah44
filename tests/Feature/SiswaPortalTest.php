@@ -30,13 +30,13 @@ class SiswaPortalTest extends TestCase
             $this->get(route($routeName))
                 ->assertOk()
                 ->assertSee('Nadia Rahma QA')
-                ->assertSee('siswa-ui.css?v=4')
                 ->assertSee(match ($routeName) {
-                    'siswa.dashboard' => 'dashboardsiswa.css?v=13',
-                    'siswa.scan-qr' => 'scanqrsiswa.css?v=8',
-                    'siswa.riwayat' => 'riwayatsiswa.css?v=9',
-                    'siswa.profil' => 'profilsiswa.css?v=6',
+                    'siswa.dashboard' => 'dashboardsiswa.css?v=15',
+                    'siswa.scan-qr' => 'scanqrsiswa.css?v=9',
+                    'siswa.riwayat' => 'riwayatsiswa.css?v=10',
+                    'siswa.profil' => 'profilsiswa.css?v=7',
                 })
+                ->assertSee('siswa-ui.css?v=5')
                 ->assertSee('siswa-ui.js?v=3')
                 ->assertSee('aria-haspopup="dialog"', false)
                 ->assertSee('Notifikasi')
@@ -45,11 +45,11 @@ class SiswaPortalTest extends TestCase
 
         $this->get(route('siswa.dashboard'))
             ->assertOk()
-            ->assertSee('dashboardsiswa.css?v=13');
+            ->assertSee('dashboardsiswa.css?v=15');
 
         $this->get(route('siswa.riwayat'))
             ->assertOk()
-            ->assertSee('riwayatsiswa.css?v=9')
+            ->assertSee('riwayatsiswa.css?v=10')
             ->assertSee('name="periode"', false)
             ->assertSee('name="mapel_id"', false)
             ->assertSee('name="status"', false);
@@ -57,6 +57,7 @@ class SiswaPortalTest extends TestCase
         $this->get(route('siswa.scan-qr'))
             ->assertDontSee('Ahmad Fauzan')
             ->assertSee('NR')
+            ->assertSee('scanqrsiswa.css?v=9')
             ->assertSee('html5-qrcode.min.js?v=2.3.8');
     }
 
@@ -67,7 +68,7 @@ class SiswaPortalTest extends TestCase
         $html = $this->actingAs($user)
             ->get(route('siswa.profil'))
             ->assertOk()
-            ->assertSee('profilsiswa.css?v=6')
+            ->assertSee('profilsiswa.css?v=7')
             ->getContent();
 
         $this->assertSame(3, substr_count($html, 'class="password-visibility-toggle"'));
@@ -344,6 +345,8 @@ class SiswaPortalTest extends TestCase
             ->get(route('siswa.dashboard'))
             ->assertOk()
             ->assertSee('notification-item', false)
+            ->assertSee('status-badge hadir', false)
+            ->assertSee('Tercatat: 10:00 WIB')
             ->assertSee($mapel->nama_mapel);
 
         $this->actingAs($userB)
@@ -417,6 +420,67 @@ class SiswaPortalTest extends TestCase
             ->assertOk()
             ->assertSee('PDF test');
 
+        $this->travelBack();
+    }
+
+    public function test_dashboard_shows_attendance_scanned_on_an_overlapping_schedule_in_the_same_block(): void
+    {
+        $this->travelTo(now()->startOfDay()->addHours(10));
+        $kelas = Kelas::create(['nama_kelas' => 'QA-BLOCK-' . bin2hex(random_bytes(4))]);
+        [$userA, $studentA] = $this->makeStudent($kelas);
+        [$userB, $studentB] = $this->makeStudent($kelas);
+        $suffix = bin2hex(random_bytes(5));
+        $guru = Guru::create([
+            'nama_lengkap' => 'Guru Blok QA ' . $suffix,
+            'status' => 'aktif',
+        ]);
+        $mapel = Mapel::create([
+            'kode' => 'BLOK-' . $suffix,
+            'nama_mapel' => 'Mapel Blok QA ' . $suffix,
+        ]);
+        $jadwals = collect([
+            ['jam_mulai' => '09:00:00', 'jam_selesai' => '10:30:00'],
+            ['jam_mulai' => '10:00:00', 'jam_selesai' => '11:00:00'],
+        ])->map(fn (array $jam) => JadwalPelajaran::create([
+            'guru_id' => $guru->id,
+            'kelas_id' => $kelas->id,
+            'mapel_id' => $mapel->id,
+            'hari' => now()->locale('id')->isoFormat('dddd'),
+            ...$jam,
+        ]));
+        $sesis = $jadwals->map(fn (JadwalPelajaran $jadwal, int $index) => SesiPelajaran::create([
+            'jadwal_id' => $jadwal->id,
+            'guru_id' => $guru->id,
+            'tanggal' => today()->toDateString(),
+            'qr_token' => 'block-' . $suffix . '-' . $index,
+            'qr_expires_at' => now()->addHour(),
+            'status_sesi' => 'Berlangsung',
+        ]));
+        $this->makeSessionAttendance($sesis[0], $studentA);
+        $attendanceScanned = $this->makeSessionAttendance($sesis[1], $studentA);
+        $attendanceB = $this->makeSessionAttendance($sesis[1], $studentB);
+
+        $this->actingAs($userA)
+            ->postJson(route('siswa.scan'), ['token' => $sesis[1]->qr_token])
+            ->assertOk()
+            ->assertJsonPath('status', 'Hadir');
+
+        $this->actingAs($userA)
+            ->get(route('siswa.dashboard'))
+            ->assertOk()
+            ->assertSee('status-badge hadir', false)
+            ->assertSee('Tercatat: 10:00 WIB')
+            ->assertSee('09:00 - 11:00')
+            ->assertSee($mapel->nama_mapel);
+
+        $this->actingAs($userB)
+            ->get(route('siswa.dashboard'))
+            ->assertOk()
+            ->assertSee('status-badge belum', false)
+            ->assertSee('Belum Absen');
+
+        $this->assertSame('Hadir', $attendanceScanned->fresh()->status);
+        $this->assertSame('Belum Absen', $attendanceB->fresh()->status);
         $this->travelBack();
     }
 

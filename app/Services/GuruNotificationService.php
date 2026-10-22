@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Guru;
 use App\Models\JadwalPelajaran;
 use App\Models\SesiPelajaran;
+use App\Support\SiswaScheduleGrouper;
 use Illuminate\Support\Carbon;
 
 class GuruNotificationService
@@ -16,22 +17,25 @@ class GuruNotificationService
         $hari = $now->copy()->locale('id')->isoFormat('dddd');
         $notifications = [];
 
-        $jadwalBerikutnya = JadwalPelajaran::query()
+        $jadwalBerikutnya = (new SiswaScheduleGrouper)->blocks(JadwalPelajaran::query()
             ->with(['mapel:id,nama_mapel', 'kelas:id,nama_kelas'])
             ->where('guru_id', $guru->id)
             ->whereRaw('LOWER(hari) = ?', [mb_strtolower($hari)])
-            ->where('jam_mulai', '>', $now->format('H:i:s'))
             ->orderBy('jam_mulai')
+            ->get(), $now)
+            ->filter(fn (array $block): bool => $block['start'] > $now->format('H:i:s'))
+            ->sortBy('start')
             ->first();
 
         if ($jadwalBerikutnya) {
-            $waktuJadwal = Carbon::parse($today.' '.$jadwalBerikutnya->jam_mulai, 'Asia/Jakarta');
+            $jadwal = $jadwalBerikutnya['jadwal'];
+            $waktuJadwal = Carbon::parse($today.' '.$jadwalBerikutnya['start'], 'Asia/Jakarta');
             $menit = max(0, (int) ceil($now->diffInSeconds($waktuJadwal, false) / 60));
             $notifications[] = $this->notification(
-                'upcoming-'.$jadwalBerikutnya->id.'-'.$today,
+                'upcoming-'.$jadwal->id.'-'.$today,
                 'Jadwal mengajar berikutnya',
-                $jadwalBerikutnya->mapel->nama_mapel.' • '.$jadwalBerikutnya->kelas->nama_kelas,
-                'Jam '.substr($jadwalBerikutnya->jam_mulai, 0, 5).' • dalam '.$menit.' menit',
+                $jadwal->mapel->nama_mapel.' • '.$jadwal->kelas->nama_kelas,
+                'Jam '.$jadwalBerikutnya['jam'].' • '.$jadwalBerikutnya['durasi'].' • dalam '.$menit.' menit',
                 'success'
             );
         }

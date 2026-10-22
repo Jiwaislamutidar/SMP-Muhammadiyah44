@@ -71,31 +71,14 @@
 
 .notification-item {
   display: grid;
-  grid-template-columns: 9px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
-  gap: 9px;
   padding: 10px 0;
   border-bottom: 1px solid #edf1ee;
 }
 
 .notification-item:last-child {
   border-bottom: 0;
-}
-
-.notification-status-dot {
-  width: 8px;
-  height: 8px;
-  margin-top: 5px;
-  border-radius: 50%;
-  background: #16a66a;
-}
-
-.notification-status-dot.is-warning {
-  background: #eab308;
-}
-
-.notification-status-dot.is-danger {
-  background: #ef4444;
 }
 
 .notification-copy {

@@ -302,6 +302,7 @@ html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb {
 .schedule-table { width: 100%; border-collapse: collapse; }
 .schedule-table th { padding: 12px 14px; color: var(--muted); background: #f8faf9; border-bottom: 1px solid var(--line); font-size: 11px; letter-spacing: .5px; text-align: left; text-transform: uppercase; }
 .schedule-table td { padding: 15px 14px; color: var(--ink); border-bottom: 1px solid var(--line); font-size: 12px; }
+.schedule-block-duration { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; font-weight: 400; }
 .schedule-table tr.active-row { background: #f0fdf4; box-shadow: inset 4px 0 var(--green-500); }
 .schedule-table tr.active-row td:first-child { padding-left: 18px; }
 .pill-soft, .pill-live { display: inline-flex; align-items: center; justify-content: center; padding: 3px 9px; border-radius: 999px; font-size: 10px; font-weight: 700; white-space: nowrap; }

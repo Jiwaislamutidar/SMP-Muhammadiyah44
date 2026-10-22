@@ -303,16 +303,9 @@ button, input, a { font-family: inherit; }
   padding: 7px 12px;
   display: flex;
   align-items: center;
-  gap: 8px;
   font-size: var(--fs-sm);
   color: var(--ink-700);
   box-shadow: var(--shadow-xs);
-}
-.status-pill .dot {
-  background: var(--brand-500);
-  border-radius: var(--r-pill);
-  width: 8px;
-  height: 8px;
 }
 .status-pill strong { color: var(--brand-600); font-weight: 600; }
 
@@ -407,43 +400,24 @@ a.date-chip:hover {
   background: var(--surface-2);
   transition: background .3s var(--ease-out);
 }
-.status-hero::after {
-  content: "";
-  position: absolute;
-  top: -60px;
-  right: -60px;
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  opacity: .5;
-  pointer-events: none;
-}
 .status-hero.hadir {
   background: linear-gradient(135deg, var(--brand-50) 0%, #fff 100%);
   border-color: rgba(8,116,67,.18);
-}
-.status-hero.hadir::after {
-  background: radial-gradient(circle, rgba(16,185,129,.22), transparent 70%);
 }
 .status-hero.izin {
   background: linear-gradient(135deg, var(--warn-bg) 0%, #fff 100%);
   border-color: var(--warn-border);
 }
-.status-hero.izin::after {
-  background: radial-gradient(circle, rgba(217,119,6,.2), transparent 70%);
-}
 .status-hero.alfa {
   background: linear-gradient(135deg, var(--danger-bg) 0%, #fff 100%);
   border-color: var(--danger-border);
 }
-.status-hero.alfa::after {
-  background: radial-gradient(circle, rgba(220,38,38,.2), transparent 70%);
+.status-hero.sakit {
+  background: linear-gradient(135deg, var(--warn-bg) 0%, #fff 100%);
+  border-color: var(--warn-border);
 }
 .status-hero.belum {
   background: linear-gradient(135deg, var(--surface-2) 0%, #fff 100%);
-}
-.status-hero.belum::after {
-  background: radial-gradient(circle, rgba(107,117,111,.12), transparent 70%);
 }
 
 .status-hero-content {
@@ -465,7 +439,6 @@ a.date-chip:hover {
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
   padding: 6px 14px;
   border-radius: var(--r-pill);
   font-weight: 700;
@@ -473,39 +446,31 @@ a.date-chip:hover {
   line-height: 1;
   border: 1px solid transparent;
 }
-.status-badge .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: var(--r-pill);
-  flex-shrink: 0;
-}
 .status-badge.hadir {
   background: var(--brand-100);
   color: var(--brand-700);
   border-color: rgba(8,116,67,.22);
-}
-.status-badge.hadir .dot {
-  background: var(--brand-500);
-  animation: pulse-dot 1.8s ease-out infinite;
 }
 .status-badge.izin {
   background: var(--warn-bg);
   color: var(--warn);
   border-color: var(--warn-border);
 }
-.status-badge.izin .dot { background: var(--warn); }
+.status-badge.sakit {
+  background: var(--warn-bg);
+  color: var(--warn);
+  border-color: var(--warn-border);
+}
 .status-badge.alfa {
   background: var(--danger-bg);
   color: var(--danger);
   border-color: var(--danger-border);
 }
-.status-badge.alfa .dot { background: var(--danger); }
 .status-badge.belum {
   background: var(--surface-3);
   color: var(--ink-700);
   border-color: var(--border-strong);
 }
-.status-badge.belum .dot { background: var(--ink-500); }
 
 .status-note {
   font-size: var(--fs-sm);
@@ -540,6 +505,11 @@ a.date-chip:hover {
 .status-hero.alfa .status-icon {
   background: var(--danger);
   border-color: var(--danger);
+  color: #fff;
+}
+.status-hero.sakit .status-icon {
+  background: var(--warn);
+  border-color: var(--warn);
   color: #fff;
 }
 .status-hero.belum .status-icon {
@@ -604,15 +574,6 @@ a.date-chip:hover {
   font-weight: 600;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-}
-.next-session .live::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  background: var(--info);
-  border-radius: var(--r-pill);
-  animation: pulse-dot-info 1.6s ease-out infinite;
 }
 
 .scan-card {
@@ -623,17 +584,6 @@ a.date-chip:hover {
   color: #fff;
   position: relative;
   overflow: hidden;
-}
-.scan-card::before {
-  content: "";
-  position: absolute;
-  top: -80px;
-  right: -80px;
-  width: 220px;
-  height: 220px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(52,211,153,.25), transparent 70%);
-  pointer-events: none;
 }
 .scan-card .card-header {
   border-bottom: 1px solid rgba(255,255,255,.14);
@@ -882,10 +832,10 @@ a.date-chip:hover {
 
 .pill-hadir,
 .pill-izin,
+.pill-sakit,
 .pill-alfa {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
   border-radius: var(--r-pill);
   padding: 4px 10px;
   font-size: var(--fs-xs);
@@ -899,6 +849,11 @@ a.date-chip:hover {
   color: var(--brand-600);
 }
 .pill-izin {
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-border);
+  color: var(--warn);
+}
+.pill-sakit {
   background: var(--warn-bg);
   border: 1px solid var(--warn-border);
   color: var(--warn);
@@ -978,6 +933,14 @@ table.jadwal tr.berlangsung td {
 table.jadwal tbody tr { transition: background .15s var(--ease-out); }
 table.jadwal tbody tr:hover { background: var(--surface-2); }
 table.jadwal tbody tr.berlangsung:hover { background: #e0ebfd; }
+table.jadwal tr.jadwal-break td {
+  padding: 7px 12px;
+  color: var(--ink-500);
+  background: var(--surface-2);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+table.jadwal tr.jadwal-break td span + span { margin-left: 8px; }
 
 .kelas-chip {
   background: var(--surface-3);
@@ -991,7 +954,6 @@ table.jadwal tbody tr.berlangsung:hover { background: #e0ebfd; }
 .status-selesai {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
   background: var(--surface-3);
   border-radius: var(--r-pill);
   padding: 4px 10px;
@@ -999,14 +961,6 @@ table.jadwal tbody tr.berlangsung:hover { background: #e0ebfd; }
   color: var(--ink-500);
   font-weight: 600;
 }
-.status-selesai::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: var(--r-pill);
-  background: var(--ink-300);
-}
-
 .status-berlangsung {
   display: inline-flex;
   align-items: center;
@@ -1030,7 +984,6 @@ table.jadwal tbody tr.berlangsung:hover { background: #e0ebfd; }
 .status-netral {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--r-pill);
@@ -1958,11 +1911,10 @@ table.jadwal tbody tr.berlangsung:hover { background: #e0ebfd; }
     gap: 10px;
   }
   table.jadwal tbody tr {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-content: start;
-    column-gap: 6px;
-    row-gap: 7px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
     min-width: 0;
     margin: 0;
     padding: 12px;
@@ -1975,6 +1927,20 @@ table.jadwal tbody tr.berlangsung:hover { background: #e0ebfd; }
     border-color: #b8dfc9;
     background: #eef8f2;
   }
+  table.jadwal tbody tr.jadwal-break {
+    grid-column: 1 / -1;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  table.jadwal tbody tr.jadwal-break td {
+    display: block;
+    padding: 7px;
+    border: 0;
+    border-radius: var(--r-sm);
+  }
   table.jadwal tbody tr.selesai { opacity: .72; }
   table.jadwal tbody tr:only-child { grid-column: 1 / -1; }
   table.jadwal tbody td,
@@ -1986,7 +1952,7 @@ table.jadwal tbody tr.berlangsung:hover { background: #e0ebfd; }
     text-align: left;
     font-size: 12px;
   }
-  table.jadwal tbody td:nth-child(-n+3) { grid-column: 1 / -1; }
+  table.jadwal tbody td:nth-child(-n+3) { flex: 0 0 100%; }
   table.jadwal tbody td:nth-child(1) { color: var(--ink-900); font-size: 13px; font-weight: 700; line-height: 1.3; }
   table.jadwal tbody td:nth-child(2) {
     overflow: hidden;
@@ -2009,9 +1975,11 @@ table.jadwal tbody tr.berlangsung:hover { background: #e0ebfd; }
   table.jadwal tbody td:nth-child(5) {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 0;
   }
-  table.jadwal tbody td:nth-child(4) { grid-column: 1; }
-  table.jadwal tbody td:nth-child(5) { grid-column: 2; justify-content: flex-end; }
   table.jadwal tbody td::before {
     position: absolute;
     width: 1px;
@@ -2024,7 +1992,7 @@ table.jadwal tbody tr.berlangsung:hover { background: #e0ebfd; }
     border: 0;
   }
   table.jadwal tbody td[colspan] {
-    grid-column: 1 / -1;
+    flex: 1 0 100%;
     display: block;
     color: var(--ink-500);
     text-align: center;
@@ -2036,9 +2004,10 @@ table.jadwal tbody tr.berlangsung:hover { background: #e0ebfd; }
   table.jadwal tbody .status-netral {
     max-width: 100%;
     padding: 3px 6px;
-    font-size: 9px;
+    font-size: 11px;
     line-height: 1.2;
     white-space: nowrap;
+    flex: 0 0 auto;
+    min-width: 0;
   }
-  table.jadwal tbody .status-netral { overflow: hidden; text-overflow: ellipsis; }
 }

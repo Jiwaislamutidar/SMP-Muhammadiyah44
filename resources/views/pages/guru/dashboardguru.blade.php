@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
   <title>Dashboard Guru - SMP Muhammadiyah 44</title>
-  <link rel="stylesheet" href="{{ asset('guru css/dashboard.css') }}?v=2">
+  <link rel="stylesheet" href="{{ asset('guru css/dashboard.css') }}?v=3">
   <link rel="stylesheet" href="{{ asset('guru css/portal-responsive.css') }}?v=1">
   <link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=2">
 </head>
@@ -37,7 +37,7 @@
             <div class="icon-wrap">🏫</div>
             <div class="stat-meta">
               <div class="label">Masuk Sekolah</div>
-              <div class="value">{{ $presensiHariIni?->jam_masuk ? substr($presensiHariIni->jam_masuk, 0, 5).' WIB' : '--:--' }}</div>
+              <div class="value">{{ $presensiHariIni?->jam_masuk ? substr($presensiHariIni->jam_masuk, 0, 5).' WIB' : '07:00' }}</div>
             </div>
           </div>
           <div class="status-badge"><span class="dot"></span> {{ $presensiHariIni?->jam_masuk ? 'Sudah Absen' : 'Belum Absen' }}</div>
@@ -48,7 +48,7 @@
             <div class="icon-wrap alt">🏠</div>
             <div class="stat-meta">
               <div class="label">Pulang Sekolah</div>
-              <div class="value">{{ $presensiHariIni?->jam_pulang ? substr($presensiHariIni->jam_pulang, 0, 5).' WIB' : '--:--' }}</div>
+              <div class="value">{{ $presensiHariIni?->jam_pulang ? substr($presensiHariIni->jam_pulang, 0, 5).' WIB' : '16:00' }}</div>
             </div>
           </div>
           <div class="status-badge pending"><span class="dot"></span> {{ $presensiHariIni?->jam_pulang ? 'Sudah Absen' : 'Belum Absen' }}</div>
@@ -59,7 +59,7 @@
         <div class="panel">
           <div class="panel-header">
             <div class="panel-title"><span class="bar"></span> Jadwal Mengajar Hari Ini</div>
-            <div class="mini-label">{{ $jadwals->count() }} Sesi KBM</div>
+            <div class="mini-label">{{ $jadwalBloks->count() }} Sesi KBM</div>
           </div>
 
           <div class="table-wrap">
@@ -73,13 +73,19 @@
               </tr>
             </thead>
             <tbody>
-              @forelse($jadwals as $jadwal)
-                @php($sesiJadwal = $jadwal->sesiPelajarans->first())
-                <tr class="{{ $sesiJadwal?->status_sesi === 'Berlangsung' ? 'active-row' : '' }}">
-                  <td>{{ substr($jadwal->jam_mulai, 0, 5) }}-{{ substr($jadwal->jam_selesai, 0, 5) }}</td>
+              @forelse($jadwalBloks as $blok)
+                @php($jadwal = $blok['jadwal'])
+                <tr class="{{ $blok['status'] === 'Berlangsung' ? 'active-row' : '' }}">
+                  <td>{{ $blok['jam'] }}@if(count($blok['segments']) > 1)<small class="schedule-block-duration">{{ $blok['durasi'] }}</small>@endif</td>
                   <td>{{ $jadwal->mapel->nama_mapel }}</td>
                   <td><span class="pill-soft">{{ $jadwal->kelas->nama_kelas }}</span></td>
-                  <td style="text-align:right"><span class="pill-live"><span class="dot"></span>{{ $sesiJadwal?->status_sesi ?? 'Belum' }}</span></td>
+                  <td style="text-align:right">
+                    @if($blok['status'] === 'Berlangsung')
+                      <span class="pill-live"><span class="dot"></span>{{ $blok['status'] }}</span>
+                    @else
+                      <span class="pill-soft">{{ $blok['status'] }}</span>
+                    @endif
+                  </td>
                 </tr>
               @empty<tr><td colspan="4">Tidak ada jadwal mengajar hari ini.</td></tr>@endforelse
             </tbody>

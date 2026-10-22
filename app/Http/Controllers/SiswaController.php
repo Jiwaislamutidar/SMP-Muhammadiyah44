@@ -160,8 +160,7 @@ class SiswaController extends Controller
                 'guru',
                 'kelas',
                 'mapel',
-                'sesiPelajarans' => fn ($query) => $query->whereDate('tanggal', today())
-                    ->with(['presensiPelajarans' => fn ($attendance) => $attendance->where('siswa_id', $siswaModel->id)]),
+                'sesiPelajarans' => fn ($query) => $query->whereDate('tanggal', today()),
             ])
                 ->where('kelas_id', $siswaModel->kelas_id)
                 ->whereRaw('LOWER(hari) = ?', [mb_strtolower($hari)])
@@ -169,14 +168,30 @@ class SiswaController extends Controller
                 ->get();
         }
 
-        $jadwalHariIni = (new SiswaScheduleGrouper)->merge($jadwalRecords, now())->all();
+        $scheduleGrouper = new SiswaScheduleGrouper;
+        $jadwalHariIni = $scheduleGrouper->merge($jadwalRecords, now())->all();
 
         $waktuSekarang = now()->format('H:i:s');
-        $jadwalAktif = $jadwalRecords->first(function (JadwalPelajaran $jadwal) use ($waktuSekarang): bool {
-            return $jadwal->jam_mulai <= $waktuSekarang && $waktuSekarang < $jadwal->jam_selesai;
-        });
-        $sesiJadwalAktif = $jadwalAktif?->sesiPelajarans->first();
-        $presensiAktif = $sesiJadwalAktif?->presensiPelajarans->first();
+        $blokAktif = $scheduleGrouper->blocks($jadwalRecords, now())
+            ->first(fn (array $block): bool => $block['start'] <= $waktuSekarang && $waktuSekarang < $block['end']);
+        $jadwalAktif = $blokAktif['jadwal'] ?? null;
+        $presensiAktif = null;
+
+        if ($jadwalAktif && $siswaModel) {
+            $jadwalIdsDalamBlok = $blokAktif['jadwals']->pluck('id')->all();
+
+            $presensiAktif = PresensiPelajaran::query()
+                ->with('sesiPelajaran.jadwal.mapel')
+                ->where('siswa_id', $siswaModel->getKey())
+                ->whereHas('sesiPelajaran', fn (Builder $query) => $query
+                    ->whereIn('jadwal_id', $jadwalIdsDalamBlok)
+                    ->whereDate('tanggal', today()))
+                ->visibleToStudent()
+                ->orderByRaw('CASE WHEN status = ? THEN 1 ELSE 0 END', ['Belum Absen'])
+                ->latest('updated_at')
+                ->first();
+        }
+        $jadwalKartuAktif = $presensiAktif?->sesiPelajaran?->jadwal ?? $jadwalAktif;
 
         $counts = $siswaModel
             ? $siswaModel->presensiPelajarans()
@@ -228,11 +243,11 @@ class SiswaController extends Controller
                     ? ($presensiAktif?->status ?? 'Belum Absen')
                     : 'Tidak ada sesi aktif',
                 'verifikator' => $jadwalAktif?->guru?->nama_lengkap ?? '-',
-                'mapel' => $jadwalAktif?->mapel?->nama_mapel ?? '-',
+                'mapel' => $jadwalKartuAktif?->mapel?->nama_mapel ?? '-',
                 'sesi' => $jadwalAktif ? 'Berlangsung' : '-',
-                'ruang' => $jadwalAktif?->ruangan ?? '-',
+                'ruang' => $jadwalKartuAktif?->ruangan ?? '-',
                 'jam' => $jadwalAktif
-                    ? substr($jadwalAktif->jam_mulai, 0, 5).' - '.substr($jadwalAktif->jam_selesai, 0, 5)
+                    ? substr($blokAktif['start'], 0, 5).' - '.substr($blokAktif['end'], 0, 5)
                     : '-',
                 'waktu_tercatat' => $presensiAktif?->waktu_scan
                     ? $presensiAktif->waktu_scan->format('H:i').' WIB'

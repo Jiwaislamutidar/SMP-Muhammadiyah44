@@ -6,6 +6,7 @@ use App\Models\Guru;
 use App\Models\JadwalPelajaran;
 use App\Models\PresensiPelajaran;
 use App\Models\SesiPelajaran;
+use App\Support\SiswaScheduleGrouper;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
@@ -18,6 +19,7 @@ class PortalGuruController extends Controller
         abort_unless($guru, 403, 'Profil guru belum terhubung ke akun ini.');
 
         $jadwals = $this->jadwalsHariIni($guru);
+        $jadwalBloks = (new SiswaScheduleGrouper)->blocks($jadwals, now());
         $jadwalSaatIni = $jadwals->first(fn (JadwalPelajaran $jadwal) =>
             $jadwal->jam_mulai <= now()->format('H:i:s') && $jadwal->jam_selesai >= now()->format('H:i:s')
         );
@@ -27,6 +29,7 @@ class PortalGuruController extends Controller
         return view('pages.guru.dashboardguru', [
             'guru' => $guru,
             'jadwals' => $jadwals,
+            'jadwalBloks' => $jadwalBloks,
             'presensiHariIni' => $guru->presensiHarian()->whereDate('tanggal', today())->first(),
             'sesiAktif' => $sesiAktif,
             'sesiBerlangsung' => $sesiBerlangsung,
@@ -40,9 +43,12 @@ class PortalGuruController extends Controller
         $guru = Guru::forUser(Auth::user());
         abort_unless($guru, 403, 'Profil guru belum terhubung ke akun ini.');
 
+        $jadwals = $this->jadwalsHariIni($guru);
+
         return view('pages.guru.jadwalngajarguru', [
             'guru' => $guru,
-            'jadwals' => $this->jadwalsHariIni($guru),
+            'jadwals' => $jadwals,
+            'jadwalBloks' => (new SiswaScheduleGrouper)->blocks($jadwals, now()),
         ]);
     }
 

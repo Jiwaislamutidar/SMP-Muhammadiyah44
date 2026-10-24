@@ -19,9 +19,9 @@
       window.setTimeout(hidePageLoader, 800);
     })();
   </script>
-  <title>Dashboard Siswa - SMP Muhammadiyah 44</title>
+  <title>SMP Muhammadiyah 44</title>
   <link rel="stylesheet" href="{{ asset('siswa css/dashboardsiswa.css') }}?v=15">
-  <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=5">
+  <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=6">
 </head>
 <body>
   @php
@@ -147,7 +147,7 @@ $rTotal = $rHadir + $rIzin + $rSakit + $rAlfa;
           <span></span><span></span><span></span>
         </button>
         <img class="topbar-logo" src="{{ asset('logo.jpg') }}" alt="Logo SMP Muhammadiyah 44">
-        <div class="portal-tag"><span class="portal-tag-page">Dashboard</span><span class="portal-tag-separator"> • </span><span class="portal-tag-school">SMP Muhammadiyah 44</span></div>
+        <div class="portal-tag"><span class="portal-tag-school">SMP Muhammadiyah 44</span></div>
       </div>
       <div class="topbar-right">
         <div class="ta-badge" id="liveDatetime">Memuat waktu...</div>

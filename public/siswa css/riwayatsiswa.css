@@ -256,6 +256,13 @@ html::-webkit-scrollbar-thumb { background: #087443; border-radius: 999px; borde
 
 .filter-select { position: relative; z-index: 1; padding: 0; overflow: visible; }
 .filter-select.is-open { z-index: 10; }
+.filter-select::after {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  margin: 0;
+  transform: translateY(-50%) rotate(45deg);
+}
 .filter-select .filter-native-select {
   position: absolute;
   left: 0;
@@ -282,7 +289,7 @@ html::-webkit-scrollbar-thumb { background: #087443; border-radius: 999px; borde
   cursor: pointer;
 }
 .filter-select.is-open::after {
-  transform: translateY(3px) rotate(225deg);
+  transform: translateY(-50%) rotate(225deg);
 }
 .filter-select-value { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .filter-options {

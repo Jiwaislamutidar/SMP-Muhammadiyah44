@@ -94,6 +94,63 @@ class AttendancePortalTest extends TestCase
         $this->assertDatabaseMissing('presensi_pelajarans', ['id' => $presensiId]);
     }
 
+    public function test_teacher_can_download_pdf_for_a_completed_historical_session_only(): void
+    {
+        [$guruUser, , $jadwal, $kelas] = $this->makeSchedule();
+        [$otherGuruUser] = $this->makeTeacher();
+        [, $siswa] = $this->makeStudent($kelas);
+        $sesi = SesiPelajaran::create([
+            'jadwal_id' => $jadwal->id,
+            'guru_id' => $jadwal->guru_id,
+            'tanggal' => now()->subDay()->toDateString(),
+            'status_sesi' => 'Selesai',
+        ]);
+        PresensiPelajaran::create([
+            'sesi_pelajaran_id' => $sesi->id,
+            'siswa_id' => $siswa->id,
+            'status' => 'Hadir',
+        ]);
+        $rekapHtml = view('pages.guru.rekap-presensi-pdf', [
+            'sesi' => $sesi->load(['jadwal.mapel', 'jadwal.kelas', 'presensiPelajarans.siswa.kelas']),
+        ])->render();
+        foreach ([$jadwal->mapel->nama_mapel, $kelas->nama_kelas, $siswa->nama_lengkap, '07:00', 'Hadir'] as $expected) {
+            $this->assertStringContainsString($expected, $rekapHtml);
+        }
+
+        $this->actingAs($guruUser)
+            ->get(route('guru.presensi-murid', ['sesi' => $sesi->id]))
+            ->assertOk()
+            ->assertSee('data-session-id="'.$sesi->id.'"', false)
+            ->assertSee('id="downloadSessionPdf" type="button"', false)
+            ->assertDontSee('id="downloadSessionPdf" type="button" disabled', false)
+            ->assertSee('Unduh PDF Rekap');
+
+        $this->actingAs($guruUser)
+            ->get(route('guru.sesi.pdf', $sesi->id))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+
+        $this->actingAs($otherGuruUser)
+            ->get(route('guru.sesi.pdf', $sesi->id))
+            ->assertForbidden();
+
+        $sesiBerlangsung = SesiPelajaran::create([
+            'jadwal_id' => $jadwal->id,
+            'guru_id' => $jadwal->guru_id,
+            'tanggal' => today()->toDateString(),
+            'status_sesi' => 'Berlangsung',
+        ]);
+
+        $this->actingAs($guruUser)
+            ->get(route('guru.presensi-murid', ['sesi' => $sesiBerlangsung->id]))
+            ->assertOk()
+            ->assertSee('id="downloadSessionPdf" type="button" disabled', false);
+
+        $this->actingAs($guruUser)
+            ->get(route('guru.sesi.pdf', $sesiBerlangsung->id))
+            ->assertStatus(409);
+    }
+
     public function test_guru_cannot_delete_another_teachers_session(): void
     {
         [$owner, , $jadwal, $kelas] = $this->makeSchedule();

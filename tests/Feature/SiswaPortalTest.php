@@ -33,10 +33,12 @@ class SiswaPortalTest extends TestCase
                 ->assertSee(match ($routeName) {
                     'siswa.dashboard' => 'dashboardsiswa.css?v=15',
                     'siswa.scan-qr' => 'scanqrsiswa.css?v=9',
-                    'siswa.riwayat' => 'riwayatsiswa.css?v=10',
+                    'siswa.riwayat' => 'riwayatsiswa.css?v=11',
                     'siswa.profil' => 'profilsiswa.css?v=7',
                 })
-                ->assertSee('siswa-ui.css?v=5')
+                ->assertSee('siswa-ui.css?v=6')
+                ->assertSee('<div class="portal-tag"><span class="portal-tag-school">SMP Muhammadiyah 44</span></div>', false)
+                ->assertDontSee('portal-tag-page')
                 ->assertSee('siswa-ui.js?v=3')
                 ->assertSee('aria-haspopup="dialog"', false)
                 ->assertSee('Notifikasi')
@@ -49,7 +51,7 @@ class SiswaPortalTest extends TestCase
 
         $this->get(route('siswa.riwayat'))
             ->assertOk()
-            ->assertSee('riwayatsiswa.css?v=10')
+            ->assertSee('riwayatsiswa.css?v=11')
             ->assertSee('name="periode"', false)
             ->assertSee('name="mapel_id"', false)
             ->assertSee('name="status"', false);

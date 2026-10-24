@@ -7,6 +7,7 @@ use App\Models\JadwalPelajaran;
 use App\Models\SesiPelajaran;
 use App\Models\Siswa;
 use App\Support\SiswaScheduleGrouper;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -41,7 +42,6 @@ class SesiPelajaranController extends Controller
         if ($sesiId) {
             $sesi = SesiPelajaran::with(['jadwal.mapel', 'jadwal.kelas', 'presensiPelajarans.siswa'])
                 ->where('guru_id', $guru->id)
-                ->whereDate('tanggal', today())
                 ->find($sesiId);
         } elseif ($selectedBlock) {
             $sesi = $selectedBlock['jadwals']
@@ -62,6 +62,18 @@ class SesiPelajaranController extends Controller
             ->implode(' • ');
 
         return view('pages.guru.presensimurid', compact('guru', 'jadwals', 'jadwalBloks', 'sesi', 'mapelGuru'));
+    }
+
+    public function exportPdf(SesiPelajaran $sesi)
+    {
+        $this->authorizeSesi($sesi);
+        abort_unless($sesi->status_sesi === 'Selesai', 409, 'PDF hanya tersedia setelah sesi selesai.');
+
+        $sesi->load(['jadwal.mapel', 'jadwal.kelas', 'presensiPelajarans.siswa.kelas']);
+
+        return Pdf::loadView('pages.guru.rekap-presensi-pdf', compact('sesi'))
+            ->setPaper('a4', 'portrait')
+            ->download('rekap-presensi-sesi-'.$sesi->id.'.pdf');
     }
 
     public function open(Request $request, JadwalPelajaran $jadwal): JsonResponse

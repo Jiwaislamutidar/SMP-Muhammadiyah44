@@ -7,7 +7,7 @@
         <img class="topbar-logo" src="{{ asset('logo.jpg') }}" alt="Logo SMP Muhammadiyah 44">
         <div class="brand-wrap">
             <span class="portal-tag">
-                <span class="portal-tag-name">Portal Guru</span><span class="portal-tag-separator"> • </span><span class="portal-tag-school">SMP Muhammadiyah 44</span>
+                <span class="portal-tag-school">SMP Muhammadiyah 44</span>
             </span>
         </div>
     </div>

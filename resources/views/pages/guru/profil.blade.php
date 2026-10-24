@@ -35,7 +35,7 @@
 				</div>
 				<dl class="details-grid">
 					<div><dt>Nama Lengkap</dt><dd>{{ $guru->nama_lengkap }}</dd></div>
-					<div><dt>NIP (Nomor Induk Pegawai)</dt><dd class="mono">{{ $guru->nip ?? '-' }}</dd></div>
+					<div><dt>NBM (Nomor Baku Muhammadiyah)</dt><dd class="mono">{{ $guru->nip ?? '-' }}</dd></div>
 					<div><dt>Status Kepegawaian</dt><dd><span class="status-pill hadir"><i></i>{{ ucfirst($guru->status) }}</span></dd></div>
 					<div><dt>Username Akun</dt><dd class="mono">{{ $user->username }}</dd></div>
 					<div class="detail-wide"><dt>Email Akun</dt><dd>{{ $user->email ?? '-' }}</dd></div>

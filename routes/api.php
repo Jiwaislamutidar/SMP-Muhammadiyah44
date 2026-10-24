@@ -19,4 +19,4 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::middleware(['auth:sanctum', 'role:siswa'])->post('/presensi/scan', [PresensiPelajaranController::class, 'scan']);
+Route::middleware(['auth:sanctum', 'role:siswa'])->post('/presensi/scan', [PresensiPelajaranController::class, 'scan'])->middleware('throttle:5,1');

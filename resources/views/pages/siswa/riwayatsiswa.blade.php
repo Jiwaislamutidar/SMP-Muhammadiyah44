@@ -20,9 +20,9 @@
             window.setTimeout(hidePageLoader, 800);
         })();
     </script>
-    <title>Riwayat Absensi - SMP Muhammadiyah 44</title>
-    <link rel="stylesheet" href="{{ asset('siswa css/riwayatsiswa.css') }}?v=10">
-    <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=5">
+    <title>SMP Muhammadiyah 44</title>
+    <link rel="stylesheet" href="{{ asset('siswa css/riwayatsiswa.css') }}?v=11">
+    <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=6">
 </head>
 <body>
     <div class="page-loader" id="pageLoader">
@@ -119,7 +119,7 @@
                     <span></span><span></span><span></span>
                 </button>
                 <img class="topbar-logo" src="{{ asset('logo.jpg') }}" alt="Logo SMP Muhammadiyah 44">
-                <div class="portal-tag"><span class="portal-tag-page">Riwayat Presensi</span><span class="portal-tag-separator"> • </span><span class="portal-tag-school">SMP Muhammadiyah 44</span></div>
+                <div class="portal-tag"><span class="portal-tag-school">SMP Muhammadiyah 44</span></div>
             </div>
 
             <div class="topbar-right">

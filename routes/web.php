@@ -66,13 +66,14 @@ Route::domain('guru.'.$domain)->group(function () {
         Route::get('/jadwal-mengajar', [PortalGuruController::class, 'jadwal'])->name('guru.jadwal');
         Route::get('/presensi', [PresensiGuruController::class, 'index'])->name('guru.presensi-guru');
         Route::delete('/presensi/riwayat', [PresensiGuruController::class, 'resetHistory'])->name('guru.presensi-riwayat.reset');
-        Route::post('/presensi/masuk', [PresensiGuruController::class, 'masuk'])->name('guru.presensi.masuk');
-        Route::post('/presensi/pulang', [PresensiGuruController::class, 'pulang'])->name('guru.presensi.pulang');
+        Route::post('/presensi/masuk', [PresensiGuruController::class, 'masuk'])->middleware('throttle:5,1')->name('guru.presensi.masuk');
+        Route::post('/presensi/pulang', [PresensiGuruController::class, 'pulang'])->middleware('throttle:5,1')->name('guru.presensi.pulang');
         Route::get('/presensi-murid', [SesiPelajaranController::class, 'index'])->name('guru.presensi-murid');
         Route::post('/sesi/{jadwal}/buka', [SesiPelajaranController::class, 'open'])->name('guru.sesi.open');
         Route::post('/sesi/{sesi}/qr', [SesiPelajaranController::class, 'regenerate'])->name('guru.sesi.qr');
         Route::post('/sesi/{sesi}/tutup', [SesiPelajaranController::class, 'close'])->name('guru.sesi.close');
         Route::delete('/sesi/{sesi}', [SesiPelajaranController::class, 'destroy'])->name('guru.sesi.destroy');
+        Route::get('/sesi/{sesi}/pdf', [SesiPelajaranController::class, 'exportPdf'])->name('guru.sesi.pdf');
         Route::get('/sesi/{sesi}/status', [SesiPelajaranController::class, 'status'])->name('guru.sesi.status');
         Route::put('/presensi-murid/{presensi}', [PresensiPelajaranController::class, 'updateManual'])->name('guru.presensi-murid.update');
 
@@ -95,7 +96,7 @@ Route::domain($domain)->group(function () {
     Route::middleware(['auth', 'role:siswa', 'throttle:60,1'])->prefix('siswa')->group(function () {
         Route::get('/dashboard', [SiswaController::class, 'dashboard'])->name('siswa.dashboard');
         Route::get('/scan-qr', [SiswaController::class, 'scanQr'])->name('siswa.scan-qr');
-        Route::post('/scan-qr', [PresensiPelajaranController::class, 'scan'])->name('siswa.scan');
+        Route::post('/scan-qr', [PresensiPelajaranController::class, 'scan'])->middleware('throttle:5,1')->name('siswa.scan');
         Route::get('/riwayat', [SiswaController::class, 'riwayat'])->name('siswa.riwayat');
         Route::get('/riwayat/unduh-pdf', [SiswaController::class, 'exportPdf'])->name('siswa.riwayat.export');
         Route::post('/riwayat/hapus', [SiswaController::class, 'deleteHistory'])->name('siswa.riwayat.destroy');

@@ -89,6 +89,8 @@ body { margin:0; }
 .radio-group input { width:13px; height:13px; margin:0; accent-color:var(--g700); }
 .btn { min-height:35px; padding:8px 14px; border:1px solid var(--line); border-radius:7px; background:#fff; color:var(--g700); font:inherit; font-size:11px; font-weight:600; cursor:pointer; }
 .btn-primary { border-color:var(--g700); background:var(--g700); color:#fff; }
+.btn-download-pdf { flex-shrink:0; }
+.btn-download-pdf:disabled { border-color:#d1d8d3; background:#e3e8e5; color:#78827c; cursor:not-allowed; }
 .footer { display:flex; justify-content:space-between; gap:12px; padding:14px 0 4px; border-top:1px solid var(--line); color:var(--muted); font-size:10px; }
 @media (max-width:1000px) { .summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .qr-layout { grid-template-columns:1fr; } }
 @media (max-width:760px) { .topbar { top:12px; left:12px; width:calc(100% - 24px); height:64px; padding:0 12px; border-radius:16px; } .topbar-right { gap:8px; } .portal-tag,.profile-pill { display:none; } .content { gap:16px; padding:90px 16px 18px; } .page-header { align-items:flex-start; flex-direction:column; } .term-chip { white-space:normal; } .footer { flex-direction:column; } }

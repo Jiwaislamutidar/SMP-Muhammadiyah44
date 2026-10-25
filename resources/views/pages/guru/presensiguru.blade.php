@@ -19,10 +19,31 @@
 		.history-toolbar select { min-width: 220px; min-height: 46px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #17211c; font: inherit; }
 		.history-actions { align-items: center; margin: 12px 0 16px; }
 		.history-actions button { min-height: 42px; padding: 9px 14px; font-size: 13px; }
+		.history-actions .btn-secondary {
+			border-color: #64748b;
+			background: #fff;
+			color: #334155;
+			transition: background-color .2s, border-color .2s, color .2s;
+		}
+		.history-actions .btn-secondary:hover:not(:disabled) { border-color: #475569; background: #f1f5f9; color: #1e293b; }
+		.history-actions .btn-danger-outline {
+			border-color: #ef4444;
+			background: #fff;
+			color: #dc2626;
+			transition: background-color .2s, border-color .2s, color .2s;
+		}
+		.history-actions .btn-danger-outline:hover:not(:disabled) { border-color: #dc2626; background: #fef2f2; color: #b91c1c; }
 		.history-table { min-width: 620px; }
 		.history-table th, .history-table td { font-size: 13px; }
 		.history-description { margin: 6px 0 0; color: #59636e; }
 		.attendance-switcher { display: none; }
+		@keyframes attendance-panel-enter {
+			from { opacity: 0; transform: translateY(5px); }
+			to { opacity: 1; transform: translateY(0); }
+		}
+		@media (prefers-reduced-motion: no-preference) {
+			.attendance-card.is-entering { animation: attendance-panel-enter 180ms ease-out both; }
+		}
 		@media (max-width: 767px) {
 			.attendance-switcher {
 				display: grid;
@@ -154,11 +175,11 @@
 				</form>
 
 				<div class="history-actions">
-					<button class="btn btn-primary" id="exportHistory" type="button">Unduh rekap CSV</button>
+					<button class="btn btn-secondary" id="exportHistory" type="button">Unduh rekap CSV</button>
 					<form id="resetHistoryForm" method="POST" action="{{ route('guru.presensi-riwayat.reset') }}">
 						@csrf
 						@method('DELETE')
-						<button class="btn" type="submit">Reset seluruh riwayat</button>
+						<button class="btn btn-danger-outline" type="submit">Reset seluruh riwayat</button>
 					</form>
 				</div>
 
@@ -224,7 +245,14 @@
 				item.setAttribute('aria-selected', String(item === tab));
 			});
 			document.querySelectorAll('[data-attendance-panel]').forEach(panel => {
-				panel.classList.toggle('mobile-tab-hidden', panel.dataset.attendancePanel !== tab.dataset.attendanceTab);
+				const isSelected = panel.dataset.attendancePanel === tab.dataset.attendanceTab;
+				panel.classList.toggle('mobile-tab-hidden', !isSelected);
+				if (isSelected && window.matchMedia('(max-width: 767px)').matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+					panel.classList.remove('is-entering');
+					void panel.offsetWidth;
+					panel.classList.add('is-entering');
+					panel.addEventListener('animationend', () => panel.classList.remove('is-entering'), { once: true });
+				}
 			});
 		}));
 

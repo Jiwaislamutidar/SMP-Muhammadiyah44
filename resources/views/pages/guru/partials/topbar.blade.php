@@ -7,7 +7,7 @@
         <img class="topbar-logo" src="{{ asset('logo.jpg') }}" alt="Logo SMP Muhammadiyah 44">
         <div class="brand-wrap">
             <span class="portal-tag">
-                <span class="portal-tag-school">SMP Muhammadiyah 44</span>
+                <span class="portal-tag-school" style="max-width:clamp(96px, 24vw, 240px); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">SMP Muhammadiyah 44</span>
             </span>
         </div>
     </div>

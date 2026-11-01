@@ -29,6 +29,7 @@ class AuthController extends Controller
 
             if ($user->role === 'siswa') {
                 $request->session()->regenerate();
+                session()->flash('show_intro', true);
                 return redirect()->route('siswa.dashboard');
             }
 

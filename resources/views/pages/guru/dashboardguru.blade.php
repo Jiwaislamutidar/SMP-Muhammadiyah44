@@ -7,7 +7,7 @@
   <title>Dashboard Guru - SMP Muhammadiyah 44</title>
   <link rel="stylesheet" href="{{ asset('guru css/dashboard.css') }}?v=4">
   <link rel="stylesheet" href="{{ asset('guru css/portal-responsive.css') }}?v=1">
-  <link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=3">
+  <link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=4">
   <style>
     .stat-meta .label { font-size: 12px; }
     .stat-meta .value { font-size: 18px; }

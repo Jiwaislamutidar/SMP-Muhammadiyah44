@@ -7,7 +7,7 @@
 	<title>Presensi Guru - SMP Muhammadiyah 44</title>
 	<link rel="stylesheet" href="{{ asset('guru css/presensiguru.css') }}?v=5">
 	<link rel="stylesheet" href="{{ asset('guru css/portal-responsive.css') }}?v=1">
-	<link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=3">
+	<link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=4">
 	<style>
 		.attendance-card h3 { font-size: 17px; }
 		.attendance-card small, .history-description { font-size: 12px; line-height: 1.5; }

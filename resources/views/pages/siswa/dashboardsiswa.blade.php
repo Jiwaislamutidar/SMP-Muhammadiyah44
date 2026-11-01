@@ -4,24 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
-  <script>
-    (function () {
-      function hidePageLoader() {
-        document.getElementById('pageLoader').classList.add('hide');
-        document.getElementById('dashboardMurid').classList.add('loaded');
-      }
-
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', hidePageLoader, { once: true });
-      } else {
-        hidePageLoader();
-      }
-      window.setTimeout(hidePageLoader, 800);
-    })();
-  </script>
+  <script>document.documentElement.classList.add('js'); document.addEventListener('DOMContentLoaded', function () { if (!window.studentMotionScriptLoaded) document.documentElement.classList.remove('js'); }, { once: true });</script>
   <title>SMP Muhammadiyah 44</title>
-  <link rel="stylesheet" href="{{ asset('siswa css/dashboardsiswa.css') }}?v=15">
-  <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=6">
+  <link rel="stylesheet" href="{{ asset('siswa css/dashboardsiswa.css') }}?v=17">
+  <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=9">
 </head>
 <body>
   @php
@@ -50,16 +36,18 @@ $rTotal = $rHadir + $rIzin + $rSakit + $rAlfa;
     $ringTone      = $persen >= 90 ? 'good' : ($persen >= 75 ? 'warn' : 'danger');
   @endphp
 
-  <div class="page-loader" id="pageLoader">
-    <div class="loader-logo-wrap">
-      <div class="loader-spinner"></div>
-      <div class="loader-logo">
-        <img src="{{ asset('logo.jpg') }}" alt="Logo SMP Muhammadiyah 44">
+  @if(session('show_intro'))
+    <div class="page-loader" id="pageLoader" hidden>
+      <div class="loader-logo-wrap">
+        <div class="loader-spinner"></div>
+        <div class="loader-logo">
+          <img src="{{ asset('logo.jpg') }}" alt="Logo SMP Muhammadiyah 44">
+        </div>
       </div>
+      <div class="loader-text">SMP Muhammadiyah 44</div>
+      <div class="loader-subtext">Memuat Halaman...</div>
     </div>
-    <div class="loader-text">SMP Muhammadiyah 44</div>
-    <div class="loader-subtext">Memuat Halaman...</div>
-  </div>
+  @endif
 
   <div class="dashboard-murid" id="dashboardMurid">
 
@@ -518,6 +506,6 @@ $rTotal = $rHadir + $rIzin + $rSakit + $rAlfa;
     });
   </script>
 
-  <script src="{{ asset('siswa js/siswa-ui.js') }}?v=3" defer></script>
+  <script src="{{ asset('siswa js/siswa-ui.js') }}?v=6" defer></script>
 </body>
 </html>

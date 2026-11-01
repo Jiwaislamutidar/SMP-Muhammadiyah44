@@ -140,10 +140,12 @@ button, input, a { font-family: inherit; }
 }
 
 .portal-tag {
-  background: var(--brand-50);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
   border-radius: var(--r-pill);
   padding: 5px 12px;
-  color: var(--brand-600);
+  color: #087443;
   font-size: var(--fs-sm);
   font-weight: 600;
   letter-spacing: .4px;
@@ -1228,106 +1230,6 @@ table.jadwal tr.jadwal-break td span + span { margin-left: 8px; }
 }
 .sidebar-overlay.show { opacity: 1; visibility: visible; }
 
-.page-loader {
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  background: linear-gradient(160deg, #062318 0%, #0b3b26 55%, #087443 100%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  transition: opacity .6s var(--ease-out), visibility .6s var(--ease-out);
-}
-.page-loader.hide {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-.loader-logo-wrap {
-  position: relative;
-  width: 108px;
-  height: 108px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.loader-logo {
-  width: 60px;
-  height: 60px;
-  border-radius: 14px;
-  background: #fff;
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 20px rgba(0,0,0,.3);
-  animation: loaderPulse 1.4s ease-in-out infinite;
-  overflow: hidden;
-  position: relative;
-  z-index: 2;
-}
-.loader-logo img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  border-radius: 8px;
-}
-.loader-spinner {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 108px;
-  height: 108px;
-  border-radius: 50%;
-  border: 4px solid rgba(255,255,255,.15);
-  border-top-color: var(--brand-500);
-  animation: loaderSpin .9s linear infinite;
-}
-.loader-text {
-  color: #fff;
-  font-size: var(--fs-md);
-  font-weight: 600;
-  letter-spacing: .3px;
-}
-.loader-subtext {
-  color: rgba(255,255,255,.6);
-  font-size: var(--fs-sm);
-  animation: loaderFade 1.6s ease-in-out infinite;
-}
-
-@keyframes loaderPulse {
-  0%, 100% { transform: scale(1); }
-  50%      { transform: scale(1.08); }
-}
-@keyframes loaderSpin { to { transform: rotate(360deg); } }
-@keyframes loaderFade {
-  0%, 100% { opacity: .5; }
-  50%      { opacity: 1; }
-}
-
-#dashboardMurid { opacity: 0; }
-#dashboardMurid.loaded {
-  opacity: 1;
-  transition: opacity .5s var(--ease-out);
-}
-#dashboardMurid .content > * {
-  opacity: 0;
-  transform: translateY(14px);
-}
-#dashboardMurid.loaded .content > * {
-  animation: fadeSlideUp .5s var(--ease-out) forwards;
-}
-#dashboardMurid.loaded .content > *:nth-child(1) { animation-delay: .05s; }
-#dashboardMurid.loaded .content > *:nth-child(2) { animation-delay: .12s; }
-#dashboardMurid.loaded .content > *:nth-child(3) { animation-delay: .19s; }
-#dashboardMurid.loaded .content > *:nth-child(4) { animation-delay: .26s; }
-
-@keyframes fadeSlideUp {
-  to { opacity: 1; transform: translateY(0); }
-}
-
 @keyframes pulse-dot {
   0%   { box-shadow: 0 0 0 0 rgba(16,185,129,.55); }
   70%  { box-shadow: 0 0 0 7px rgba(16,185,129,0); }
@@ -1564,6 +1466,7 @@ table.jadwal tr.jadwal-break td span + span { margin-left: 8px; }
 
 .page-header {
   position: relative;
+  z-index: 0;
   isolation: isolate;
   margin-bottom: calc(var(--pita-clearance) - 22px);
 }
@@ -1571,7 +1474,7 @@ table.jadwal tr.jadwal-break td span + span { margin-left: 8px; }
 .page-header::before {
   content: "";
   position: absolute;
-  z-index: -1;
+  z-index: 0;
   top: calc(0px - var(--intro-top-padding));
   bottom: calc(0px - var(--pita-clearance) - var(--pita-overlap));
   left: 50%;
@@ -1580,6 +1483,11 @@ table.jadwal tr.jadwal-break td span + span { margin-left: 8px; }
   border-radius: 0 0 var(--pita-radius) var(--pita-radius);
   background: #087443;
   pointer-events: none;
+}
+
+.page-header > * {
+  position: relative;
+  z-index: 1;
 }
 
 .page-header h1,
@@ -1603,7 +1511,14 @@ table.jadwal tr.jadwal-break td span + span { margin-left: 8px; }
 }
 
 .top-row {
+  position: relative;
+  z-index: 1;
   margin-top: 0;
+}
+
+.top-row > .card {
+  position: relative;
+  z-index: 1;
 }
 
 @media (max-width: 1024px) {

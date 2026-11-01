@@ -4,37 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
-    <script>
-        (function () {
-            function hidePageLoader() {
-                document.getElementById('pageLoader').classList.add('hide');
-                document.getElementById('profilMurid').classList.add('loaded');
-            }
-
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', hidePageLoader, { once: true });
-            } else {
-                hidePageLoader();
-            }
-            window.setTimeout(hidePageLoader, 800);
-        })();
-    </script>
+    <script>document.documentElement.classList.add('js'); document.addEventListener('DOMContentLoaded', function () { if (!window.studentMotionScriptLoaded) document.documentElement.classList.remove('js'); }, { once: true });</script>
     <title>SMP Muhammadiyah 44</title>
-    <link rel="stylesheet" href="{{ asset('siswa css/profilsiswa.css') }}?v=7">
-    <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=6">
+    <link rel="stylesheet" href="{{ asset('siswa css/profilsiswa.css') }}?v=9">
+    <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=9">
 </head>
 <body>
-    <div class="page-loader" id="pageLoader">
-        <div class="loader-logo-wrap">
-            <div class="loader-spinner"></div>
-            <div class="loader-logo">
-                <img src="{{ asset('logo.jpg') }}" alt="Logo SMP Muhammadiyah 44">
-            </div>
-        </div>
-        <div class="loader-text">SMP Muhammadiyah 44</div>
-        <div class="loader-subtext">Memuat profil...</div>
-    </div>
-
     <div class="profil-murid" id="profilMurid">
         <aside class="sidebar" id="sidebar">
             <nav class="sidebar-nav" aria-label="Menu utama">
@@ -389,6 +364,6 @@
         });
     </script>
 
-    <script src="{{ asset('siswa js/siswa-ui.js') }}?v=3" defer></script>
+    <script src="{{ asset('siswa js/siswa-ui.js') }}?v=6" defer></script>
 </body>
 </html>

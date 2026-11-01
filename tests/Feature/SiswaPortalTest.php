@@ -31,27 +31,28 @@ class SiswaPortalTest extends TestCase
                 ->assertOk()
                 ->assertSee('Nadia Rahma QA')
                 ->assertSee(match ($routeName) {
-                    'siswa.dashboard' => 'dashboardsiswa.css?v=15',
-                    'siswa.scan-qr' => 'scanqrsiswa.css?v=9',
-                    'siswa.riwayat' => 'riwayatsiswa.css?v=11',
-                    'siswa.profil' => 'profilsiswa.css?v=7',
+                    'siswa.dashboard' => 'dashboardsiswa.css?v=17',
+                    'siswa.scan-qr' => 'scanqrsiswa.css?v=11',
+                    'siswa.riwayat' => 'riwayatsiswa.css?v=13',
+                    'siswa.profil' => 'profilsiswa.css?v=9',
                 })
-                ->assertSee('siswa-ui.css?v=6')
+                ->assertSee('siswa-ui.css?v=9')
                 ->assertSee('<div class="portal-tag"><span class="portal-tag-school">SMP Muhammadiyah 44</span></div>', false)
                 ->assertDontSee('portal-tag-page')
-                ->assertSee('siswa-ui.js?v=3')
+                ->assertSee('siswa-ui.js?v=6')
                 ->assertSee('aria-haspopup="dialog"', false)
                 ->assertSee('Notifikasi')
-                ->assertSee('Belum ada notifikasi presensi.');
+                ->assertSee('Belum ada notifikasi presensi.')
+                ->assertDontSee('id="pageLoader"', false);
         }
 
         $this->get(route('siswa.dashboard'))
             ->assertOk()
-            ->assertSee('dashboardsiswa.css?v=15');
+            ->assertSee('dashboardsiswa.css?v=17');
 
         $this->get(route('siswa.riwayat'))
             ->assertOk()
-            ->assertSee('riwayatsiswa.css?v=11')
+            ->assertSee('riwayatsiswa.css?v=13')
             ->assertSee('name="periode"', false)
             ->assertSee('name="mapel_id"', false)
             ->assertSee('name="status"', false);
@@ -59,7 +60,7 @@ class SiswaPortalTest extends TestCase
         $this->get(route('siswa.scan-qr'))
             ->assertDontSee('Ahmad Fauzan')
             ->assertSee('NR')
-            ->assertSee('scanqrsiswa.css?v=9')
+            ->assertSee('scanqrsiswa.css?v=11')
             ->assertSee('html5-qrcode.min.js?v=2.3.8');
     }
 
@@ -70,7 +71,7 @@ class SiswaPortalTest extends TestCase
         $html = $this->actingAs($user)
             ->get(route('siswa.profil'))
             ->assertOk()
-            ->assertSee('profilsiswa.css?v=7')
+            ->assertSee('profilsiswa.css?v=9')
             ->getContent();
 
         $this->assertSame(3, substr_count($html, 'class="password-visibility-toggle"'));
@@ -156,6 +157,34 @@ class SiswaPortalTest extends TestCase
             'username' => ['malformed'],
             'password' => ['malformed'],
         ])->assertUnprocessable()->assertJsonValidationErrors(['username', 'password']);
+    }
+
+    public function test_student_login_shows_intro_loader_for_one_dashboard_request_only(): void
+    {
+        [$user] = $this->makeStudent();
+
+        $this->post(route('login'), [
+            'username' => $user->username,
+            'password' => 'old-secret',
+        ])
+            ->assertRedirect(route('siswa.dashboard'))
+            ->assertSessionHas('show_intro', true);
+
+        $this->get(route('siswa.dashboard'))
+            ->assertOk()
+            ->assertSee('id="pageLoader"', false)
+            ->assertSessionMissing('show_intro');
+
+        $this->get(route('siswa.dashboard'))
+            ->assertOk()
+            ->assertDontSee('id="pageLoader"', false);
+
+        foreach (['siswa.scan-qr', 'siswa.riwayat', 'siswa.profil'] as $routeName) {
+            $this->withSession(['show_intro' => true])
+                ->get(route($routeName))
+                ->assertOk()
+                ->assertDontSee('id="pageLoader"', false);
+        }
     }
 
     public function test_opening_student_login_does_not_log_out_authenticated_student(): void

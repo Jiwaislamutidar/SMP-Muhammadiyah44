@@ -79,6 +79,7 @@ Route::domain('guru.'.$domain)->group(function () {
 
         Route::get('/riwayat-presensi', [PortalGuruController::class, 'riwayat'])->name('guru.riwayat-presensi');
         Route::get('/profil', [PortalGuruController::class, 'profil'])->name('guru.profil');
+        Route::put('/profil/ubah-password', [PortalGuruController::class, 'updatePassword'])->name('guru.profil.update-password');
 
         Route::post('/logout', [GuruAuth::class, 'logout'])->name('guru.logout');
     });

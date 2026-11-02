@@ -335,6 +335,23 @@ html.motion-off .text-reveal-inline-visible {
 html.motion-off .text-mask { overflow: visible; }
 html.motion-off .text-mask-inner { transform: none !important; transition: none !important; }
 
+.dashboard-murid .card,
+.dashboard-murid .box,
+.dashboard-murid .status-hero,
+.dashboard-murid .chart-card,
+.dashboard-murid .metric-card,
+.dashboard-murid .scanner-card,
+.dashboard-murid .session-card,
+.dashboard-murid .steps-card,
+.dashboard-murid .info-note-card,
+.riwayat-murid .summary-card,
+.riwayat-murid .filter-bar,
+.riwayat-murid .table-card,
+.profil-murid .profile-card,
+.profil-murid .info-box {
+  border-color: #c7d0cb;
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root),
 ::view-transition-group(student-topbar),

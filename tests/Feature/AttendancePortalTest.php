@@ -259,6 +259,66 @@ class AttendancePortalTest extends TestCase
             ->assertDontSee('Ust. Ahmad Fauzi');
     }
 
+    public function test_guru_can_update_password_from_profile(): void
+    {
+        [$guruUser] = $this->makeTeacher();
+
+        $this->actingAs($guruUser)
+            ->put(route('guru.profil.update-password'), [
+                'current_password' => 'test-password',
+                'password' => 'new-test-password',
+                'password_confirmation' => 'new-test-password',
+            ])
+            ->assertRedirect(route('guru.profil'))
+            ->assertSessionHas('success', 'Kata sandi berhasil diperbarui!');
+
+        $this->assertTrue(Hash::check('new-test-password', $guruUser->fresh()->password));
+        $this->assertFalse(Hash::check('test-password', $guruUser->fresh()->password));
+    }
+
+    public function test_guru_password_update_rejects_incorrect_or_invalid_password_data(): void
+    {
+        [$guruUser] = $this->makeTeacher();
+
+        $this->actingAs($guruUser)
+            ->from(route('guru.profil'))
+            ->put(route('guru.profil.update-password'), [
+                'current_password' => 'incorrect-password',
+                'password' => 'new-test-password',
+                'password_confirmation' => 'new-test-password',
+            ])
+            ->assertRedirect(route('guru.profil'))
+            ->assertSessionHasErrors('current_password');
+
+        $this->actingAs($guruUser)
+            ->from(route('guru.profil'))
+            ->put(route('guru.profil.update-password'), [
+                'current_password' => 'test-password',
+                'password' => 'short',
+                'password_confirmation' => 'different',
+            ])
+            ->assertRedirect(route('guru.profil'))
+            ->assertSessionHasErrors('password');
+
+        $this->assertTrue(Hash::check('test-password', $guruUser->fresh()->password));
+    }
+
+    public function test_guru_profile_has_password_dialog_without_edit_or_device_information(): void
+    {
+        [$guruUser] = $this->makeTeacher();
+
+        $this->actingAs($guruUser)
+            ->get(route('guru.profil'))
+            ->assertOk()
+            ->assertSee('action="'.route('guru.profil.update-password').'"', false)
+            ->assertSee('name="current_password"', false)
+            ->assertSee('name="password_confirmation"', false)
+            ->assertDontSee('Edit Profil')
+            ->assertDontSee('Browser Saat Ini')
+            ->assertDontSee('IP Address')
+            ->assertDontSee('<i></i>Aktif', false);
+    }
+
     public function test_guru_schedule_displays_each_presence_block_once_and_opens_canonical_schedule(): void
     {
         $this->travelTo(Carbon::parse('2026-10-21 10:30:00'));

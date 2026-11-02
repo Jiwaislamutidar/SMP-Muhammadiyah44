@@ -436,6 +436,30 @@ body {
 	box-shadow: 0 0 0 2px #ffffff;
 }
 
+.attendance-page .bell-btn {
+	position: relative;
+	width: 38px;
+	height: 38px;
+	display: grid;
+	flex: 0 0 auto;
+	place-items: center;
+	border: 1px solid #e4eae6;
+	border-radius: 9px;
+	background: #fff;
+	color: #17211c;
+}
+
+.attendance-page .notification-toggle .badge-dot {
+	top: 8px;
+	right: 8px;
+	width: 8px;
+	height: 8px;
+	border: 2px solid #fff;
+	border-radius: 50%;
+	background: #ef4444;
+	box-shadow: none;
+}
+
 .user-mini {
 	border-left: 1px solid #e4eae6;
 	padding-left: 8px;

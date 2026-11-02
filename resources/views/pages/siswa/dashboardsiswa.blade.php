@@ -50,7 +50,7 @@
   </script>
   <title>SMP Muhammadiyah 44</title>
   <link rel="stylesheet" href="{{ asset('siswa css/dashboardsiswa.css') }}?v=17">
-  <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=10">
+  <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=11">
 </head>
 <body>
   @php

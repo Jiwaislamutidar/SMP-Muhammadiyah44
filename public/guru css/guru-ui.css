@@ -118,6 +118,21 @@
 .stats-row,.stat-grid,.summary-grid,.cards-two,.form-grid,.details-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 .right-stack,.panel,.summary-panel,.active-session,.stat-card,.profile-layout,.profile-main-column,.account-panel { min-width:0; }
 .panel,.summary-panel,.active-session,.stat-card { border-color:#e3e8e5; }
+.dashboard-guru .panel,
+.dashboard-guru .stat-card,
+.dashboard-guru .active-session,
+.guru-page .panel,
+.guru-page .summary-card,
+.guru-page .attendance-card,
+.guru-page .stat-card,
+.guru-page .schedule-card,
+.guru-page .schedule-item,
+.guru-page .qr-box,
+.attendance-page .panel,
+.attendance-page .attendance-card,
+.attendance-page .stat-card,
+.attendance-page .side-panel,
+.attendance-page .mini-card { border-color:#c7d0cb; }
 .panel-header,.panel-head,.session-header,.summary-top,.session-footer { flex-wrap:wrap; }
 .stat-card,.panel,.summary-panel,.active-session,.card,.attendance-card { overflow-wrap:anywhere; }
 .data-table,.schedule-table { width:100%; border-collapse:collapse; }

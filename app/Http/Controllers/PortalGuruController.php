@@ -7,8 +7,11 @@ use App\Models\JadwalPelajaran;
 use App\Models\PresensiPelajaran;
 use App\Models\SesiPelajaran;
 use App\Support\SiswaScheduleGrouper;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
 class PortalGuruController extends Controller
@@ -78,6 +81,28 @@ class PortalGuruController extends Controller
                 ->unique()
                 ->values(),
         ]);
+    }
+
+    public function updatePassword(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'current_password' => ['required'],
+            'password' => ['required', 'string', 'min:6', 'confirmed'],
+        ]);
+
+        $user = Auth::user();
+
+        if (! Hash::check($validated['current_password'], $user->password)) {
+            return back()->withErrors([
+                'current_password' => 'Kata sandi saat ini tidak sesuai.',
+            ]);
+        }
+
+        $user->update([
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        return redirect()->route('guru.profil')->with('success', 'Kata sandi berhasil diperbarui!');
     }
 
     public function riwayat(): View

@@ -44,7 +44,7 @@
     </script>
     <title>SMP Muhammadiyah 44</title>
     <link rel="stylesheet" href="{{ asset('siswa css/profilsiswa.css') }}?v=9">
-    <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=10">
+    <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=11">
 </head>
 <body>
     <div class="profil-murid" id="profilMurid">

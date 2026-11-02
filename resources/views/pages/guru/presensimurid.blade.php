@@ -4,9 +4,9 @@
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="csrf-token" content="{{ csrf_token() }}">
   <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
   <title>Presensi Murid - SMP Muhammadiyah 44</title>
-  <link rel="stylesheet" href="{{ asset('guru css/presensimurid.css') }}?v=4">
+  <link rel="stylesheet" href="{{ asset('guru css/presensimurid.css') }}?v=5">
   <link rel="stylesheet" href="{{ asset('guru css/portal-responsive.css') }}?v=1">
-  <link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=4">
+  <link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=5">
 </head>
 <body>
 @php
@@ -21,7 +21,7 @@
   @include('pages.guru.partials.sidebar', ['activePage' => 'presensi-murid', 'sidebarRole' => $mapelGuru ?: 'Guru Mata Pelajaran', 'guruInitials' => mb_strtoupper($guruInitials)])
   @include('pages.guru.partials.topbar', ['profileRole' => $mapelGuru ?: 'Guru Mata Pelajaran', 'guruInitials' => mb_strtoupper($guruInitials)])
   <main class="content">
-    <div class="page-header"><div><h1>Presensi Murid</h1><p>Kelola sesi mengajar dan kehadiran kelas hari ini.</p></div><span class="term-chip">{{ now()->locale('id')->translatedFormat('l, j F Y') }}</span></div>
+    <div class="page-header"><div><h1>Presensi Murid</h1><p>Kelola sesi mengajar dan kehadiran kelas hari ini.</p></div></div>
     @if(session('success'))<div class="panel" role="status">{{ session('success') }}</div>@endif
     @if($errors->any())<div class="panel" role="alert">{{ $errors->first() }}</div>@endif
     <section class="panel schedule-panel">

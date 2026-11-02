@@ -4,10 +4,53 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
-  <script>document.documentElement.classList.add('js'); document.addEventListener('DOMContentLoaded', function () { if (!window.studentMotionScriptLoaded) document.documentElement.classList.remove('js'); }, { once: true });</script>
+  <script>
+    document.documentElement.classList.add('js');
+    (function () {
+      var flagPrefix = 'student-motion-seen:';
+      var resetFlags = function () {
+        try {
+          var storage = window.sessionStorage;
+          var keys = [];
+          for (var index = 0; index < storage.length; index += 1) {
+            var key = storage.key(index);
+            if (key && key.indexOf(flagPrefix) === 0) keys.push(key);
+          }
+          keys.forEach(function (key) { storage.removeItem(key); });
+        } catch (error) {}
+      };
+      @if(session('show_intro'))
+        resetFlags();
+      @endif
+      try {
+        var storage = window.sessionStorage;
+        var entries = window.performance && window.performance.getEntriesByType
+          ? window.performance.getEntriesByType('navigation')
+          : [];
+        var navigationType = entries.length ? entries[0].type : '';
+        var isReload = navigationType === 'reload';
+        var shouldSkip = !isReload && (navigationType === 'back_forward' ||
+          storage.getItem(flagPrefix + window.location.pathname) === '1');
+        @if(session('show_intro'))
+          shouldSkip = false;
+        @endif
+        if (shouldSkip) document.documentElement.classList.add('motion-off');
+        storage.setItem(flagPrefix + window.location.pathname, '1');
+      } catch (error) {}
+      window.addEventListener('pageshow', function (event) {
+        if (event.persisted) document.documentElement.classList.add('motion-off');
+      });
+      document.addEventListener('submit', function (event) {
+        if (event.target instanceof HTMLFormElement && event.target.querySelector('.logout-item')) resetFlags();
+      }, true);
+    })();
+    document.addEventListener('DOMContentLoaded', function () {
+      if (!window.studentMotionScriptLoaded) document.documentElement.classList.remove('js');
+    }, { once: true });
+  </script>
   <title>SMP Muhammadiyah 44</title>
   <link rel="stylesheet" href="{{ asset('siswa css/dashboardsiswa.css') }}?v=17">
-  <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=9">
+  <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=10">
 </head>
 <body>
   @php
@@ -506,6 +549,6 @@ $rTotal = $rHadir + $rIzin + $rSakit + $rAlfa;
     });
   </script>
 
-  <script src="{{ asset('siswa js/siswa-ui.js') }}?v=6" defer></script>
+  <script src="{{ asset('siswa js/siswa-ui.js') }}?v=7" defer></script>
 </body>
 </html>

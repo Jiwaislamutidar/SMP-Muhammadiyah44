@@ -286,6 +286,12 @@
       });
     }
 
+    if (document.documentElement.classList.contains('motion-off')) {
+      content.classList.add('motion-ready');
+      window.studentMotionScriptLoaded = true;
+      return;
+    }
+
     var rowSelector = 'tr, li, .session-row, .step-item';
     var displayCache = new WeakMap();
     var targetsByElement = new Map();

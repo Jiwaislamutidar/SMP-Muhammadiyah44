@@ -137,6 +137,13 @@ body { margin:0; }
 @media (max-width:760px) { .qr-visual { min-height:270px; } .qr-image svg { width:min(78vw,340px); } .qr-actions { align-items:stretch; flex-direction:column; } .session-buttons { justify-content:stretch; flex-direction:column; } .session-buttons .btn { width:100%; } }
 @media (max-width:380px) { .qr-visual { min-height:235px; } .qr-image svg { width:68vw; } .confirm-content { padding:19px; } }
 
+.qr-box .qr-countdown { padding:0; border:0; border-radius:0; background:transparent; color:#b42318; }
+.qr-box .qr-countdown.is-expired { background:transparent; color:#b42318; }
+.qr-panel:has(#sessionStatus.is-live):has(#qrVisual:not(.is-expired)) .qr-countdown:not(.is-expired) { color:#087443; }
+.qr-box #qrExpiry { color:#b42318; }
+.qr-panel:has(#sessionStatus.is-live) #qrExpiry { color:#087443; }
+.qr-panel:has(#qrVisual.is-expired) #qrExpiry { color:#b42318; }
+
 .schedule-panel { margin-bottom:20px; }
 .profile-meta { min-width:0; max-width:240px; }
 .profile-meta .name,.profile-meta .role,.sidebar-footer-user .name,.sidebar-footer-user .role { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }

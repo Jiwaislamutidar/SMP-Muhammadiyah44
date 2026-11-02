@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
   <title>Dashboard Guru - SMP Muhammadiyah 44</title>
-  <link rel="stylesheet" href="{{ asset('guru css/dashboard.css') }}?v=4">
+  <link rel="stylesheet" href="{{ asset('guru css/dashboard.css') }}?v=5">
   <link rel="stylesheet" href="{{ asset('guru css/portal-responsive.css') }}?v=1">
-  <link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=4">
+  <link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=5">
   <style>
     .stat-meta .label { font-size: 12px; }
     .stat-meta .value { font-size: 18px; }
@@ -17,7 +17,6 @@
     .session-main .meta { font-size: 12px; }
     .active-session .primary-btn { min-height: 44px; font-size: 14px; }
     .live-status.inactive { color: #59636e; }
-    .live-status.inactive .dot { background: #9ca3af; }
     @media (max-width: 760px) {
       .stats-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
       .stat-card { align-items: flex-start; flex-direction: column; gap: 8px; padding: 14px 12px; }

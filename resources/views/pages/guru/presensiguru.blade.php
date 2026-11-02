@@ -7,7 +7,7 @@
 	<title>Presensi Guru - SMP Muhammadiyah 44</title>
 	<link rel="stylesheet" href="{{ asset('guru css/presensiguru.css') }}?v=5">
 	<link rel="stylesheet" href="{{ asset('guru css/portal-responsive.css') }}?v=1">
-	<link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=4">
+	<link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=5">
 	<style>
 		.attendance-card h3 { font-size: 17px; }
 		.attendance-card small, .history-description { font-size: 12px; line-height: 1.5; }
@@ -20,12 +20,13 @@
 		.history-actions { align-items: center; margin: 12px 0 16px; }
 		.history-actions button { min-height: 42px; padding: 9px 14px; font-size: 13px; }
 		.history-actions .btn-secondary {
-			border-color: #64748b;
+			border: 1px solid #93b4f5;
 			background: #fff;
-			color: #334155;
+			color: #1d4ed8;
 			transition: background-color .2s, border-color .2s, color .2s;
 		}
-		.history-actions .btn-secondary:hover:not(:disabled) { border-color: #475569; background: #f1f5f9; color: #1e293b; }
+		.history-actions .btn-secondary:hover:not(:disabled) { border-color: #1d4ed8; background: #eff6ff; color: #1d4ed8; }
+		.history-actions .btn-secondary:focus-visible { outline: 3px solid rgba(29, 78, 216, .35); outline-offset: 2px; }
 		.history-actions .btn-danger-outline {
 			border-color: #ef4444;
 			background: #fff;

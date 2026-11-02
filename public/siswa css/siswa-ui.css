@@ -316,6 +316,24 @@
 .topbar { view-transition-name: student-topbar; }
 .content { view-transition-name: student-content; }
 html.js .content:not(.motion-ready) { visibility: hidden; }
+html.motion-off.js .content:not(.motion-ready) { visibility: visible; }
+
+html.motion-off .text-reveal-target,
+html.motion-off .text-reveal-pending,
+html.motion-off .text-reveal-animating,
+html.motion-off .text-reveal-visible,
+html.motion-off .text-reveal-inline-target,
+html.motion-off .text-reveal-inline-pending,
+html.motion-off .text-reveal-inline-visible {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
+  will-change: auto !important;
+}
+
+html.motion-off .text-mask { overflow: visible; }
+html.motion-off .text-mask-inner { transform: none !important; transition: none !important; }
 
 ::view-transition-old(root),
 ::view-transition-new(root),

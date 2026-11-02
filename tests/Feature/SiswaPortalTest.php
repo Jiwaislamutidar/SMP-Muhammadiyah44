@@ -36,15 +36,28 @@ class SiswaPortalTest extends TestCase
                     'siswa.riwayat' => 'riwayatsiswa.css?v=13',
                     'siswa.profil' => 'profilsiswa.css?v=9',
                 })
-                ->assertSee('siswa-ui.css?v=9')
+                ->assertSee('siswa-ui.css?v=10')
+                ->assertSee('student-motion-seen:', false)
+                ->assertSee('window.location.pathname', false)
+                ->assertSee("navigationType === 'reload'", false)
+                ->assertSee("navigationType === 'back_forward'", false)
+                ->assertSee('event.persisted', false)
+                ->assertSee("event.target.querySelector('.logout-item')", false)
+                ->assertSee('storage.removeItem(key)', false)
                 ->assertSee('<div class="portal-tag"><span class="portal-tag-school">SMP Muhammadiyah 44</span></div>', false)
                 ->assertDontSee('portal-tag-page')
-                ->assertSee('siswa-ui.js?v=6')
+                ->assertSee('siswa-ui.js?v=7')
                 ->assertSee('aria-haspopup="dialog"', false)
                 ->assertSee('Notifikasi')
                 ->assertSee('Belum ada notifikasi presensi.')
                 ->assertDontSee('id="pageLoader"', false);
         }
+
+        $this->withSession(['show_intro' => true])
+            ->get(route('siswa.dashboard'))
+            ->assertOk()
+            ->assertSee('id="pageLoader"', false)
+            ->assertSee('resetFlags();', false);
 
         $this->get(route('siswa.dashboard'))
             ->assertOk()

@@ -281,8 +281,8 @@ html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb {
 .page-header p { margin: 0; color: var(--muted); font-size: 13px; }
 
 .stats-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
-.stat-card { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); box-shadow: 0 4px 16px rgba(22,43,30,.04); transition: transform .2s ease, box-shadow .2s ease; }
-.stat-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(22,43,30,.08); }
+.stat-card { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); box-shadow: 0 4px 16px rgba(22,43,30,.04); }
+.stat-card:hover { transform: none; box-shadow: 0 4px 16px rgba(22,43,30,.04); }
 .stat-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
 .icon-wrap { width: 48px; height: 48px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 12px; background: var(--green-100); font-size: 21px; }
 .icon-wrap.alt { border: 1px solid var(--line); background: var(--surface); }
@@ -316,6 +316,13 @@ html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb {
 .session-header, .summary-top, .summary-body { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .session-label { padding: 5px 10px; color: var(--green-700); background: var(--green-100); border-radius: 7px; font-size: 10px; font-weight: 700; letter-spacing: .45px; text-transform: uppercase; }
 .live-status { display: flex; align-items: center; gap: 6px; color: var(--green-500); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.live-status:not(.inactive) .dot, .pill-live .dot { animation: liveStatusPulse 1.4s ease-in-out infinite; }
+.live-status.inactive .dot, .status-badge .dot { display: none; }
+.session-label { padding: 0; background: transparent; border-radius: 0; }
+@keyframes liveStatusPulse { 50% { box-shadow: 0 0 0 4px rgba(22,166,106,.18); opacity: .65; } }
+@media (prefers-reduced-motion: reduce) {
+  .live-status:not(.inactive) .dot, .pill-live .dot { animation: none; }
+}
 .session-main { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .session-main h3 { margin: 0 0 5px; font-size: 21px; }
 .session-main .meta { display: flex; flex-wrap: wrap; gap: 7px; color: var(--muted); font-size: 11px; }

@@ -6,6 +6,7 @@ use App\Models\Guru;
 use App\Models\JadwalPelajaran;
 use App\Models\SesiPelajaran;
 use App\Models\Siswa;
+use App\Services\AttendanceStatusService;
 use App\Support\SiswaScheduleGrouper;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
@@ -19,8 +20,9 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class SesiPelajaranController extends Controller
 {
-    public function index(): View
+    public function index(AttendanceStatusService $attendanceStatus): View
     {
+        $attendanceStatus->completeExpiredStudentSessions();
         $guru = Guru::forUser(Auth::user());
         abort_unless($guru, 403, 'Profil guru belum terhubung ke akun ini.');
         $guru->loadMissing('mapels');
@@ -131,7 +133,7 @@ class SesiPelajaranController extends Controller
         return $this->sesiResponse($sesi->fresh(['jadwal.mapel', 'jadwal.kelas', 'presensiPelajarans.siswa']));
     }
 
-    public function close(SesiPelajaran $sesi): JsonResponse
+    public function close(AttendanceStatusService $attendanceStatus, SesiPelajaran $sesi): JsonResponse
     {
         $this->authorizeSesi($sesi);
         abort_unless($sesi->status_sesi === 'Berlangsung', 422, 'Sesi tidak sedang berlangsung.');
@@ -147,7 +149,7 @@ class SesiPelajaranController extends Controller
             $sesi->save();
         });
 
-        return $this->status($sesi->fresh(['jadwal.mapel', 'jadwal.kelas', 'presensiPelajarans.siswa']));
+        return $this->status($attendanceStatus, $sesi->fresh(['jadwal.mapel', 'jadwal.kelas', 'presensiPelajarans.siswa']));
     }
 
     public function destroy(SesiPelajaran $sesi): JsonResponse
@@ -166,9 +168,11 @@ class SesiPelajaranController extends Controller
         ]);
     }
 
-    public function status(SesiPelajaran $sesi): JsonResponse
+    public function status(AttendanceStatusService $attendanceStatus, SesiPelajaran $sesi): JsonResponse
     {
         $this->authorizeSesi($sesi);
+        $attendanceStatus->completeExpiredStudentSessions();
+        $sesi->refresh();
         $sesi->loadMissing(['jadwal.mapel', 'jadwal.kelas', 'presensiPelajarans.siswa']);
 
         return response()->json([

@@ -7,7 +7,7 @@
   <title>@yield('title') - SMP Muhammadiyah 44</title>
 
   {{-- Global admin shell styles (sidebar + topbar + base) --}}
-  <link rel="stylesheet" href="{{ asset('admin css/admin-shell.css') }}?v=6">
+  <link rel="stylesheet" href="{{ asset('admin css/admin-shell.css') }}?v=7">
   {{-- Shared page-level utilities --}}
   <link rel="stylesheet" href="{{ asset('admin css/admin-page.css') }}?v=5">
   {{-- Page-specific styles --}}
@@ -171,20 +171,13 @@
       <button class="burger-btn" id="burgerBtn" onclick="toggleSidebar()" aria-label="Buka menu">
         <span></span><span></span><span></span>
       </button>
+      <img class="topbar-logo" src="{{ asset('logo.jpg') }}" alt="Logo SMP Muhammadiyah 44">
       <div class="brand-wrap">
-        <div class="brand-dot"></div>
-        <div class="portal-tag">Admin Portal &bull; SMP Muhammadiyah 44</div>
+        <div class="portal-tag">Portal Admin</div>
       </div>
     </div>
     <div class="topbar-right">
       <div class="date-pill" id="liveDatetime">Memuat waktu...</div>
-      <button class="bell-btn" type="button" aria-label="Notifikasi">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/>
-          <path d="M10.3 21a2 2 0 0 0 3.4 0"/>
-        </svg>
-        <span class="badge"></span>
-      </button>
       <div class="profile-pill">
         <div class="avatar">AD</div>
         <div class="profile-meta">

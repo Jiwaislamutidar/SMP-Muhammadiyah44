@@ -11,8 +11,9 @@ use App\Models\PresensiPelajaran;
 use App\Models\SesiPelajaran;
 use App\Models\Siswa;
 use App\Models\User;
-use Database\Seeders\GuruSeeder;
+use App\Services\AttendanceStatusService;
 use Carbon\Carbon;
+use Database\Seeders\GuruSeeder;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
@@ -141,6 +142,7 @@ class AttendancePortalTest extends TestCase
             'status_sesi' => 'Berlangsung',
         ]);
 
+        $this->travelTo(today()->setTime(7, 30));
         $this->actingAs($guruUser)
             ->get(route('guru.presensi-murid', ['sesi' => $sesiBerlangsung->id]))
             ->assertOk()
@@ -149,6 +151,7 @@ class AttendancePortalTest extends TestCase
         $this->actingAs($guruUser)
             ->get(route('guru.sesi.pdf', $sesiBerlangsung->id))
             ->assertStatus(409);
+        $this->travelBack();
     }
 
     public function test_guru_cannot_delete_another_teachers_session(): void
@@ -199,6 +202,7 @@ class AttendancePortalTest extends TestCase
     {
         [$guruUser, $guru] = $this->makeTeacher();
         Storage::fake('public');
+        $this->travelTo(today()->setTime(7, 30));
 
         $this->actingAs($guruUser)
             ->post(route('guru.presensi.masuk'), ['foto' => UploadedFile::fake()->image('masuk.jpg')])
@@ -214,6 +218,171 @@ class AttendancePortalTest extends TestCase
 
         $this->assertNotNull($presensi->fresh()->jam_pulang);
         Storage::disk('public')->assertExists($presensi->fresh()->foto_pulang);
+        $this->travelBack();
+    }
+
+    public function test_expired_open_sessions_become_complete_and_unscanned_students_become_alfa(): void
+    {
+        [, , $jadwal, $kelas] = $this->makeSchedule();
+        [, $siswa] = $this->makeStudent($kelas);
+        [, , $jadwalBelumDibuka, $kelasBelumDibuka] = $this->makeSchedule();
+        [, $siswaBelumDibuka] = $this->makeStudent($kelasBelumDibuka);
+
+        $sesiBerlangsung = SesiPelajaran::create([
+            'jadwal_id' => $jadwal->id,
+            'guru_id' => $jadwal->guru_id,
+            'tanggal' => today(),
+            'status_sesi' => 'Berlangsung',
+        ]);
+        $presensiBerlangsung = PresensiPelajaran::create([
+            'sesi_pelajaran_id' => $sesiBerlangsung->id,
+            'siswa_id' => $siswa->id,
+            'status' => 'Belum Absen',
+        ]);
+        $sesiBelumDibuka = SesiPelajaran::create([
+            'jadwal_id' => $jadwalBelumDibuka->id,
+            'guru_id' => $jadwalBelumDibuka->guru_id,
+            'tanggal' => today(),
+            'status_sesi' => 'Belum',
+        ]);
+        $presensiBelumDibuka = PresensiPelajaran::create([
+            'sesi_pelajaran_id' => $sesiBelumDibuka->id,
+            'siswa_id' => $siswaBelumDibuka->id,
+            'status' => 'Belum Absen',
+        ]);
+
+        $this->travelTo(today()->setTime(8, 1));
+        app(AttendanceStatusService::class)->completeExpiredStudentSessions();
+
+        $this->assertSame('Selesai', $sesiBerlangsung->fresh()->status_sesi);
+        $this->assertSame('Alfa', $presensiBerlangsung->fresh()->status);
+        $this->assertSame('Belum', $sesiBelumDibuka->fresh()->status_sesi);
+        $this->assertSame('Belum Absen', $presensiBelumDibuka->fresh()->status);
+        $this->travelBack();
+    }
+
+    public function test_guru_cutoff_marks_only_missing_attendance_records_as_alfa(): void
+    {
+        [, $guruRecorded] = $this->makeTeacher();
+        [, $guruMissing] = $this->makeTeacher();
+        PresensiGuru::create([
+            'guru_id' => $guruRecorded->id,
+            'tanggal' => today(),
+            'status' => 'Izin',
+        ]);
+
+        $attendanceStatus = app(AttendanceStatusService::class);
+        $this->travelTo(today()->setTime(14, 59));
+        $attendanceStatus->applyGuruAttendanceCutoff();
+        $this->assertDatabaseMissing('presensi_gurus', [
+            'guru_id' => $guruMissing->id,
+            'tanggal' => today()->toDateString(),
+        ]);
+
+        $this->travelTo(today()->setTime(15, 0));
+        $attendanceStatus->applyGuruAttendanceCutoff();
+
+        $this->assertDatabaseHas('presensi_gurus', [
+            'guru_id' => $guruRecorded->id,
+            'tanggal' => today()->toDateString(),
+            'status' => 'Izin',
+        ]);
+        $this->assertDatabaseHas('presensi_gurus', [
+            'guru_id' => $guruMissing->id,
+            'tanggal' => today()->toDateString(),
+            'status' => 'Alfa',
+            'jam_masuk' => null,
+            'foto_masuk' => null,
+            'jam_pulang' => null,
+            'foto_pulang' => null,
+        ]);
+        $this->travelBack();
+    }
+
+    public function test_admin_dashboard_uses_distinct_student_attendance_and_renders_today_schedule_filters(): void
+    {
+        [, , $jadwalHadir] = $this->makeSchedule();
+        [, , $jadwalAlfa] = $this->makeSchedule();
+        [, , $jadwalIzin] = $this->makeSchedule();
+        [, $siswaHadirDanAlfa] = $this->makeStudent($jadwalHadir->kelas);
+        [, $siswaIzin] = $this->makeStudent($jadwalIzin->kelas);
+        $userAdmin = User::create([
+            'name' => 'Admin QA '.bin2hex(random_bytes(4)),
+            'username' => 'admin-qa-'.bin2hex(random_bytes(4)),
+            'email' => null,
+            'role' => 'admin',
+            'password' => Hash::make('test-password'),
+        ]);
+        $sesiHadir = SesiPelajaran::create([
+            'jadwal_id' => $jadwalHadir->id,
+            'guru_id' => $jadwalHadir->guru_id,
+            'tanggal' => today(),
+            'status_sesi' => 'Selesai',
+        ]);
+        $sesiAlfa = SesiPelajaran::create([
+            'jadwal_id' => $jadwalAlfa->id,
+            'guru_id' => $jadwalAlfa->guru_id,
+            'tanggal' => today(),
+            'status_sesi' => 'Selesai',
+        ]);
+        $sesiIzin = SesiPelajaran::create([
+            'jadwal_id' => $jadwalIzin->id,
+            'guru_id' => $jadwalIzin->guru_id,
+            'tanggal' => today(),
+            'status_sesi' => 'Selesai',
+        ]);
+        PresensiPelajaran::create([
+            'sesi_pelajaran_id' => $sesiHadir->id,
+            'siswa_id' => $siswaHadirDanAlfa->id,
+            'status' => 'Hadir',
+        ]);
+        PresensiPelajaran::create([
+            'sesi_pelajaran_id' => $sesiAlfa->id,
+            'siswa_id' => $siswaHadirDanAlfa->id,
+            'status' => 'Alfa',
+        ]);
+        PresensiPelajaran::create([
+            'sesi_pelajaran_id' => $sesiIzin->id,
+            'siswa_id' => $siswaIzin->id,
+            'status' => 'Izin',
+            'keterangan' => 'Pemeriksaan kesehatan',
+        ]);
+        $this->travelTo(today()->setTime(14, 59));
+
+        $dashboard = $this->actingAs($userAdmin)
+            ->get(route('admin.dashboard'))
+            ->assertOk();
+        $dashboard
+            ->assertSee('Murid Hadir')
+            ->assertSee('Murid Alfa')
+            ->assertSee('Murid Izin/Sakit')
+            ->assertSee($siswaHadirDanAlfa->nama_lengkap)
+            ->assertSee('Pemeriksaan kesehatan')
+            ->assertSee('dari '.Siswa::query()->where('status', 'aktif')->count().' siswa aktif')
+            ->assertSee('Semua Kelas')
+            ->assertSee($jadwalHadir->kelas->nama_kelas)
+            ->assertDontSee('dash-quick-actions', false)
+            ->assertDontSee('+ Guru')
+            ->assertDontSee('+ Murid');
+        $this->assertSame(3, substr_count($dashboard->getContent(), 'class="dash-kpi-num">1</div>'));
+
+        $this->travelBack();
+    }
+
+    public function test_guru_must_upload_evidence_when_recording_izin_or_sakit(): void
+    {
+        [$guruUser, $guru] = $this->makeTeacher();
+        $this->travelTo(today()->setTime(10, 0));
+
+        $this->actingAs($guruUser)
+            ->post(route('guru.presensi.izin'), ['status' => 'Izin'])
+            ->assertSessionHasErrors('bukti_izin');
+
+        $this->assertDatabaseMissing('presensi_gurus', [
+            'guru_id' => $guru->id,
+            'tanggal' => today()->toDateString(),
+        ]);
+        $this->travelBack();
     }
 
     public function test_guru_portal_pages_render_schedule_data(): void
@@ -627,7 +796,7 @@ class AttendancePortalTest extends TestCase
             'ruangan' => 'Ruang Seeder QA',
         ]);
 
-        (new GuruSeeder())->run();
+        (new GuruSeeder)->run();
 
         $username = 'GURU'.str_pad((string) $guru->id, 3, '0', STR_PAD_LEFT);
         $guru->refresh();
@@ -639,7 +808,7 @@ class AttendancePortalTest extends TestCase
         $this->assertTrue(Hash::check($username, $user->password));
         $this->assertSame($guru->id, $jadwal->fresh()->guru_id);
 
-        (new GuruSeeder())->run();
+        (new GuruSeeder)->run();
         $this->assertSame(1, User::where('username', $username)->count());
         $this->assertSame($user->id, $guru->fresh()->user_id);
 

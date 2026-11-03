@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminGuruController;
 use App\Http\Controllers\Admin\AdminJadwalController;
 use App\Http\Controllers\Admin\AuthController as AdminAuth;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\SiswaController as AdminSiswaController;
 use App\Http\Controllers\Guru\AuthController as GuruAuth;
 use App\Http\Controllers\PortalGuruController;
@@ -26,9 +27,7 @@ Route::domain('admin.'.$domain)->group(function () {
     Route::post('/login', [AdminAuth::class, 'login'])->middleware('throttle:5,1');
 
     Route::middleware(['auth', 'role:admin', 'throttle:60,1'])->group(function () {
-        Route::get('/dashboard', function () {
-            return view('pages.admin.dashboardadmin');
-        })->name('admin.dashboard');
+        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
 
         Route::get('/data-guru', [AdminGuruController::class, 'index'])->name('admin.dataguru');
         Route::get('/admin/guru', [AdminGuruController::class, 'index'])->name('admin.guru.index');
@@ -67,6 +66,7 @@ Route::domain('guru.'.$domain)->group(function () {
         Route::get('/presensi', [PresensiGuruController::class, 'index'])->name('guru.presensi-guru');
         Route::delete('/presensi/riwayat', [PresensiGuruController::class, 'resetHistory'])->name('guru.presensi-riwayat.reset');
         Route::post('/presensi/masuk', [PresensiGuruController::class, 'masuk'])->middleware('throttle:5,1')->name('guru.presensi.masuk');
+        Route::post('/presensi/izin', [PresensiGuruController::class, 'izin'])->middleware('throttle:5,1')->name('guru.presensi.izin');
         Route::post('/presensi/pulang', [PresensiGuruController::class, 'pulang'])->middleware('throttle:5,1')->name('guru.presensi.pulang');
         Route::get('/presensi-murid', [SesiPelajaranController::class, 'index'])->name('guru.presensi-murid');
         Route::post('/sesi/{jadwal}/buka', [SesiPelajaranController::class, 'open'])->name('guru.sesi.open');

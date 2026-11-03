@@ -15,6 +15,7 @@ class PresensiGuru extends Model
         'jam_pulang',
         'foto_pulang',
         'status',
+        'bukti_izin',
     ];
 
     protected $casts = [

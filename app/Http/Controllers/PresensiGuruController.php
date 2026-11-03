@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Guru;
+use App\Models\PresensiGuru;
+use App\Services\AttendanceStatusService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,8 +13,9 @@ use Illuminate\View\View;
 
 class PresensiGuruController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request, AttendanceStatusService $attendanceStatus): View
     {
+        $attendanceStatus->applyGuruAttendanceCutoff();
         $guru = Guru::forUser(Auth::user());
         abort_unless($guru, 403, 'Profil guru belum terhubung ke akun ini.');
 
@@ -45,7 +48,7 @@ class PresensiGuruController extends Controller
 
         $presensi = $guru->presensiHarian()->get();
         $foto = $presensi
-            ->flatMap(fn ($record) => [$record->foto_masuk, $record->foto_pulang])
+            ->flatMap(fn ($record) => [$record->foto_masuk, $record->foto_pulang, $record->bukti_izin])
             ->filter()
             ->unique()
             ->values()
@@ -64,18 +67,61 @@ class PresensiGuruController extends Controller
             ->with('success', 'Seluruh riwayat presensi berhasil direset.');
     }
 
-    public function masuk(Request $request): RedirectResponse
+    public function masuk(Request $request, AttendanceStatusService $attendanceStatus): RedirectResponse
     {
-        return $this->catat($request, 'masuk');
+        return $this->catat($request, 'masuk', $attendanceStatus);
     }
 
-    public function pulang(Request $request): RedirectResponse
+    public function pulang(Request $request, AttendanceStatusService $attendanceStatus): RedirectResponse
     {
-        return $this->catat($request, 'pulang');
+        return $this->catat($request, 'pulang', $attendanceStatus);
     }
 
-    private function catat(Request $request, string $jenis): RedirectResponse
+    public function izin(Request $request, AttendanceStatusService $attendanceStatus): RedirectResponse
     {
+        $attendanceStatus->applyGuruAttendanceCutoff();
+        $guru = Guru::forUser(Auth::user());
+        abort_unless($guru, 403, 'Profil guru belum terhubung ke akun ini.');
+
+        if (now()->gte(today()->setTime(15, 0))) {
+            return back()->withErrors(['bukti_izin' => 'Batas pencatatan presensi hari ini sudah berakhir.']);
+        }
+
+        $validated = $request->validate([
+            'status' => ['required', 'in:Izin,Sakit'],
+            'bukti_izin' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
+        ]);
+
+        if ($guru->presensiHarian()->whereDate('tanggal', today())->exists()) {
+            return back()->withErrors(['status' => 'Presensi hari ini sudah tercatat.']);
+        }
+
+        $now = now();
+        $path = $validated['bukti_izin']->store(
+            'presensi_guru/'.$now->format('Y').'/'.$now->format('m'),
+            'public'
+        );
+
+        PresensiGuru::create([
+            'guru_id' => $guru->id,
+            'tanggal' => today(),
+            'status' => $validated['status'],
+            'bukti_izin' => $path,
+        ]);
+
+        return back()->with('success', 'Presensi '.$validated['status'].' berhasil dicatat beserta bukti.');
+    }
+
+    private function catat(Request $request, string $jenis, AttendanceStatusService $attendanceStatus): RedirectResponse
+    {
+        $attendanceStatus->applyGuruAttendanceCutoff();
+        if ($jenis === 'masuk' && now()->lt(today()->setTime(7, 0))) {
+            return back()->withErrors(['foto' => 'Absen masuk dibuka mulai pukul 07.00.']);
+        }
+        if ($jenis === 'masuk' && now()->gte(today()->setTime(15, 0))) {
+            return back()->withErrors(['foto' => 'Batas absen masuk hari ini sudah berakhir pukul 15.00.']);
+        }
+
         $validated = $request->validate([
             'foto' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
@@ -86,6 +132,10 @@ class PresensiGuruController extends Controller
 
         if ($jenis === 'masuk' && $presensi->jam_masuk) {
             return back()->withErrors(['foto' => 'Absen masuk hari ini sudah tercatat.']);
+        }
+
+        if ($jenis === 'masuk' && $presensi->exists && $presensi->status !== 'Hadir') {
+            return back()->withErrors(['foto' => 'Status presensi hari ini sudah tercatat sebagai '.$presensi->status.'.']);
         }
 
         if ($jenis === 'pulang' && ! $presensi->jam_masuk) {

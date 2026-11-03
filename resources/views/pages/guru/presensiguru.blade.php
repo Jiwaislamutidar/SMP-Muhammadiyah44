@@ -37,6 +37,11 @@
 		.history-table { min-width: 620px; }
 		.history-table th, .history-table td { font-size: 13px; }
 		.history-description { margin: 6px 0 0; color: #59636e; }
+		.absence-form { display: grid; gap: 9px; margin-top: 16px; padding-top: 14px; border-top: 1px solid #e5e7eb; }
+		.absence-form-title { margin: 0; color: #374151; font-size: 13px; font-weight: 700; }
+		.absence-form label { display: grid; gap: 6px; color: #374151; font-size: 12px; font-weight: 600; }
+		.absence-form select, .absence-form input[type="file"] { width: 100%; min-height: 40px; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #374151; font: inherit; font-size: 12px; }
+		.absence-form .btn { justify-self: start; }
 		.attendance-switcher { display: none; }
 		@keyframes attendance-panel-enter {
 			from { opacity: 0; transform: translateY(5px); }
@@ -109,6 +114,7 @@
 
 			<section class="panel">
 				<div class="panel-head"><div class="panel-title">Kehadiran Sekolah</div></div>
+				@php($statusTidakHadir = $presensi && in_array($presensi->status, ['Izin', 'Sakit', 'Alfa'], true))
 				<div class="attendance-switcher" role="tablist" aria-label="Pilih jenis presensi">
 					<button type="button" role="tab" id="attendanceTabMasuk" aria-controls="attendancePanelMasuk" aria-selected="true" data-attendance-tab="masuk">Absen Datang</button>
 					<button type="button" role="tab" id="attendanceTabPulang" aria-controls="attendancePanelPulang" aria-selected="false" data-attendance-tab="pulang">Absen Kepulangan</button>
@@ -118,19 +124,38 @@
 						<div class="card-top">
 							<div class="attendance-card-heading">
 								<span class="muted">ABSEN DATANG</span>
-								<span class="status-pill {{ $presensi?->jam_masuk ? 'hadir' : 'belum' }}">{{ $presensi?->jam_masuk ? 'Sudah Absen' : 'Belum Absen' }}</span>
+								<span class="status-pill {{ $presensi?->jam_masuk ? 'hadir' : ($statusTidakHadir ? 'neutral' : 'belum') }}">{{ $presensi?->jam_masuk ? 'Sudah Absen' : ($statusTidakHadir ? $presensi->status : 'Belum Absen') }}</span>
 							</div>
 							<div class="attendance-card-copy">
 								<h3>Absen Masuk Sekolah</h3>
-								<small>{{ $presensi?->jam_masuk ? 'Presensi tersimpan hari ini.' : 'Ambil foto sebagai bukti kehadiran.' }}</small>
+								<small>{{ $presensi?->jam_masuk ? 'Presensi tersimpan hari ini.' : ($statusTidakHadir ? 'Status presensi hari ini sudah tercatat.' : 'Ambil foto sebagai bukti kehadiran.') }}</small>
 							</div>
 						</div>
 						<div class="big-time">{{ $presensi?->jam_masuk ? substr($presensi->jam_masuk, 0, 5) : 'Belum tercatat' }} @if($presensi?->jam_masuk)<small>WIB</small>@endif</div>
 						@if($presensi?->foto_masuk)<p><a href="{{ asset('storage/'.$presensi->foto_masuk) }}" target="_blank" rel="noopener">Lihat foto bukti</a></p>@endif
 						@if($presensi?->jam_masuk)
 							<button class="attendance-action attendance-done" type="button" disabled>Sudah Absen ({{ substr($presensi->jam_masuk, 0, 5) }} WIB)</button>
+						@elseif($statusTidakHadir)
+							<button class="attendance-action attendance-done" type="button" disabled>{{ $presensi->status }} hari ini</button>
 						@else
 							<button class="attendance-action" type="button" data-title="Absen Masuk Sekolah" data-url="{{ route('guru.presensi.masuk') }}">Absen Masuk Sekolah</button>
+						@endif
+						@if(!$presensi)
+							<form class="absence-form" method="POST" action="{{ route('guru.presensi.izin') }}" enctype="multipart/form-data">
+								@csrf
+								<p class="absence-form-title">Catat Izin atau Sakit</p>
+								<label for="absenceStatus">Status
+									<select id="absenceStatus" name="status" required>
+										<option value="">Pilih status</option>
+										<option value="Izin" {{ old('status') === 'Izin' ? 'selected' : '' }}>Izin</option>
+										<option value="Sakit" {{ old('status') === 'Sakit' ? 'selected' : '' }}>Sakit</option>
+									</select>
+								</label>
+								<label for="absenceEvidence">Bukti (PDF atau gambar, maks. 5 MB)
+									<input id="absenceEvidence" type="file" name="bukti_izin" accept=".pdf,image/jpeg,image/png,image/webp" required>
+								</label>
+								<button class="btn btn-secondary" type="submit">Kirim Izin/Sakit</button>
+							</form>
 						@endif
 					</div>
 					<div class="attendance-card mobile-tab-hidden" id="attendancePanelPulang" role="tabpanel" aria-labelledby="attendanceTabPulang" data-attendance-panel="pulang">

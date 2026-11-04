@@ -3,7 +3,7 @@
 @section('title', 'Dashboard')
 
 @section('styles')
-<link rel="stylesheet" href="{{ asset('admin css/dashboardadmin.css') }}?v=4">
+<link rel="stylesheet" href="{{ asset('admin css/dashboardadmin.css') }}?v=5">
 @endsection
 
 @section('content')
@@ -24,18 +24,10 @@
   <article class="dash-kpi dash-kpi--red">
     <div class="dash-kpi-label">Murid Alfa</div>
     <div class="dash-kpi-num">{{ $alfaCount }}</div>
-    <button class="dash-small-outline" type="button" data-open-modal="alfaModal">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 10a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/><path d="m13 13 6 6"/><path d="M8 3h8"/><path d="M12 3v3"/></svg>
-      Lihat Daftar
-    </button>
   </article>
   <article class="dash-kpi dash-kpi--amber">
     <div class="dash-kpi-label">Murid Izin/Sakit</div>
     <div class="dash-kpi-num">{{ $izinSakitCount }}</div>
-    <button class="dash-small-outline" type="button" data-open-modal="izinSakitModal">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 10a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/><path d="m13 13 6 6"/><path d="M8 3h8"/><path d="M12 3v3"/></svg>
-      Lihat Daftar
-    </button>
   </article>
 </section>
 
@@ -44,6 +36,14 @@
     <div class="dash-card-inner">
       <div class="dash-card-header">
         <h2 class="dash-card-title" id="guruAttendanceTitle">Presensi Guru Hari Ini</h2>
+        <label class="dash-filter-label" for="guruPeriodFilter">
+          <span class="sr-only">Periode presensi guru</span>
+          <select class="dash-class-filter" id="guruPeriodFilter" data-url="{{ route('admin.dashboard.guru-period') }}">
+            <option value="hari">Hari Ini</option>
+            <option value="minggu">7 Hari Terakhir</option>
+            <option value="bulan">1 Bulan Terakhir</option>
+          </select>
+        </label>
       </div>
 
       <div class="dash-tabs" role="tablist" aria-label="Filter presensi guru">
@@ -56,7 +56,7 @@
       </div>
 
       <div class="dash-tab-panel" id="guruHadirPanel" role="tabpanel" aria-labelledby="guruHadirTab" data-guru-panel="hadir">
-        <div class="dash-absence-list">
+        <div class="dash-absence-list" id="guruHadirList">
           @forelse($guruHadir as $guru)
             @php($presensiGuru = $guru->presensiHarian->first())
             <div class="dash-absence-item">
@@ -79,7 +79,7 @@
       </div>
 
       <div class="dash-tab-panel" id="guruTidakHadirPanel" role="tabpanel" aria-labelledby="guruTidakHadirTab" data-guru-panel="tidak-hadir" hidden>
-        <div class="dash-absence-list">
+        <div class="dash-absence-list" id="guruTidakHadirList">
           @forelse($guruTidakHadir as $guru)
             @php($presensiGuru = $guru->presensiHarian->first())
             <div class="dash-absence-item">
@@ -105,10 +105,10 @@
           @endforelse
         </div>
 
-        <div class="dash-unrecorded">
-          <h3>Belum presensi <span class="dash-count">{{ $guruBelumPresensi->count() }}</span></h3>
+        <div class="dash-unrecorded" id="guruUnrecordedSection">
+          <h3><span id="guruUnrecordedTitle">Belum presensi</span> <span class="dash-count" id="guruUnrecordedCount">{{ $guruBelumPresensi->count() }}</span></h3>
           @forelse($guruBelumPresensi as $guru)
-            <div class="dash-unrecorded-item">
+            <div class="dash-unrecorded-item" data-guru-id="{{ $guru->id }}">
               <span>{{ $guru->nama_lengkap }}</span>
               <span>Belum presensi</span>
             </div>
@@ -116,6 +116,7 @@
             <p class="dash-empty">Semua guru sudah memiliki catatan presensi.</p>
           @endforelse
         </div>
+        <p class="dash-fetch-error" id="guruFetchError" role="alert" hidden></p>
       </div>
     </div>
   </section>
@@ -173,78 +174,135 @@
   </section>
 </div>
 
-<dialog class="dash-modal" id="alfaModal" aria-labelledby="alfaModalTitle">
-  <div class="dash-modal-header">
-    <h2 id="alfaModalTitle">Daftar Murid Alfa</h2>
-    <button class="dash-modal-close" type="button" data-close-modal aria-label="Tutup">×</button>
-  </div>
-  <div class="dash-modal-body">
-    <table class="dash-detail-table">
-      <thead><tr><th>Nama Murid</th><th>Kelas</th><th>Mata Pelajaran</th><th>Jam</th></tr></thead>
-      <tbody>
-        @forelse($alfaStudents as $attendance)
-          <tr>
-            <td>{{ $attendance->siswa?->nama_lengkap ?? '-' }}</td>
-            <td>{{ $attendance->siswa?->kelas?->nama_kelas ?? '-' }}</td>
-            <td>{{ $attendance->sesiPelajaran?->jadwal?->mapel?->nama_mapel ?? '-' }}</td>
-            <td>@if($attendance->sesiPelajaran?->jadwal){{ substr($attendance->sesiPelajaran->jadwal->jam_mulai, 0, 5) }}–{{ substr($attendance->sesiPelajaran->jadwal->jam_selesai, 0, 5) }}@else-@endif</td>
-          </tr>
-        @empty
-          <tr><td colspan="4" class="dash-empty-cell">Tidak ada murid Alfa hari ini.</td></tr>
-        @endforelse
-      </tbody>
-    </table>
-  </div>
-</dialog>
-
-<dialog class="dash-modal" id="izinSakitModal" aria-labelledby="izinSakitModalTitle">
-  <div class="dash-modal-header">
-    <h2 id="izinSakitModalTitle">Daftar Murid Izin/Sakit</h2>
-    <button class="dash-modal-close" type="button" data-close-modal aria-label="Tutup">×</button>
-  </div>
-  <div class="dash-modal-body">
-    <table class="dash-detail-table">
-      <thead><tr><th>Nama Murid</th><th>Kelas</th><th>Mata Pelajaran</th><th>Jam</th><th>Keterangan</th></tr></thead>
-      <tbody>
-        @forelse($izinSakitStudents as $attendance)
-          <tr>
-            <td>{{ $attendance->siswa?->nama_lengkap ?? '-' }}</td>
-            <td>{{ $attendance->siswa?->kelas?->nama_kelas ?? '-' }}</td>
-            <td>{{ $attendance->sesiPelajaran?->jadwal?->mapel?->nama_mapel ?? '-' }}</td>
-            <td>@if($attendance->sesiPelajaran?->jadwal){{ substr($attendance->sesiPelajaran->jadwal->jam_mulai, 0, 5) }}–{{ substr($attendance->sesiPelajaran->jadwal->jam_selesai, 0, 5) }}@else-@endif</td>
-            <td>{{ $attendance->keterangan ?: '-' }}</td>
-          </tr>
-        @empty
-          <tr><td colspan="5" class="dash-empty-cell">Tidak ada murid Izin/Sakit hari ini.</td></tr>
-        @endforelse
-      </tbody>
-    </table>
-  </div>
-</dialog>
-
 <script>
-  document.querySelectorAll('[data-guru-tab]').forEach((tab) => {
+  const guruTabs = document.querySelectorAll('[data-guru-tab]');
+  const guruPanels = document.querySelectorAll('[data-guru-panel]');
+  const guruPeriodFilter = document.getElementById('guruPeriodFilter');
+  const guruFetchError = document.getElementById('guruFetchError');
+  const guruHadirList = document.getElementById('guruHadirList');
+  const guruTidakHadirList = document.getElementById('guruTidakHadirList');
+  const guruUnrecordedSection = document.getElementById('guruUnrecordedSection');
+  const guruUnrecordedTitle = document.getElementById('guruUnrecordedTitle');
+  const guruAttendanceTitle = document.getElementById('guruAttendanceTitle');
+  const guruUnrecordedCount = document.getElementById('guruUnrecordedCount');
+  const guruHadirCount = document.querySelector('#guruHadirTab .dash-count');
+  const guruTidakHadirCount = document.querySelector('#guruTidakHadirTab .dash-count');
+
+  function animateGuruRows(panel) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const rows = panel.querySelectorAll('.dash-absence-item');
+    rows.forEach((row, index) => {
+      row.classList.remove('dash-row-enter');
+      row.style.setProperty('--row-index', index);
+    });
+    void panel.offsetWidth;
+    rows.forEach((row) => row.classList.add('dash-row-enter'));
+    if (rows.length) {
+      rows[rows.length - 1].addEventListener('animationend', () => {
+        rows.forEach((row) => row.classList.remove('dash-row-enter'));
+      }, { once: true });
+    }
+  }
+
+  function makeTextElement(tag, className, value) {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    element.textContent = value;
+    return element;
+  }
+
+  function renderGuruList(container, teachers, absent) {
+    container.replaceChildren();
+    if (!teachers.length) {
+      container.append(makeTextElement('p', 'dash-empty', absent
+        ? 'Tidak ada guru dengan status tidak hadir pada periode ini.'
+        : 'Belum ada guru yang tercatat hadir pada periode ini.'));
+      return;
+    }
+
+    teachers.forEach((teacher) => {
+      const row = makeTextElement('div', 'dash-absence-item', '');
+      row.dataset.guruId = teacher.id;
+      const person = makeTextElement('div', 'dash-absence-left', '');
+      person.append(makeTextElement('span', 'dash-avatar', teacher.nama.slice(0, 1).toLocaleUpperCase('id')));
+      const copy = makeTextElement('div', 'dash-person-copy', '');
+      copy.append(makeTextElement('strong', 'dash-name', teacher.nama));
+      copy.append(makeTextElement('small', 'dash-role', teacher.mapel));
+      person.append(copy);
+      row.append(person);
+
+      const details = makeTextElement('div', 'dash-absence-right', '');
+      if (absent) {
+        teacher.tanggal.forEach((record) => {
+          const label = `${record.status} · ${new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium' }).format(new Date(`${record.tanggal}T00:00:00`))}`;
+          details.append(makeTextElement('span', `dash-status-badge dash-status-badge--${record.status.toLocaleLowerCase('id')}`, label));
+        });
+      } else {
+        teacher.tanggal.forEach((record) => {
+          const detail = record.jam_masuk
+            ? `${new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium' }).format(new Date(`${record.tanggal}T00:00:00`))} · ${record.jam_masuk.slice(0, 5)}`
+            : new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium' }).format(new Date(`${record.tanggal}T00:00:00`));
+          details.append(makeTextElement('small', 'dash-role', detail));
+        });
+      }
+      row.append(details);
+      container.append(row);
+    });
+  }
+
+  async function loadGuruPeriod() {
+    guruFetchError.hidden = true;
+    guruPeriodFilter.disabled = true;
+    try {
+      const response = await fetch(`${guruPeriodFilter.dataset.url}?${new URLSearchParams({ periode: guruPeriodFilter.value })}`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!response.ok) throw new Error('Data presensi guru tidak dapat dimuat.');
+      const data = await response.json();
+      renderGuruList(guruHadirList, data.hadir, false);
+      renderGuruList(guruTidakHadirList, data.tidak_hadir, true);
+      guruHadirCount.textContent = data.counts.hadir;
+      guruTidakHadirCount.textContent = data.counts.tidak_hadir;
+      guruUnrecordedCount.textContent = data.counts.belum_presensi;
+      guruUnrecordedTitle.textContent = guruPeriodFilter.value === 'hari'
+        ? 'Belum presensi hari ini'
+        : 'Belum presensi dalam periode';
+      guruAttendanceTitle.textContent = guruPeriodFilter.value === 'hari'
+        ? 'Presensi Guru Hari Ini'
+        : `Presensi Guru · ${guruPeriodFilter.options[guruPeriodFilter.selectedIndex].text}`;
+      guruUnrecordedSection.hidden = data.belum_presensi.length === 0;
+      guruUnrecordedSection.querySelectorAll('.dash-unrecorded-item').forEach((row) => row.remove());
+      guruUnrecordedSection.querySelectorAll('.dash-empty').forEach((empty) => empty.remove());
+      data.belum_presensi.forEach((teacher) => {
+        const row = makeTextElement('div', 'dash-unrecorded-item', '');
+        row.dataset.guruId = teacher.id;
+        row.append(makeTextElement('span', '', teacher.nama));
+        row.append(makeTextElement('span', '', 'Belum presensi'));
+        guruUnrecordedSection.append(row);
+      });
+      const selectedPanel = document.querySelector('[data-guru-panel]:not([hidden])');
+      if (selectedPanel) animateGuruRows(selectedPanel);
+    } catch (error) {
+      guruFetchError.textContent = error.message || 'Terjadi kesalahan saat memuat presensi guru.';
+      guruFetchError.hidden = false;
+    } finally {
+      guruPeriodFilter.disabled = false;
+    }
+  }
+
+  guruTabs.forEach((tab) => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('[data-guru-tab]').forEach((item) => {
         item.setAttribute('aria-selected', String(item === tab));
       });
-      document.querySelectorAll('[data-guru-panel]').forEach((panel) => {
-        panel.hidden = panel.dataset.guruPanel !== tab.dataset.guruTab;
+      guruPanels.forEach((panel) => {
+        const selected = panel.dataset.guruPanel === tab.dataset.guruTab;
+        panel.hidden = !selected;
+        if (selected) animateGuruRows(panel);
       });
     });
   });
-
-  document.querySelectorAll('[data-open-modal]').forEach((button) => {
-    button.addEventListener('click', () => document.getElementById(button.dataset.openModal).showModal());
-  });
-  document.querySelectorAll('[data-close-modal]').forEach((button) => {
-    button.addEventListener('click', () => button.closest('dialog').close());
-  });
-  document.querySelectorAll('.dash-modal').forEach((modal) => {
-    modal.addEventListener('click', (event) => {
-      if (event.target === modal) modal.close();
-    });
-  });
+  guruPeriodFilter.addEventListener('change', loadGuruPeriod);
 
   const classFilter = document.getElementById('scheduleClassFilter');
   classFilter.addEventListener('change', () => {

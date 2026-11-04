@@ -32,3 +32,57 @@
   font-size: 11.5px;
   font-weight: 600;
 }
+
+.admin-total.class-total {
+  padding: 6px 10px;
+  border: 1px solid #e5e7eb;
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.class-count {
+  color: #17211c;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.class-edit-button {
+  padding: 6px 11px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--green-700);
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+.class-edit-button:hover { background: var(--surface); }
+
+.kelas-modal { max-width: 620px; }
+.kelas-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.kelas-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.kelas-form-grid .admin-input,
+.kelas-form-grid .admin-select { width: 100%; }
+.kelas-count-field { grid-column: 1 / -1; }
+.kelas-cancel-button {
+  padding: 9px 15px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+@media (max-width: 560px) {
+  .kelas-form-grid { grid-template-columns: 1fr; }
+  .kelas-count-field { grid-column: auto; }
+}

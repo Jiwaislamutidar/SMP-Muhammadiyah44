@@ -347,6 +347,16 @@ class AttendancePortalTest extends TestCase
             'status' => 'Izin',
             'keterangan' => 'Pemeriksaan kesehatan',
         ]);
+        PresensiGuru::create([
+            'guru_id' => $jadwalHadir->guru_id,
+            'tanggal' => today(),
+            'status' => 'Hadir',
+        ]);
+        PresensiGuru::create([
+            'guru_id' => $jadwalAlfa->guru_id,
+            'tanggal' => today()->subDay(),
+            'status' => 'Alfa',
+        ]);
         $this->travelTo(today()->setTime(14, 59));
 
         $dashboard = $this->actingAs($userAdmin)
@@ -356,15 +366,18 @@ class AttendancePortalTest extends TestCase
             ->assertSee('Murid Hadir')
             ->assertSee('Murid Alfa')
             ->assertSee('Murid Izin/Sakit')
-            ->assertSee($siswaHadirDanAlfa->nama_lengkap)
-            ->assertSee('Pemeriksaan kesehatan')
             ->assertSee('dari '.Siswa::query()->where('status', 'aktif')->count().' siswa aktif')
             ->assertSee('Semua Kelas')
             ->assertSee($jadwalHadir->kelas->nama_kelas)
+            ->assertDontSee('Lihat Daftar')
+            ->assertDontSee('alfaModal')
+            ->assertDontSee('izinSakitModal')
             ->assertDontSee('dash-quick-actions', false)
             ->assertDontSee('+ Guru')
             ->assertDontSee('+ Murid');
         $this->assertSame(3, substr_count($dashboard->getContent(), 'class="dash-kpi-num">1</div>'));
+        $dashboard->assertViewHas('guruHadir', fn ($gurus) => $gurus->modelKeys() === [$jadwalHadir->guru_id]);
+        $dashboard->assertViewHas('guruTidakHadir', fn ($gurus) => ! $gurus->contains('id', $jadwalAlfa->guru_id));
 
         $this->travelBack();
     }
@@ -383,6 +396,133 @@ class AttendancePortalTest extends TestCase
             'tanggal' => today()->toDateString(),
         ]);
         $this->travelBack();
+    }
+
+    public function test_admin_guru_attendance_period_groups_each_teacher_and_all_absence_dates(): void
+    {
+        [, $guruAbsent] = $this->makeTeacher();
+        [, $guruPresent] = $this->makeTeacher();
+        PresensiGuru::create([
+            'guru_id' => $guruAbsent->id,
+            'tanggal' => today()->subDays(5),
+            'status' => 'Izin',
+        ]);
+        PresensiGuru::create([
+            'guru_id' => $guruAbsent->id,
+            'tanggal' => today()->subDay(),
+            'status' => 'Sakit',
+        ]);
+        PresensiGuru::create([
+            'guru_id' => $guruPresent->id,
+            'tanggal' => today()->subDay(),
+            'status' => 'Hadir',
+        ]);
+        PresensiGuru::create([
+            'guru_id' => $guruPresent->id,
+            'tanggal' => today(),
+            'status' => 'Hadir',
+        ]);
+        $admin = User::create([
+            'name' => 'Admin QA '.bin2hex(random_bytes(4)),
+            'username' => 'admin-qa-'.bin2hex(random_bytes(4)),
+            'email' => null,
+            'role' => 'admin',
+            'password' => Hash::make('test-password'),
+        ]);
+
+        $periodResponse = $this->actingAs($admin)
+            ->getJson(route('admin.dashboard.guru-period', ['periode' => 'minggu']))
+            ->assertOk()
+            ->json();
+        $absentGuru = collect($periodResponse['tidak_hadir'])->firstWhere('id', $guruAbsent->id);
+        $presentGuru = collect($periodResponse['hadir'])->firstWhere('id', $guruPresent->id);
+        $this->assertNotNull($absentGuru);
+        $this->assertCount(2, $absentGuru['tanggal']);
+        $this->assertSame(['Izin', 'Sakit'], collect($absentGuru['tanggal'])->pluck('status')->all());
+        $this->assertNotNull($presentGuru);
+        $this->assertNull(collect($periodResponse['tidak_hadir'])->firstWhere('id', $guruPresent->id));
+        $this->assertSame(count($periodResponse['hadir']), $periodResponse['counts']['hadir']);
+        $this->assertSame(count($periodResponse['tidak_hadir']), $periodResponse['counts']['tidak_hadir']);
+    }
+
+    public function test_admin_student_report_filters_rows_summaries_export_and_bulk_delete(): void
+    {
+        [, , $jadwal] = $this->makeSchedule();
+        [, $siswa] = $this->makeStudent($jadwal->kelas);
+        $sesiHariIni = SesiPelajaran::create([
+            'jadwal_id' => $jadwal->id,
+            'guru_id' => $jadwal->guru_id,
+            'tanggal' => today(),
+            'status_sesi' => 'Selesai',
+        ]);
+        $sesiKemarin = SesiPelajaran::create([
+            'jadwal_id' => $jadwal->id,
+            'guru_id' => $jadwal->guru_id,
+            'tanggal' => today()->subDay(),
+            'status_sesi' => 'Selesai',
+        ]);
+        $hadir = PresensiPelajaran::create([
+            'sesi_pelajaran_id' => $sesiHariIni->id,
+            'siswa_id' => $siswa->id,
+            'status' => 'Hadir',
+        ]);
+        $izin = PresensiPelajaran::create([
+            'sesi_pelajaran_id' => $sesiKemarin->id,
+            'siswa_id' => $siswa->id,
+            'status' => 'Izin',
+        ]);
+        $admin = User::create([
+            'name' => 'Admin QA '.bin2hex(random_bytes(4)),
+            'username' => 'admin-qa-'.bin2hex(random_bytes(4)),
+            'email' => null,
+            'role' => 'admin',
+            'password' => Hash::make('test-password'),
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.rekapabsensi'))
+            ->assertOk()
+            ->assertSee($siswa->nama_lengkap)
+            ->assertSee('Hapus Data')
+            ->assertSee('Export Rekap')
+            ->assertDontSee('00654321');
+
+        $this->actingAs($admin)
+            ->getJson(route('admin.rekapabsensi.data', ['periode' => 'minggu']))
+            ->assertOk()
+            ->assertJsonPath('summary.hadir', 1)
+            ->assertJsonPath('summary.izin_sakit', 1)
+            ->assertJsonPath('total', 2)
+            ->assertJsonPath('rows.0.tanggal', today()->subDay()->toDateString());
+
+        $this->actingAs($admin)
+            ->getJson(route('admin.rekapabsensi.data', [
+                'periode' => 'minggu',
+                'kelas' => $jadwal->kelas_id,
+                'status' => 'Izin',
+            ]))
+            ->assertOk()
+            ->assertJsonPath('total', 1)
+            ->assertJsonPath('rows.0.status', 'Izin');
+
+        $export = $this->actingAs($admin)
+            ->get(route('admin.rekapabsensi.export', [
+                'periode' => 'minggu',
+                'kelas' => $jadwal->kelas_id,
+                'status' => 'Izin',
+            ]))
+            ->assertOk();
+        $this->assertStringContainsString($siswa->nama_lengkap, $export->streamedContent());
+
+        $this->actingAs($admin)
+            ->delete(route('admin.rekapabsensi.destroy'), [
+                'periode' => 'minggu',
+                'kelas' => $jadwal->kelas_id,
+                'status' => 'Izin',
+            ])
+            ->assertRedirect(route('admin.rekapabsensi'));
+        $this->assertDatabaseHas('presensi_pelajarans', ['id' => $hadir->id]);
+        $this->assertDatabaseMissing('presensi_pelajarans', ['id' => $izin->id]);
     }
 
     public function test_guru_portal_pages_render_schedule_data(): void

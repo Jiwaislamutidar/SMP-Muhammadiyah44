@@ -37,25 +37,6 @@ class DashboardController extends Controller
             ->count('siswa_id');
         $totalSiswaAktif = Siswa::query()->where('status', 'aktif')->count();
 
-        $alfaStudents = (clone $todayAttendance)
-            ->where('status', 'Alfa')
-            ->with(['siswa.kelas', 'sesiPelajaran.jadwal.mapel'])
-            ->get()
-            ->sortBy(fn (PresensiPelajaran $attendance): string => implode('|', [
-                $attendance->siswa?->kelas?->nama_kelas ?? '',
-                $attendance->siswa?->nama_lengkap ?? '',
-            ]))
-            ->values();
-        $izinSakitStudents = (clone $todayAttendance)
-            ->whereIn('status', ['Izin', 'Sakit'])
-            ->with(['siswa.kelas', 'sesiPelajaran.jadwal.mapel'])
-            ->get()
-            ->sortBy(fn (PresensiPelajaran $attendance): string => implode('|', [
-                $attendance->siswa?->kelas?->nama_kelas ?? '',
-                $attendance->siswa?->nama_lengkap ?? '',
-            ]))
-            ->values();
-
         $gurus = Guru::query()
             ->with([
                 'mapels',
@@ -88,13 +69,11 @@ class DashboardController extends Controller
 
         return view('pages.admin.dashboardadmin', compact(
             'alfaCount',
-            'alfaStudents',
             'guruBelumPresensi',
             'guruHadir',
             'guruTidakHadir',
             'hadirCount',
             'izinSakitCount',
-            'izinSakitStudents',
             'jadwalBloks',
             'kelasList',
             'totalSiswaAktif'

@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Admin\AdminGuruController;
 use App\Http\Controllers\Admin\AdminJadwalController;
+use App\Http\Controllers\Admin\AdminKelasController;
+use App\Http\Controllers\Admin\AttendanceReportController;
 use App\Http\Controllers\Admin\AuthController as AdminAuth;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\SiswaController as AdminSiswaController;
@@ -39,12 +41,18 @@ Route::domain('admin.'.$domain)->group(function () {
         Route::get('/data-murid', [AdminSiswaController::class, 'index'])->name('admin.datamurid');
         Route::post('/data-murid/import', [AdminSiswaController::class, 'import'])->name('admin.siswa.import');
         Route::post('/data-murid/import-manual', [AdminSiswaController::class, 'manualImport'])->name('admin.siswa.manual-import');
-        Route::get('/data-kelas', fn () => view('pages.admin.datakelas'))->name('admin.datakelas');
+        Route::get('/data-kelas', [AdminKelasController::class, 'index'])->name('admin.datakelas');
+        Route::post('/data-kelas', [AdminKelasController::class, 'store'])->name('admin.kelas.store');
+        Route::put('/data-kelas/{kelas}', [AdminKelasController::class, 'update'])->name('admin.kelas.update');
         Route::get('/mata-pelajaran', fn () => view('pages.admin.matapelajaran'))->name('admin.matapelajaran');
         Route::get('/jadwal-pelajaran', [AdminJadwalController::class, 'index'])->name('admin.jadwalpelajaran');
         Route::post('/jadwal-pelajaran/import', [AdminJadwalController::class, 'import'])->name('admin.jadwalpelajaran.import');
         Route::get('/jadwal-pelajaran/template', [AdminJadwalController::class, 'template'])->name('admin.jadwalpelajaran.template');
-        Route::get('/rekap-absensi', fn () => view('pages.admin.rekapabsensi'))->name('admin.rekapabsensi');
+        Route::get('/rekap-absensi', [AttendanceReportController::class, 'index'])->name('admin.rekapabsensi');
+        Route::get('/rekap-absensi/data', [AttendanceReportController::class, 'studentData'])->name('admin.rekapabsensi.data');
+        Route::get('/rekap-absensi/export', [AttendanceReportController::class, 'export'])->name('admin.rekapabsensi.export');
+        Route::delete('/rekap-absensi', [AttendanceReportController::class, 'destroy'])->name('admin.rekapabsensi.destroy');
+        Route::get('/dashboard/presensi-guru', [AttendanceReportController::class, 'guruPeriod'])->name('admin.dashboard.guru-period');
         Route::get('/profil', fn () => view('pages.admin.profil'))->name('admin.profil');
 
         Route::post('/logout', [AdminAuth::class, 'logout'])->name('admin.logout');

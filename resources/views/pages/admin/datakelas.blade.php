@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('title', 'Data Kelas')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/datakelas.css') }}?v=3">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/datakelas.css') }}?v=4">@endsection
 @section('content')
 
 <div class="admin-page-header">
@@ -8,31 +8,25 @@
     <h1>Data Kelas</h1>
     <p>Kelola rombongan belajar &amp; wali kelas</p>
   </div>
-  <button class="admin-action" type="button" onclick="showAdminToast('Fitur Tambah Kelas siap digunakan setelah sinkronisasi')">+ Tambah Kelas</button>
+  <button class="admin-action" type="button" data-add-class>+ Tambah Kelas</button>
 </div>
 
-@php
-  $rawKelas = [
-    ['7A', 'Kelas 7A', 'Tingkat VII', 'Ahmad Fauzi, S.Pd.',    '32', 'Ruang 101', 'Gedung A Lt. 1'],
-    ['7B', 'Kelas 7B', 'Tingkat VII', 'Siti Rahma, S.Pd.',     '30', 'Ruang 102', 'Gedung A Lt. 1'],
-    ['8A', 'Kelas 8A', 'Tingkat VIII','Budi Santoso, M.Pd.',   '31', 'Ruang 201', 'Gedung B Lt. 2'],
-    ['8B', 'Kelas 8B', 'Tingkat VIII','Dewi Lestari, S.Pd.',   '29', 'Ruang 202', 'Gedung B Lt. 2'],
-    ['9A', 'Kelas 9A', 'Tingkat IX',  'Rizky Maulana, S.Pd.',  '30', 'Ruang 301', 'Gedung C Lt. 3'],
-  ];
-  $kelasList = collect($rawKelas)
-    ->when(request('tingkat'), fn($c, $t) => $c->filter(fn($k) => str_contains($k[2], $t)))
-    ->when(request('search'), fn($c, $s) => $c->filter(fn($k) => str_contains(strtolower($k[1].' '.$k[3]), strtolower($s))));
-@endphp
+@if (session('success'))
+  <div class="admin-alert success" role="status">{{ session('success') }}</div>
+@endif
+@if ($errors->any())
+  <div class="admin-alert error" role="alert">{{ $errors->first() }}</div>
+@endif
 
-<form class="admin-toolbar" method="GET">
-  <input class="admin-search" name="search" value="{{ request('search') }}" placeholder="Cari nama kelas atau wali kelas..." aria-label="Cari kelas">
+<form class="admin-toolbar" method="GET" action="{{ route('admin.datakelas') }}">
+  <input class="admin-search" type="search" name="search" value="{{ request('search') }}" placeholder="Cari nama kelas, wali kelas, atau ruangan..." aria-label="Cari kelas">
   <select class="admin-select" name="tingkat" onchange="this.form.submit()">
     <option value="">Semua Tingkat</option>
     <option value="VII" @selected(request('tingkat') === 'VII')>VII</option>
     <option value="VIII" @selected(request('tingkat') === 'VIII')>VIII</option>
     <option value="IX" @selected(request('tingkat') === 'IX')>IX</option>
   </select>
-  <span class="admin-total">Total {{ $kelasList->count() }} Kelas</span>
+  <span class="admin-total class-total">Total {{ $totalKelas }} Kelas</span>
 </form>
 
 <section class="panel admin-table-wrap">
@@ -41,9 +35,8 @@
       <tr>
         <th>Kelas &amp; Tingkat</th>
         <th>Wali Kelas</th>
-        <th>Kapasitas Murid</th>
+        <th>Jumlah Murid</th>
         <th>Ruangan</th>
-        <th>Status</th>
         <th>Aksi</th>
       </tr>
     </thead>
@@ -52,35 +45,175 @@
         <tr>
           <td>
             <div class="class-identity">
-              <span class="class-pill-badge">{{ $kelas[0] }}</span>
+              <span class="class-pill-badge">{{ $kelas->nama_kelas }}</span>
               <div>
-                <strong>{{ $kelas[1] }}</strong>
-                <small>{{ $kelas[2] }}</small>
+                <strong>{{ $kelas->nama_kelas }}</strong>
+                <small>{{ $kelas->tingkat ? 'Tingkat '.$kelas->tingkat : 'Tingkat belum diisi' }}</small>
               </div>
             </div>
           </td>
-          <td><strong>{{ $kelas[3] }}</strong></td>
-          <td><span class="badge blue">{{ $kelas[4] }} Murid</span></td>
+          <td><strong>{{ $kelas->wali_kelas ?: 'Belum diisi' }}</strong></td>
+          <td><span class="class-count">{{ $kelas->jumlah_murid }} Murid</span></td>
+          <td>{{ $kelas->ruangan ?: 'Belum diisi' }}</td>
           <td>
-            <span class="class-room-badge">{{ $kelas[5] }}</span>
-            <small>{{ $kelas[6] }}</small>
+            <button class="class-edit-button" type="button" data-edit-class
+              data-id="{{ $kelas->id }}"
+              data-nama="{{ $kelas->nama_kelas }}"
+              data-tingkat="{{ $kelas->tingkat }}"
+              data-wali="{{ $kelas->wali_kelas }}"
+              data-ruangan="{{ $kelas->ruangan }}"
+              data-jumlah="{{ $kelas->jumlah_murid }}"
+              data-update-url="{{ route('admin.kelas.update', $kelas) }}">Edit</button>
           </td>
-          <td><span class="badge">Aktif</span></td>
-          <td><button class="link-action" type="button" onclick="showAdminToast('Detail {{ $kelas[1] }}')">Detail</button></td>
         </tr>
       @empty
-        <tr><td class="admin-empty-row" colspan="6">Belum ada data kelas yang sesuai.</td></tr>
+        <tr><td class="admin-empty-row" colspan="5">Belum ada data kelas yang sesuai.</td></tr>
       @endforelse
     </tbody>
   </table>
-  <div class="admin-pagination">
-    <span>Menampilkan 1–5 dari 18 kelas</span>
-    <div class="admin-page-links">
-      <span class="disabled" aria-disabled="true">‹</span>
-      <span>Halaman 1 dari 4</span>
-      <button type="button" onclick="showAdminToast('Halaman 2')" aria-label="Halaman berikutnya">›</button>
-    </div>
-  </div>
 </section>
+
+<div class="modal-overlay" id="kelasModal" aria-hidden="true">
+  <section class="modal-box kelas-modal" role="dialog" aria-modal="true" aria-labelledby="kelasModalTitle">
+    <div class="modal-header">
+      <h2 id="kelasModalTitle">Tambah Kelas</h2>
+      <button class="modal-close-btn" type="button" data-close-class-modal aria-label="Tutup">&times;</button>
+    </div>
+    <form id="kelasForm" method="POST" action="{{ route('admin.kelas.store') }}" data-store-url="{{ route('admin.kelas.store') }}">
+      @csrf
+      <input type="hidden" name="form_context" value="add">
+      <input type="hidden" name="kelas_id" value="">
+      <input type="hidden" id="kelasMethod" name="_method" value="PUT" disabled>
+      <div class="modal-body kelas-form-grid">
+        <label>Nama Kelas
+          <input class="admin-input" type="text" name="nama_kelas" maxlength="100" placeholder="Contoh: 7A" required>
+        </label>
+        <label>Tingkat
+          <select class="admin-select" name="tingkat" required>
+            <option value="">Pilih tingkat</option>
+            <option value="VII">VII</option>
+            <option value="VIII">VIII</option>
+            <option value="IX">IX</option>
+          </select>
+        </label>
+        <label>Wali Kelas
+          <input class="admin-input" type="text" name="wali_kelas" maxlength="255" placeholder="Nama wali kelas" required>
+        </label>
+        <label>Ruangan
+          <input class="admin-input" type="text" name="ruangan" maxlength="100" placeholder="Contoh: Ruang 101" required>
+        </label>
+        <label class="kelas-count-field">Jumlah Murid
+          <input class="admin-input" type="number" name="jumlah_murid" min="0" max="1000" step="1" placeholder="0" required>
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button class="admin-action-outline kelas-cancel-button" type="button" data-close-class-modal>Batal</button>
+        <button class="admin-action" id="kelasSubmitButton" type="submit">Simpan Kelas</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+@php
+  $oldKelasForm = [
+    'context' => old('form_context'),
+    'id' => old('kelas_id'),
+    'nama' => old('nama_kelas'),
+    'tingkat' => old('tingkat'),
+    'wali' => old('wali_kelas'),
+    'ruangan' => old('ruangan'),
+    'jumlah' => old('jumlah_murid'),
+  ];
+@endphp
+
+<script>
+(() => {
+  const modal = document.getElementById('kelasModal');
+  const form = document.getElementById('kelasForm');
+  const method = document.getElementById('kelasMethod');
+  const title = document.getElementById('kelasModalTitle');
+  const submit = document.getElementById('kelasSubmitButton');
+  const fields = {
+    id: form.elements.kelas_id,
+    context: form.elements.form_context,
+    nama: form.elements.nama_kelas,
+    tingkat: form.elements.tingkat,
+    wali: form.elements.wali_kelas,
+    ruangan: form.elements.ruangan,
+    jumlah: form.elements.jumlah_murid
+  };
+
+  const showModal = () => {
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    fields.nama.focus();
+  };
+  const closeModal = () => {
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  };
+  const openAddModal = () => {
+    form.reset();
+    form.action = form.dataset.storeUrl;
+    fields.id.value = '';
+    fields.context.value = 'add';
+    method.disabled = true;
+    title.textContent = 'Tambah Kelas';
+    submit.textContent = 'Simpan Kelas';
+    showModal();
+  };
+  const openEditModal = (button) => {
+    fields.id.value = button.dataset.id;
+    fields.context.value = 'edit';
+    fields.nama.value = button.dataset.nama;
+    fields.tingkat.value = button.dataset.tingkat || '';
+    fields.wali.value = button.dataset.wali || '';
+    fields.ruangan.value = button.dataset.ruangan || '';
+    fields.jumlah.value = button.dataset.jumlah || '0';
+    form.action = button.dataset.updateUrl;
+    method.disabled = false;
+    title.textContent = 'Edit Data Kelas';
+    submit.textContent = 'Simpan Perubahan';
+    showModal();
+  };
+
+  document.querySelector('[data-add-class]').addEventListener('click', openAddModal);
+  document.querySelectorAll('[data-edit-class]').forEach((button) => {
+    button.addEventListener('click', () => openEditModal(button));
+  });
+  document.querySelectorAll('[data-close-class-modal]').forEach((button) => {
+    button.addEventListener('click', closeModal);
+  });
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) closeModal();
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && modal.classList.contains('show')) closeModal();
+  });
+
+  const oldForm = @json($oldKelasForm);
+  if (oldForm.context === 'add') {
+    openAddModal();
+    fields.nama.value = oldForm.nama || '';
+    fields.tingkat.value = oldForm.tingkat || '';
+    fields.wali.value = oldForm.wali || '';
+    fields.ruangan.value = oldForm.ruangan || '';
+    fields.jumlah.value = oldForm.jumlah || '';
+  } else if (oldForm.context === 'edit') {
+    const button = Array.from(document.querySelectorAll('[data-edit-class]'))
+      .find((item) => item.dataset.id === String(oldForm.id));
+    if (button) {
+      openEditModal(button);
+      fields.nama.value = oldForm.nama || '';
+      fields.tingkat.value = oldForm.tingkat || '';
+      fields.wali.value = oldForm.wali || '';
+      fields.ruangan.value = oldForm.ruangan || '';
+      fields.jumlah.value = oldForm.jumlah || '';
+    }
+  }
+})();
+</script>
 
 @endsection

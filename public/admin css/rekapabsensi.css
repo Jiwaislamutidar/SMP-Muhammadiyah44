@@ -1,73 +1,58 @@
-/* =====================================================
-   REKAP ABSENSI – Page-Specific Styles
-   Shared utilities: admin-shell.css + admin-page.css
-   ===================================================== */
+.rekap-actions { display: flex; align-items: center; gap: 8px; }
+.rekap-actions #deleteAttendance { border-color: #fecaca; color: #b91c1c; }
+.rekap-actions #deleteAttendance:hover { border-color: #dc2626; background: #fef2f2; }
+.rekap-toolbar { align-items: end; }
+.rekap-search-form { flex: 1 1 220px; min-width: 180px; margin: 0; }
+.rekap-search-form .admin-search { width: 100%; }
+.rekap-filter-label { display: grid; gap: 5px; color: #374151; font-size: 11px; font-weight: 600; }
+.rekap-filter-label .admin-select { min-width: 150px; }
+.summary-item { border-radius: 12px; }
+.summary-item::before { display: none; }
+.summary-count { color: #17211c; }
+.rekap-identity { display: flex; align-items: center; gap: 10px; }
+.rekap-identity strong { color: #17211c; font-size: 13px; font-weight: 700; }
+.rekap-table { color: #17211c; }
+.rekap-table th, .rekap-table td { color: #17211c !important; }
+.rekap-table th { font-weight: 700; }
+.rekap-table [hidden] { display: none !important; }
+.rekap-class-badge { padding: 3px 8px; border-radius: 6px; background: #f3f4f6; color: #4b5563; font-size: 11px; font-weight: 600; }
+.rekap-status { font-size: 12px; font-weight: 700; }
+.rekap-status--hadir { color: #087443; }
+.rekap-status--izin, .rekap-status--sakit { color: #b45309; }
+.rekap-status--alfa { color: #dc2626; }
+.rekap-error { padding: 10px 12px; border: 1px solid #fecaca; border-radius: 8px; color: #b91c1c; font-size: 12px; }
+.rekap-success { padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; color: #374151; font-size: 12px; }
 
-.rekap-identity {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.rekap-delete-modal {
+  width: min(440px, calc(100vw - 32px));
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  color: #17211c;
+  text-align: center;
+  box-shadow: 0 16px 48px rgba(15, 23, 42, .2);
 }
-.rekap-identity strong {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.rekap-time {
-  font-variant-numeric: tabular-nums;
-  font-size: 12px;
-  font-weight: 600;
-  color: #475569;
-}
-.rekap-time--empty {
-  color: #94a3b8;
-}
-
-.summary-strip {
+.rekap-delete-modal::backdrop { background: rgba(15, 23, 42, .42); }
+.rekap-delete-icon {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-}
-.summary-item {
-  position: relative;
-  padding: 16px 20px;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  box-shadow: 0 1px 3px rgba(0,0,0,.04);
-  overflow: hidden;
-}
-.summary-item::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-}
-.summary-item--green::before { background: #10b981; }
-.summary-item--amber::before { background: #f59e0b; }
-.summary-item--red::before   { background: #ef4444; }
-
-.summary-item span {
-  display: block;
-  color: var(--muted);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: .6px;
+  width: 42px;
+  height: 42px;
+  margin: 0 auto 12px;
+  place-items: center;
+  border-radius: 50%;
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 20px;
   font-weight: 700;
 }
-.summary-item strong {
-  display: block;
-  margin-top: 6px;
-  font-size: 28px;
-  font-weight: 800;
-  line-height: 1;
-}
+.rekap-delete-modal h2 { margin: 0; font-size: 16px; }
+.rekap-delete-modal p { margin: 8px 0 20px; color: #6b7280; font-size: 12px; line-height: 1.5; }
+.rekap-delete-actions { display: flex; justify-content: center; gap: 9px; }
+.rekap-danger-button { border-color: #dc2626 !important; background: #dc2626 !important; color: #fff !important; }
+.rekap-danger-button:hover { background: #b91c1c !important; }
 
-@media (max-width: 600px) {
-  .summary-strip {
-    grid-template-columns: 1fr;
-  }
+@media (max-width: 700px) {
+  .rekap-actions { width: 100%; }
+  .rekap-toolbar { align-items: stretch; }
+  .rekap-filter-label, .rekap-filter-label .admin-select { width: 100%; }
 }

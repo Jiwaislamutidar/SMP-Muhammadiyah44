@@ -1,112 +1,251 @@
 @extends('layouts.admin')
 @section('title', 'Rekap Absensi')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/rekapabsensi.css') }}?v=3">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/rekapabsensi.css') }}?v=4">@endsection
 @section('content')
 
 <div class="admin-page-header">
   <div>
-    <h1>Rekap Absensi</h1>
-    <p>Pantau kehadiran guru &amp; murid harian</p>
+    <h1>Rekap Absensi Murid</h1>
+    <p>Data presensi murid berdasarkan periode yang dipilih</p>
   </div>
-  <div class="admin-header-actions">
-    <button class="admin-action admin-action-outline" type="button" onclick="showAdminToast('Menampilkan data hari ini')">Hari Ini</button>
-    <button class="admin-action" type="button" onclick="showAdminToast('Menyiapkan file ekspor rekap...')">↓ Export Rekap</button>
+  <div class="admin-header-actions rekap-actions">
+    <button class="admin-action admin-action-outline" id="deleteAttendance" type="button">Hapus Data</button>
+    <a class="admin-action" id="exportAttendance" href="{{ route('admin.rekapabsensi.export', ['periode' => 'hari']) }}">↓ Export Rekap</a>
   </div>
 </div>
 
-{{-- KPI summary strip --}}
 <div class="summary-strip">
-  <div class="summary-item summary-item--green">
+  <div class="summary-item">
     <span>Murid Hadir</span>
-    <strong style="color:#087443">795</strong>
+    <strong class="summary-count" id="summaryHadir">{{ $report['summary']['hadir'] }}</strong>
   </div>
-  <div class="summary-item summary-item--amber">
+  <div class="summary-item">
     <span>Izin / Sakit</span>
-    <strong style="color:#d97706">32</strong>
+    <strong class="summary-count" id="summaryIzinSakit">{{ $report['summary']['izin_sakit'] }}</strong>
   </div>
-  <div class="summary-item summary-item--red">
+  <div class="summary-item">
     <span>Alfa (Tanpa Keterangan)</span>
-    <strong style="color:#dc2626">15</strong>
+    <strong class="summary-count" id="summaryAlfa">{{ $report['summary']['alfa'] }}</strong>
   </div>
 </div>
 
-@php
-  $rawAbsen = [
-    ['Ahmad Fauzan',   '00654321', '7A', 'Hadir', '06:52 WIB', ''],
-    ['Muhammad Rizky', '00654322', '7A', 'Hadir', '06:55 WIB', ''],
-    ['Fahri Ramadhan', '00654323', '7B', 'Izin',  '-',          'amber'],
-    ['Aisyah Putri',   '00654324', '7B', 'Hadir', '06:58 WIB', ''],
-    ['Nabila Zahra',   '00654325', '8A', 'Alfa',  '-',          'red'],
-    ['Raka Pratama',   '00654326', '8A', 'Hadir', '07:01 WIB', ''],
-    ['Fikri Maulana',  '00654327', '8B', 'Hadir', '06:49 WIB', ''],
-    ['Siti Aulia',     '00654328', '8B', 'Izin',  '-',          'amber'],
-  ];
-  $absenList = collect($rawAbsen)
-    ->when(request('kelas'), fn($c, $k) => $c->filter(fn($a) => $a[2] === $k))
-    ->when(request('status'), fn($c, $s) => $c->filter(fn($a) => strtolower($a[3]) === strtolower($s)))
-    ->when(request('search'), fn($c, $q) => $c->filter(fn($a) => str_contains(strtolower($a[0].' '.$a[1]), strtolower($q))));
-@endphp
+@if(session('success'))
+  <p class="rekap-success" role="status">{{ session('success') }}</p>
+@endif
 
-<form class="admin-toolbar" method="GET">
-  <input class="admin-search" name="search" value="{{ request('search') }}" placeholder="Cari nama atau NISN murid..." aria-label="Cari murid">
-  <select class="admin-select" name="kelas">
-    <option value="">Semua Kelas</option>
-    @foreach (['7A', '7B', '8A', '8B', '9A', '9B'] as $k)
-      <option value="{{ $k }}" @selected(request('kelas') === $k)>{{ $k }}</option>
-    @endforeach
-  </select>
-  <select class="admin-select" name="status">
-    <option value="">Semua Status</option>
-    @foreach (['Hadir', 'Izin', 'Alfa'] as $s)
-      <option value="{{ $s }}" @selected(request('status') === $s)>{{ $s }}</option>
-    @endforeach
-  </select>
-  <button class="admin-filter-submit" type="submit">Filter</button>
-  <span class="admin-total">Total {{ $absenList->count() }} Data</span>
-</form>
+<div class="admin-toolbar rekap-toolbar">
+  <label class="rekap-filter-label" for="rekapPeriod">
+    Periode
+    <select class="admin-select" id="rekapPeriod">
+      <option value="hari">Hari Ini</option>
+      <option value="minggu">7 Hari Terakhir</option>
+      <option value="bulan">1 Bulan Terakhir</option>
+    </select>
+  </label>
+  <form class="rekap-search-form" method="GET" action="{{ route('admin.rekapabsensi') }}" id="rekapSearchForm">
+    <input class="admin-search" id="rekapSearch" name="search" type="search" placeholder="Cari nama atau NISN murid..." aria-label="Cari murid">
+  </form>
+  <label class="rekap-filter-label" for="rekapClass">
+    Kelas
+    <select class="admin-select" id="rekapClass">
+      <option value="">Semua Kelas</option>
+      @foreach($kelasList as $kelas)
+        <option value="{{ $kelas->id }}">{{ $kelas->nama_kelas }}</option>
+      @endforeach
+    </select>
+  </label>
+  <label class="rekap-filter-label" for="rekapStatus">
+    Status
+    <select class="admin-select" id="rekapStatus">
+      <option value="">Semua Status</option>
+      @foreach(['Hadir', 'Izin', 'Sakit', 'Alfa'] as $status)
+        <option value="{{ $status }}">{{ $status }}</option>
+      @endforeach
+    </select>
+  </label>
+  <span class="admin-total" id="rekapTotal">Total {{ $report['total'] }} Data</span>
+</div>
+
+<p class="rekap-error" id="rekapError" role="alert" hidden></p>
 
 <section class="panel admin-table-wrap">
-  <table class="admin-table">
+  <table class="admin-table rekap-table">
     <thead>
       <tr>
         <th>Murid</th>
         <th>NISN</th>
         <th>Kelas</th>
+        <th class="rekap-date-heading" hidden>Tanggal</th>
         <th>Status</th>
+        <th>Mata Pelajaran</th>
+        <th>Jam Pelajaran</th>
         <th>Waktu Presensi</th>
-        <th>Aksi</th>
       </tr>
     </thead>
-    <tbody>
-      @forelse ($absenList as $absen)
+    <tbody id="rekapRows">
+      @forelse($report['rows'] as $row)
         <tr>
-          <td>
-            <div class="rekap-identity">
-              <span class="initial">{{ collect(explode(' ', $absen[0]))->map(fn($w) => substr($w, 0, 1))->join('') }}</span>
-              <strong>{{ $absen[0] }}</strong>
-            </div>
-          </td>
-          <td><span style="font-variant-numeric:tabular-nums; font-weight:600; color:#475569;">{{ $absen[1] }}</span></td>
-          <td><span class="badge blue">{{ $absen[2] }}</span></td>
-          <td><span class="badge {{ $absen[5] }}">{{ $absen[3] }}</span></td>
-          <td>
-            <span class="rekap-time {{ $absen[4] === '-' ? 'rekap-time--empty' : '' }}">{{ $absen[4] }}</span>
-          </td>
-          <td><button class="link-action" type="button" onclick="showAdminToast('Detail presensi {{ $absen[0] }}')">Detail</button></td>
+          <td><div class="rekap-identity"><strong>{{ $row['nama'] }}</strong></div></td>
+          <td>{{ $row['nisn'] }}</td>
+          <td><span class="rekap-class-badge">{{ $row['kelas'] }}</span></td>
+          <td class="rekap-date-cell" hidden>{{ $row['tanggal'] }}</td>
+          <td><span class="rekap-status rekap-status--{{ strtolower($row['status']) }}">{{ $row['status'] }}</span></td>
+          <td>{{ $row['mapel'] }}</td>
+          <td>{{ $row['jam_pelajaran'] }}</td>
+          <td>{{ $row['waktu'] === '-' ? '-' : substr($row['waktu'], 0, 5) }}</td>
         </tr>
       @empty
-        <tr><td class="admin-empty-row" colspan="6">Belum ada data presensi yang sesuai.</td></tr>
+        <tr><td class="admin-empty-row" colspan="7">Belum ada data presensi yang sesuai.</td></tr>
       @endforelse
     </tbody>
   </table>
-  <div class="admin-pagination">
-    <span>Menampilkan 1–8 dari 842 data presensi</span>
-    <div class="admin-page-links">
-      <span class="disabled" aria-disabled="true">‹</span>
-      <span>Halaman 1 dari 106</span>
-      <button type="button" onclick="showAdminToast('Halaman 2')" aria-label="Halaman berikutnya">›</button>
-    </div>
-  </div>
 </section>
 
+<dialog class="rekap-delete-modal" id="deleteModal" aria-labelledby="deleteModalTitle">
+  <form method="POST" action="{{ route('admin.rekapabsensi.destroy') }}" id="deleteAttendanceForm">
+    @csrf
+    @method('DELETE')
+    <input type="hidden" name="periode" value="hari">
+    <input type="hidden" name="kelas">
+    <input type="hidden" name="status">
+    <input type="hidden" name="search">
+    <div class="rekap-delete-icon" aria-hidden="true">!</div>
+    <h2 id="deleteModalTitle">Apakah kamu yakin ingin menghapus data ini?</h2>
+    <p>Data presensi yang sesuai dengan filter aktif akan dihapus permanen.</p>
+    <div class="rekap-delete-actions">
+      <button class="admin-action admin-action-outline" type="button" id="cancelDelete">Batal</button>
+      <button class="admin-action rekap-danger-button" type="submit">Ya, Hapus Data</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+  const reportUrl = @json(route('admin.rekapabsensi.data'));
+  const periodFilter = document.getElementById('rekapPeriod');
+  const classFilter = document.getElementById('rekapClass');
+  const statusFilter = document.getElementById('rekapStatus');
+  const searchFilter = document.getElementById('rekapSearch');
+  const reportRows = document.getElementById('rekapRows');
+  const reportError = document.getElementById('rekapError');
+  const dateHeading = document.querySelector('.rekap-date-heading');
+  const exportLink = document.getElementById('exportAttendance');
+  const deleteModal = document.getElementById('deleteModal');
+  const deleteForm = document.getElementById('deleteAttendanceForm');
+  let searchTimer;
+  let reportRequestController;
+
+  function activeFilters() {
+    return {
+      periode: periodFilter.value,
+      kelas: classFilter.value,
+      status: statusFilter.value,
+      search: searchFilter.value.trim(),
+    };
+  }
+
+  function updateActionUrls(filters) {
+    const query = new URLSearchParams(filters);
+    exportLink.href = `{{ route('admin.rekapabsensi.export') }}?${query}`;
+    Object.entries(filters).forEach(([name, value]) => {
+      deleteForm.elements[name].value = value;
+    });
+  }
+
+  function addCell(row, value, className = '') {
+    const cell = document.createElement('td');
+    if (className) cell.className = className;
+    cell.textContent = value;
+    row.append(cell);
+    return cell;
+  }
+
+  function renderRows(rows, multiDay) {
+    reportRows.replaceChildren();
+    dateHeading.hidden = !multiDay;
+    if (!rows.length) {
+      const row = document.createElement('tr');
+      const empty = addCell(row, 'Belum ada data presensi yang sesuai.', 'admin-empty-row');
+      empty.colSpan = multiDay ? 8 : 7;
+      reportRows.append(row);
+      return;
+    }
+
+    rows.forEach((item) => {
+      const row = document.createElement('tr');
+      const identityCell = document.createElement('td');
+      const identity = document.createElement('div');
+      identity.className = 'rekap-identity';
+      const name = document.createElement('strong');
+      name.textContent = item.nama;
+      identity.append(name);
+      identityCell.append(identity);
+      row.append(identityCell);
+      addCell(row, item.nisn);
+      const classCell = document.createElement('td');
+      const classBadge = document.createElement('span');
+      classBadge.className = 'rekap-class-badge';
+      classBadge.textContent = item.kelas;
+      classCell.append(classBadge);
+      row.append(classCell);
+      if (multiDay) addCell(row, item.tanggal, 'rekap-date-cell');
+      const statusCell = document.createElement('td');
+      const badge = document.createElement('span');
+      badge.className = `rekap-status rekap-status--${item.status.toLowerCase()}`;
+      badge.textContent = item.status;
+      statusCell.append(badge);
+      row.append(statusCell);
+      const mapelCell = document.createElement('td');
+      mapelCell.append(makeCellText('span', item.mapel));
+      row.append(mapelCell);
+      addCell(row, item.jam_pelajaran);
+      addCell(row, item.waktu === '-' ? '-' : item.waktu.slice(0, 5));
+      reportRows.append(row);
+    });
+  }
+
+  function makeCellText(tag, value) {
+    const element = document.createElement(tag);
+    element.textContent = value;
+    return element;
+  }
+
+  async function loadReport() {
+    const filters = activeFilters();
+    updateActionUrls(filters);
+    reportError.hidden = true;
+    reportRequestController?.abort();
+    reportRequestController = new AbortController();
+    try {
+      const response = await fetch(`${reportUrl}?${new URLSearchParams(filters)}`, {
+        headers: { Accept: 'application/json' },
+        signal: reportRequestController.signal,
+      });
+      if (!response.ok) throw new Error('Data rekap tidak dapat dimuat.');
+      const report = await response.json();
+      document.getElementById('summaryHadir').textContent = report.summary.hadir;
+      document.getElementById('summaryIzinSakit').textContent = report.summary.izin_sakit;
+      document.getElementById('summaryAlfa').textContent = report.summary.alfa;
+      document.getElementById('rekapTotal').textContent = `Total ${report.total} Data`;
+      renderRows(report.rows, filters.periode !== 'hari');
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        reportError.textContent = error.message || 'Terjadi kesalahan saat memuat data rekap.';
+        reportError.hidden = false;
+      }
+    }
+  }
+
+  [periodFilter, classFilter, statusFilter].forEach((filter) => filter.addEventListener('change', loadReport));
+  document.getElementById('rekapSearchForm').addEventListener('submit', (event) => {
+    event.preventDefault();
+    window.clearTimeout(searchTimer);
+    loadReport();
+  });
+  searchFilter.addEventListener('input', () => {
+    window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(loadReport, 250);
+  });
+  document.getElementById('deleteAttendance').addEventListener('click', () => deleteModal.showModal());
+  document.getElementById('cancelDelete').addEventListener('click', () => deleteModal.close());
+</script>
 @endsection

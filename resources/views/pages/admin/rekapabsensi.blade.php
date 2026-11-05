@@ -1,16 +1,16 @@
 @extends('layouts.admin')
 @section('title', 'Rekap Absensi')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/rekapabsensi.css') }}?v=4">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/rekapabsensi.css') }}?v=6">@endsection
 @section('content')
 
 <div class="admin-page-header">
   <div>
     <h1>Rekap Absensi Murid</h1>
-    <p>Data presensi murid berdasarkan periode yang dipilih</p>
+    <p>Data presensi murid berdasarkan tanggal yang dipilih</p>
   </div>
   <div class="admin-header-actions rekap-actions">
     <button class="admin-action admin-action-outline" id="deleteAttendance" type="button">Hapus Data</button>
-    <a class="admin-action" id="exportAttendance" href="{{ route('admin.rekapabsensi.export', ['periode' => 'hari']) }}">↓ Export Rekap</a>
+    <a class="admin-action" id="exportAttendance" href="{{ route('admin.rekapabsensi.export', ['date' => $selectedDate]) }}">↓ Export Rekap</a>
   </div>
 </div>
 
@@ -34,13 +34,9 @@
 @endif
 
 <div class="admin-toolbar rekap-toolbar">
-  <label class="rekap-filter-label" for="rekapPeriod">
-    Periode
-    <select class="admin-select" id="rekapPeriod">
-      <option value="hari">Hari Ini</option>
-      <option value="minggu">7 Hari Terakhir</option>
-      <option value="bulan">1 Bulan Terakhir</option>
-    </select>
+  <label class="rekap-filter-label" for="rekapDate">
+    Tanggal
+    <input class="admin-input" id="rekapDate" type="date" value="{{ $selectedDate }}" required>
   </label>
   <form class="rekap-search-form" method="GET" action="{{ route('admin.rekapabsensi') }}" id="rekapSearchForm">
     <input class="admin-search" id="rekapSearch" name="search" type="search" placeholder="Cari nama atau NISN murid..." aria-label="Cari murid">
@@ -75,7 +71,7 @@
         <th>Murid</th>
         <th>NISN</th>
         <th>Kelas</th>
-        <th class="rekap-date-heading" hidden>Tanggal</th>
+        <th>Tanggal</th>
         <th>Status</th>
         <th>Mata Pelajaran</th>
         <th>Jam Pelajaran</th>
@@ -88,14 +84,14 @@
           <td><div class="rekap-identity"><strong>{{ $row['nama'] }}</strong></div></td>
           <td>{{ $row['nisn'] }}</td>
           <td><span class="rekap-class-badge">{{ $row['kelas'] }}</span></td>
-          <td class="rekap-date-cell" hidden>{{ $row['tanggal'] }}</td>
+          <td class="rekap-date-cell">{{ $row['tanggal'] }}</td>
           <td><span class="rekap-status rekap-status--{{ strtolower($row['status']) }}">{{ $row['status'] }}</span></td>
           <td>{{ $row['mapel'] }}</td>
           <td>{{ $row['jam_pelajaran'] }}</td>
           <td>{{ $row['waktu'] === '-' ? '-' : substr($row['waktu'], 0, 5) }}</td>
         </tr>
       @empty
-        <tr><td class="admin-empty-row" colspan="7">Belum ada data presensi yang sesuai.</td></tr>
+        <tr><td class="admin-empty-row" colspan="8">Belum ada data presensi yang sesuai.</td></tr>
       @endforelse
     </tbody>
   </table>
@@ -105,7 +101,7 @@
   <form method="POST" action="{{ route('admin.rekapabsensi.destroy') }}" id="deleteAttendanceForm">
     @csrf
     @method('DELETE')
-    <input type="hidden" name="periode" value="hari">
+    <input type="hidden" name="date" value="{{ $selectedDate }}">
     <input type="hidden" name="kelas">
     <input type="hidden" name="status">
     <input type="hidden" name="search">
@@ -121,14 +117,14 @@
 
 <script>
   const reportUrl = @json(route('admin.rekapabsensi.data'));
-  const periodFilter = document.getElementById('rekapPeriod');
+  const dateFilter = document.getElementById('rekapDate');
   const classFilter = document.getElementById('rekapClass');
   const statusFilter = document.getElementById('rekapStatus');
   const searchFilter = document.getElementById('rekapSearch');
   const reportRows = document.getElementById('rekapRows');
   const reportError = document.getElementById('rekapError');
-  const dateHeading = document.querySelector('.rekap-date-heading');
   const exportLink = document.getElementById('exportAttendance');
+  const deleteButton = document.getElementById('deleteAttendance');
   const deleteModal = document.getElementById('deleteModal');
   const deleteForm = document.getElementById('deleteAttendanceForm');
   let searchTimer;
@@ -136,7 +132,7 @@
 
   function activeFilters() {
     return {
-      periode: periodFilter.value,
+      date: dateFilter.value,
       kelas: classFilter.value,
       status: statusFilter.value,
       search: searchFilter.value.trim(),
@@ -144,8 +140,17 @@
   }
 
   function updateActionUrls(filters) {
+    if (!filters.date) {
+      exportLink.removeAttribute('href');
+      exportLink.setAttribute('aria-disabled', 'true');
+      deleteButton.disabled = true;
+      return;
+    }
+
     const query = new URLSearchParams(filters);
     exportLink.href = `{{ route('admin.rekapabsensi.export') }}?${query}`;
+    exportLink.removeAttribute('aria-disabled');
+    deleteButton.disabled = false;
     Object.entries(filters).forEach(([name, value]) => {
       deleteForm.elements[name].value = value;
     });
@@ -159,13 +164,12 @@
     return cell;
   }
 
-  function renderRows(rows, multiDay) {
+  function renderRows(rows) {
     reportRows.replaceChildren();
-    dateHeading.hidden = !multiDay;
     if (!rows.length) {
       const row = document.createElement('tr');
       const empty = addCell(row, 'Belum ada data presensi yang sesuai.', 'admin-empty-row');
-      empty.colSpan = multiDay ? 8 : 7;
+      empty.colSpan = 8;
       reportRows.append(row);
       return;
     }
@@ -187,7 +191,7 @@
       classBadge.textContent = item.kelas;
       classCell.append(classBadge);
       row.append(classCell);
-      if (multiDay) addCell(row, item.tanggal, 'rekap-date-cell');
+      addCell(row, item.tanggal, 'rekap-date-cell');
       const statusCell = document.createElement('td');
       const badge = document.createElement('span');
       badge.className = `rekap-status rekap-status--${item.status.toLowerCase()}`;
@@ -212,8 +216,13 @@
   async function loadReport() {
     const filters = activeFilters();
     updateActionUrls(filters);
-    reportError.hidden = true;
     reportRequestController?.abort();
+    if (!filters.date) {
+      reportError.textContent = 'Pilih tanggal untuk memuat data rekap.';
+      reportError.hidden = false;
+      return;
+    }
+    reportError.hidden = true;
     reportRequestController = new AbortController();
     try {
       const response = await fetch(`${reportUrl}?${new URLSearchParams(filters)}`, {
@@ -226,7 +235,7 @@
       document.getElementById('summaryIzinSakit').textContent = report.summary.izin_sakit;
       document.getElementById('summaryAlfa').textContent = report.summary.alfa;
       document.getElementById('rekapTotal').textContent = `Total ${report.total} Data`;
-      renderRows(report.rows, filters.periode !== 'hari');
+      renderRows(report.rows);
     } catch (error) {
       if (error.name !== 'AbortError') {
         reportError.textContent = error.message || 'Terjadi kesalahan saat memuat data rekap.';
@@ -235,7 +244,7 @@
     }
   }
 
-  [periodFilter, classFilter, statusFilter].forEach((filter) => filter.addEventListener('change', loadReport));
+  [dateFilter, classFilter, statusFilter].forEach((filter) => filter.addEventListener('change', loadReport));
   document.getElementById('rekapSearchForm').addEventListener('submit', (event) => {
     event.preventDefault();
     window.clearTimeout(searchTimer);

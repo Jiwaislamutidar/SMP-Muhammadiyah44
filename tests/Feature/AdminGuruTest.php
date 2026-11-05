@@ -18,19 +18,23 @@ class AdminGuruTest extends TestCase
     {
         $admin = $this->makeAdmin();
         $mapel = Mapel::create(['kode' => 'QA-'.bin2hex(random_bytes(3)), 'nama_mapel' => 'Matematika QA']);
+        $nbm = 'NBM-'.bin2hex(random_bytes(4));
 
         $this->actingAs($admin)
             ->get(route('admin.guru.index'))
             ->assertOk()
             ->assertSee('Data Guru')
-            ->assertSee('Tambah Guru Manual')
+            ->assertSee('Tambah Guru')
             ->assertSee('Tambah Baris Mapel & Jam')
-            ->assertSee('mapel_items[__INDEX__][jumlah_jam]');
+            ->assertSee('mapel_items[__INDEX__][jumlah_jam]')
+            ->assertSee('data-delete-guru')
+            ->assertDontSee('Nonaktifkan')
+            ->assertDontSee('Aktifkan');
 
         $this->actingAs($admin)
             ->post(route('admin.guru.store'), [
                 'nama_lengkap' => 'Guru QA '.bin2hex(random_bytes(3)),
-                'nip' => 'NIP-'.bin2hex(random_bytes(4)),
+                'nip' => $nbm,
                 'status' => 'aktif',
                 'mapel_items' => [
                     ['mapel_id' => $mapel->id, 'nama_baru' => '', 'jumlah_jam' => 6],
@@ -39,7 +43,10 @@ class AdminGuruTest extends TestCase
             ])
             ->assertRedirect(route('admin.guru.index'));
 
-        $guru = Guru::where('nip', 'like', 'NIP-%')->latest('id')->firstOrFail();
+        $guru = Guru::where('nip', $nbm)->firstOrFail();
+        $this->assertSame('guru', $guru->user->role);
+        $this->assertSame($nbm, $guru->user->username);
+        $this->assertTrue(Hash::check($nbm, $guru->user->password));
         $this->assertSame(6, $guru->mapels->find($mapel->id)->pivot->jumlah_jam);
         $mapelBaru = Mapel::where('nama_mapel', 'Mapel Manual QA')->firstOrFail();
         $this->assertSame(3, $guru->mapels->find($mapelBaru->id)->pivot->jumlah_jam);
@@ -55,7 +62,8 @@ class AdminGuruTest extends TestCase
         $guru->mapels()->attach($firstMapel->id, ['jumlah_jam' => 12]);
 
         $this->actingAs($admin)
-            ->put(route('admin.guru.update', $guru->id), [
+            ->post(route('admin.guru.update', $guru->id), [
+                '_method' => 'PUT',
                 'nama_lengkap' => 'Guru Edit QA Selesai',
                 'nip' => 'QA-UPDATE-'.bin2hex(random_bytes(3)),
                 'status' => 'nonaktif',
@@ -63,24 +71,93 @@ class AdminGuruTest extends TestCase
                     ['mapel_id' => $firstMapel->id, 'nama_baru' => '', 'jumlah_jam' => 12],
                     ['mapel_id' => $secondMapel->id, 'nama_baru' => '', 'jumlah_jam' => 5],
                 ],
-            ])
-            ->assertRedirect(route('admin.guru.index'));
+            ], ['Accept' => 'application/json'])
+            ->assertOk()
+            ->assertJsonPath('guru.status', 'nonaktif');
 
-        $this->assertSame('nonaktif', $guru->fresh()->status);
+        $updatedGuru = $guru->fresh();
+        $this->assertSame('nonaktif', $updatedGuru->status);
+        $this->assertSame($updatedGuru->nip, $updatedGuru->user->username);
+        $this->assertTrue(Hash::check($updatedGuru->nip, $updatedGuru->user->password));
         $this->assertSame(12, $guru->fresh()->mapels->find($firstMapel->id)->pivot->jumlah_jam);
         $this->assertSame(5, $guru->fresh()->mapels->find($secondMapel->id)->pivot->jumlah_jam);
     }
 
-    public function test_admin_can_toggle_guru_status(): void
+    public function test_admin_can_delete_guru_and_linked_login_account(): void
     {
         $admin = $this->makeAdmin();
-        $guru = Guru::create(['nama_lengkap' => 'Guru Toggle QA '.bin2hex(random_bytes(3)), 'nip' => null, 'status' => 'aktif']);
+        $nbm = 'NBM-DELETE-'.bin2hex(random_bytes(3));
+        $user = User::create([
+            'name' => 'Guru Hapus',
+            'username' => $nbm,
+            'email' => null,
+            'role' => 'guru',
+            'password' => Hash::make($nbm),
+        ]);
+        $guru = Guru::create([
+            'user_id' => $user->id,
+            'nama_lengkap' => 'Guru Hapus QA '.bin2hex(random_bytes(3)),
+            'nip' => $nbm,
+            'status' => 'aktif',
+        ]);
 
         $this->actingAs($admin)
-            ->delete(route('admin.guru.destroy', $guru->id))
-            ->assertRedirect(route('admin.guru.index'));
+            ->post(route('admin.guru.destroy', $guru->id), ['_method' => 'DELETE'], ['Accept' => 'application/json'])
+            ->assertOk()
+            ->assertJsonPath('id', $guru->id);
+
+        $this->assertDatabaseMissing('gurus', ['id' => $guru->id]);
+        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+    }
+
+    public function test_admin_can_update_status_for_teacher_without_nbm(): void
+    {
+        $admin = $this->makeAdmin();
+        $guru = Guru::create([
+            'nama_lengkap' => 'Guru Tanpa NBM QA '.bin2hex(random_bytes(3)),
+            'nip' => null,
+            'status' => 'aktif',
+        ]);
+
+        $this->actingAs($admin)
+            ->putJson(route('admin.guru.update', $guru->id), [
+                'nama_lengkap' => $guru->nama_lengkap,
+                'nip' => null,
+                'status' => 'nonaktif',
+                'mapel_items' => [],
+            ])
+            ->assertOk()
+            ->assertJsonPath('guru.status', 'nonaktif');
 
         $this->assertSame('nonaktif', $guru->fresh()->status);
+        $this->assertNull($guru->fresh()->user_id);
+    }
+
+    public function test_nonactive_teacher_cannot_log_in(): void
+    {
+        $nbm = 'NBM-INACTIVE-'.bin2hex(random_bytes(3));
+        $user = User::create([
+            'name' => 'Guru Nonaktif',
+            'username' => $nbm,
+            'email' => null,
+            'role' => 'guru',
+            'password' => Hash::make($nbm),
+        ]);
+        Guru::create([
+            'user_id' => $user->id,
+            'nama_lengkap' => 'Guru Nonaktif QA '.bin2hex(random_bytes(3)),
+            'nip' => $nbm,
+            'status' => 'nonaktif',
+        ]);
+
+        $this->post(route('guru.login'), [
+            'username' => $nbm,
+            'password' => $nbm,
+        ])
+            ->assertRedirect()
+            ->assertSessionHas('error', 'Akun guru sedang nonaktif. Hubungi administrator.');
+
+        $this->assertGuest();
     }
 
     public function test_admin_can_import_csv_and_upsert_guru_mapel_and_hours(): void

@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Imports\GuruImport;
 use App\Models\Guru;
 use App\Models\Mapel;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
@@ -39,7 +42,7 @@ class AdminGuruController extends Controller
     {
         $validated = $request->validate([
             'nama_lengkap' => ['required', 'string', 'max:255', 'unique:gurus,nama_lengkap'],
-            'nip' => ['nullable', 'string', 'max:100', 'unique:gurus,nip'],
+            'nip' => ['required', 'string', 'max:100', 'unique:gurus,nip', 'unique:users,username'],
             'status' => ['required', 'in:aktif,nonaktif'],
             'mapel_items' => ['nullable', 'array'],
             'mapel_items.*' => ['array'],
@@ -50,9 +53,17 @@ class AdminGuruController extends Controller
 
         DB::transaction(function () use ($validated) {
             $syncData = $this->mapelSyncData($validated['mapel_items'] ?? []);
+            $user = User::create([
+                'name' => $validated['nama_lengkap'],
+                'username' => $validated['nip'],
+                'email' => null,
+                'role' => 'guru',
+                'password' => Hash::make($validated['nip']),
+            ]);
             $guru = Guru::create([
+                'user_id' => $user->id,
                 'nama_lengkap' => $validated['nama_lengkap'],
-                'nip' => $validated['nip'] ?? null,
+                'nip' => $validated['nip'],
                 'status' => $validated['status'],
             ]);
             $guru->mapels()->sync($syncData);
@@ -95,10 +106,20 @@ class AdminGuruController extends Controller
 
     public function update(Request $request, $id)
     {
-        $guru = Guru::findOrFail($id);
+        $guru = Guru::with('user')->findOrFail($id);
+        $linkedUserId = $guru->user_id ?? User::query()
+            ->where('role', 'guru')
+            ->where('username', $guru->nip)
+            ->value('id');
         $validated = $request->validate([
             'nama_lengkap' => ['required', 'string', 'max:255', 'unique:gurus,nama_lengkap,'.$guru->id],
-            'nip' => ['nullable', 'string', 'max:100', 'unique:gurus,nip,'.$guru->id],
+            'nip' => [
+                $linkedUserId ? 'required' : 'nullable',
+                'string',
+                'max:100',
+                'unique:gurus,nip,'.$guru->id,
+                Rule::unique('users', 'username')->ignore($linkedUserId),
+            ],
             'status' => ['required', 'in:aktif,nonaktif'],
             'mapel_items' => ['nullable', 'array'],
             'mapel_items.*' => ['array'],
@@ -107,25 +128,88 @@ class AdminGuruController extends Controller
             'mapel_items.*.jumlah_jam' => ['nullable', 'integer', 'between:1,65535'],
         ]);
 
-        DB::transaction(function () use ($guru, $validated) {
+        DB::transaction(function () use ($guru, $linkedUserId, $validated) {
+            $user = $guru->user ?? ($linkedUserId ? User::findOrFail($linkedUserId) : null);
+            if ($user && $user->role !== 'guru') {
+                abort(409, 'Akun yang terhubung bukan akun guru.');
+            }
+
+            if (! $user && filled($validated['nip'] ?? null)) {
+                $user = new User([
+                    'email' => null,
+                    'role' => 'guru',
+                    'password' => Hash::make($validated['nip']),
+                ]);
+            }
+
+            if ($user) {
+                $user->name = $validated['nama_lengkap'];
+                $user->username = $validated['nip'];
+                $user->save();
+            }
+
             $guru->update([
                 'nama_lengkap' => $validated['nama_lengkap'],
                 'nip' => $validated['nip'] ?? null,
                 'status' => $validated['status'],
+                'user_id' => $user?->id,
             ]);
 
             $guru->mapels()->sync($this->mapelSyncData($validated['mapel_items'] ?? []));
         });
 
+        if ($request->expectsJson()) {
+            $guru->load('mapels');
+
+            return response()->json([
+                'message' => 'Data guru berhasil diperbarui.',
+                'guru' => [
+                    'id' => $guru->id,
+                    'nama_lengkap' => $guru->nama_lengkap,
+                    'nip' => $guru->nip,
+                    'status' => $guru->status,
+                    'mapels' => $guru->mapels->pluck('nama_mapel')->values(),
+                    'mapel_items' => $guru->mapels->map(fn ($mapel) => [
+                        'mapel_id' => $mapel->id,
+                        'jumlah_jam' => $mapel->pivot->jumlah_jam,
+                    ])->values(),
+                    'total_jam' => $guru->mapels->sum('pivot.jumlah_jam'),
+                ],
+                'total_guru' => Guru::count(),
+            ]);
+        }
+
         return redirect()->route('admin.guru.index')->with('success', 'Data guru berhasil diperbarui.');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        $guru = Guru::findOrFail($id);
-        $guru->update(['status' => $guru->status === 'aktif' ? 'nonaktif' : 'aktif']);
+        DB::transaction(function () use ($id) {
+            $guru = Guru::query()->lockForUpdate()->findOrFail($id);
+            $user = $guru->user()->lockForUpdate()->first()
+                ?? User::query()
+                    ->where('role', 'guru')
+                    ->where('username', $guru->nip)
+                    ->lockForUpdate()
+                    ->first();
 
-        return redirect()->route('admin.guru.index')->with('success', 'Status guru berhasil diperbarui.');
+            if ($user && $user->role !== 'guru') {
+                abort(409, 'Akun yang terhubung bukan akun guru.');
+            }
+
+            $guru->delete();
+            $user?->delete();
+        });
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Data guru dan akun terkait berhasil dihapus.',
+                'id' => (int) $id,
+                'total_guru' => Guru::count(),
+            ]);
+        }
+
+        return redirect()->route('admin.guru.index')->with('success', 'Data guru dan akun terkait berhasil dihapus.');
     }
 
     private function mapelSyncData(array $items): array

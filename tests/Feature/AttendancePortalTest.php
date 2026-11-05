@@ -485,19 +485,20 @@ class AttendancePortalTest extends TestCase
             ->assertSee($siswa->nama_lengkap)
             ->assertSee('Hapus Data')
             ->assertSee('Export Rekap')
+            ->assertSee('type="date"', false)
             ->assertDontSee('00654321');
 
         $this->actingAs($admin)
-            ->getJson(route('admin.rekapabsensi.data', ['periode' => 'minggu']))
+            ->getJson(route('admin.rekapabsensi.data', ['date' => today()->toDateString()]))
             ->assertOk()
             ->assertJsonPath('summary.hadir', 1)
-            ->assertJsonPath('summary.izin_sakit', 1)
-            ->assertJsonPath('total', 2)
-            ->assertJsonPath('rows.0.tanggal', today()->subDay()->toDateString());
+            ->assertJsonPath('summary.izin_sakit', 0)
+            ->assertJsonPath('total', 1)
+            ->assertJsonPath('rows.0.tanggal', today()->toDateString());
 
         $this->actingAs($admin)
             ->getJson(route('admin.rekapabsensi.data', [
-                'periode' => 'minggu',
+                'date' => today()->subDay()->toDateString(),
                 'kelas' => $jadwal->kelas_id,
                 'status' => 'Izin',
             ]))
@@ -507,7 +508,7 @@ class AttendancePortalTest extends TestCase
 
         $export = $this->actingAs($admin)
             ->get(route('admin.rekapabsensi.export', [
-                'periode' => 'minggu',
+                'date' => today()->subDay()->toDateString(),
                 'kelas' => $jadwal->kelas_id,
                 'status' => 'Izin',
             ]))
@@ -516,7 +517,7 @@ class AttendancePortalTest extends TestCase
 
         $this->actingAs($admin)
             ->delete(route('admin.rekapabsensi.destroy'), [
-                'periode' => 'minggu',
+                'date' => today()->subDay()->toDateString(),
                 'kelas' => $jadwal->kelas_id,
                 'status' => 'Izin',
             ])

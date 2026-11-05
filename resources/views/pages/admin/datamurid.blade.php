@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('title', 'Data Murid')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/datamurid.css') }}?v=4">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/datamurid.css') }}?v=5">@endsection
 @section('content')
 <div class="admin-page-header">
 	<div>
@@ -69,9 +69,11 @@
 						</div>
 					</td>
 					<td><span class="student-nisn">{{ $siswa->nisn }}</span></td>
-					<td><span class="badge blue">{{ $siswa->kelas->nama_kelas ?? 'Belum ada kelas' }}</span></td>
-					<td><span class="badge {{ $siswa->status === 'aktif' ? '' : 'red' }}">{{ ucfirst($siswa->status) }}</span></td>
-					<td><button class="link-action" type="button">Detail</button></td>
+					<td><span class="student-class">{{ $siswa->kelas->nama_kelas ?? 'Belum ada kelas' }}</span></td>
+					<td><span class="student-status">{{ ucfirst($siswa->status) }}</span></td>
+					<td><button class="student-delete-button" type="button" data-delete-student
+						data-name="{{ $nama }}"
+						data-delete-url="{{ route('admin.siswa.destroy', $siswa) }}">Hapus</button></td>
 				</tr>
 			@empty
 				<tr><td class="admin-empty-row" colspan="5">Belum ada data murid yang sesuai.</td></tr>
@@ -95,6 +97,19 @@
 		</div>
 	</div>
 </section>
+
+<dialog class="student-delete-modal" id="deleteStudentModal" aria-labelledby="deleteStudentTitle">
+	<form method="POST" id="deleteStudentForm">
+		@csrf
+		@method('DELETE')
+		<h2 id="deleteStudentTitle">Apakah kamu yakin untuk menghapus siswa <span id="deleteStudentName"></span>?</h2>
+		<p>Data murid, akun login, dan catatan presensinya akan dihapus permanen.</p>
+		<div class="student-delete-actions">
+			<button type="button" id="cancelDeleteStudent">Batal</button>
+			<button class="student-delete-confirm" type="submit">Ya, Hapus</button>
+		</div>
+	</form>
+</dialog>
 
 <div class="admin-modal-backdrop" id="importModal" hidden>
 	<section class="admin-import-modal" role="dialog" aria-modal="true" aria-labelledby="importModalTitle">
@@ -184,6 +199,17 @@
 		const addStudentButton = document.getElementById('addStudentRow');
 		const studentCount = document.getElementById('manualStudentCount');
 		const classOptions = @json($kelasList->map(fn ($kelas) => ['id' => $kelas->id, 'nama' => $kelas->nama_kelas])->values());
+		const deleteStudentModal = document.getElementById('deleteStudentModal');
+		const deleteStudentForm = document.getElementById('deleteStudentForm');
+
+		document.querySelectorAll('[data-delete-student]').forEach((button) => {
+			button.addEventListener('click', () => {
+				document.getElementById('deleteStudentName').textContent = button.dataset.name;
+				deleteStudentForm.action = button.dataset.deleteUrl;
+				deleteStudentModal.showModal();
+			});
+		});
+		document.getElementById('cancelDeleteStudent').addEventListener('click', () => deleteStudentModal.close());
 
 		const showSelectedFile = () => {
 			fileName.textContent = fileInput.files[0]

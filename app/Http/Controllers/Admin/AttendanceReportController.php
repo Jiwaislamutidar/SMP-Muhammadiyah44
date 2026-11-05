@@ -16,11 +16,17 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AttendanceReportController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $validated = $request->validate([
+            'date' => ['sometimes', 'date_format:Y-m-d'],
+        ]);
+        $date = $validated['date'] ?? today()->toDateString();
+
         return view('pages.admin.rekapabsensi', [
             'kelasList' => Kelas::query()->orderBy('nama_kelas')->get(),
-            'report' => $this->studentReport('hari', null, null, ''),
+            'selectedDate' => $date,
+            'report' => $this->studentReport($date, null, null, ''),
         ]);
     }
 
@@ -95,7 +101,7 @@ class AttendanceReportController extends Controller
         $filters = $this->validatedStudentFilters($request);
 
         return response()->json($this->studentReport(
-            $filters['periode'],
+            $filters['date'],
             $filters['kelas'],
             $filters['status'],
             $filters['search']
@@ -106,7 +112,7 @@ class AttendanceReportController extends Controller
     {
         $filters = $this->validatedStudentFilters($request);
         $report = $this->studentReport(
-            $filters['periode'],
+            $filters['date'],
             $filters['kelas'],
             $filters['status'],
             $filters['search']
@@ -132,7 +138,7 @@ class AttendanceReportController extends Controller
             }
 
             fclose($output);
-        }, 'rekap-absensi-'.$filters['periode'].'.csv', [
+        }, 'rekap-absensi-'.$filters['date'].'.csv', [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
@@ -141,7 +147,7 @@ class AttendanceReportController extends Controller
     {
         $filters = $this->validatedStudentFilters($request);
         $matchingIds = $this->studentAttendanceQuery(
-            $filters['periode'],
+            $filters['date'],
             $filters['kelas'],
             $filters['status'],
             $filters['search']
@@ -163,28 +169,28 @@ class AttendanceReportController extends Controller
     private function validatedStudentFilters(Request $request): array
     {
         return $request->validate([
-            'periode' => ['sometimes', 'in:hari,minggu,bulan'],
+            'date' => ['sometimes', 'date_format:Y-m-d'],
             'kelas' => ['nullable', 'integer', 'exists:kelas,id'],
             'status' => ['nullable', 'in:Hadir,Izin,Sakit,Alfa'],
             'search' => ['nullable', 'string', 'max:120'],
-        ]) + ['periode' => 'hari', 'kelas' => null, 'status' => null, 'search' => ''];
+        ]) + ['date' => today()->toDateString(), 'kelas' => null, 'status' => null, 'search' => ''];
     }
 
-    private function studentReport(string $period, ?int $classId, ?string $status, ?string $search = null): array
+    private function studentReport(string $date, ?int $classId, ?string $status, ?string $search = null): array
     {
         $search = $search ?? '';
-        [$start, $end] = $this->dateRange($period);
-        $summaryQuery = $this->studentAttendanceQuery($period);
+        $summaryQuery = $this->studentAttendanceQuery($date);
         $summary = [
             'hadir' => (clone $summaryQuery)->where('presensi_pelajarans.status', 'Hadir')->distinct()->count('presensi_pelajarans.siswa_id'),
             'izin_sakit' => (clone $summaryQuery)->whereIn('presensi_pelajarans.status', ['Izin', 'Sakit'])->distinct()->count('presensi_pelajarans.siswa_id'),
             'alfa' => (clone $summaryQuery)->where('presensi_pelajarans.status', 'Alfa')->distinct()->count('presensi_pelajarans.siswa_id'),
         ];
 
-        $rows = $this->studentAttendanceQuery($period, $classId, $status, $search)
+        $rows = $this->studentAttendanceQuery($date, $classId, $status, $search)
             ->with(['siswa.kelas', 'sesiPelajaran.jadwal.mapel'])
             ->orderBy('siswas.nama_lengkap')
             ->orderBy('sesi_pelajarans.tanggal')
+            ->orderBy('sesi_pelajarans.id')
             ->get()
             ->map(fn (PresensiPelajaran $attendance): array => [
                 'nama' => $attendance->siswa?->nama_lengkap ?? '-',
@@ -207,27 +213,23 @@ class AttendanceReportController extends Controller
             'summary' => $summary,
             'rows' => $rows,
             'total' => $rows->count(),
-            'period' => $period,
-            'start' => $start->toDateString(),
-            'end' => $end->toDateString(),
+            'date' => $date,
         ];
     }
 
     private function studentAttendanceQuery(
-        string $period,
+        string $date,
         ?int $classId = null,
         ?string $status = null,
         ?string $search = null
     ): Builder {
         $search = $search ?? '';
-        [$start, $end] = $this->dateRange($period);
 
         return PresensiPelajaran::query()
             ->select('presensi_pelajarans.*')
             ->join('siswas', 'siswas.id', '=', 'presensi_pelajarans.siswa_id')
             ->join('sesi_pelajarans', 'sesi_pelajarans.id', '=', 'presensi_pelajarans.sesi_pelajaran_id')
-            ->whereDate('sesi_pelajarans.tanggal', '>=', $start)
-            ->whereDate('sesi_pelajarans.tanggal', '<=', $end)
+            ->whereDate('sesi_pelajarans.tanggal', $date)
             ->where('presensi_pelajarans.status', '!=', 'Belum Absen')
             ->when($classId, fn (Builder $query) => $query->where('siswas.kelas_id', $classId))
             ->when($status, fn (Builder $query) => $query->where('presensi_pelajarans.status', $status))

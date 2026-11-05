@@ -95,7 +95,9 @@ class SiswaImportTest extends TestCase
             ->assertOk()
             ->assertSee('+ Tambah Manual')
             ->assertSee('students[0][nama_lengkap]')
-            ->assertSee('NIS / NISN');
+            ->assertSee('NIS / NISN')
+            ->assertSee('Hapus')
+            ->assertDontSee('Detail');
 
         $this->actingAs($admin)
             ->post(route('admin.siswa.manual-import'), [
@@ -146,5 +148,37 @@ class SiswaImportTest extends TestCase
 
         $this->assertDatabaseMissing('users', ['username' => $nis]);
         $this->assertDatabaseMissing('siswas', ['nisn' => $nis]);
+    }
+
+    public function test_admin_can_delete_a_student_and_the_linked_login_account(): void
+    {
+        $admin = User::create([
+            'name' => 'Admin Student Delete Test',
+            'username' => 'admin-student-delete-'.bin2hex(random_bytes(4)),
+            'email' => null,
+            'role' => 'admin',
+            'password' => Hash::make('test-password'),
+        ]);
+        $user = User::create([
+            'name' => 'Murid Hapus Test',
+            'username' => 'murid-hapus-'.bin2hex(random_bytes(4)),
+            'email' => null,
+            'role' => 'siswa',
+            'password' => Hash::make('test-password'),
+        ]);
+        $student = Siswa::create([
+            'user_id' => $user->id,
+            'nisn' => 'nisn-hapus-'.bin2hex(random_bytes(4)),
+            'nama_lengkap' => 'Murid Hapus Test',
+            'status' => 'aktif',
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.siswa.destroy', $student))
+            ->assertRedirect(route('admin.datamurid'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('siswas', ['id' => $student->id]);
+        $this->assertDatabaseMissing('users', ['id' => $user->id]);
     }
 }

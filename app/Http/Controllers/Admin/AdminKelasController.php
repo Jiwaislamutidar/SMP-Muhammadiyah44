@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Kelas;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class AdminKelasController extends Controller
@@ -43,6 +44,26 @@ class AdminKelasController extends Controller
         $kelas->update($this->validatedClass($request));
 
         return redirect()->route('admin.datakelas')->with('success', 'Data kelas berhasil diperbarui.');
+    }
+
+    public function destroy(Kelas $kelas): RedirectResponse
+    {
+        $deleted = DB::transaction(function () use ($kelas): bool {
+            $lockedKelas = Kelas::query()->lockForUpdate()->findOrFail($kelas->id);
+
+            if ($lockedKelas->siswas()->exists() || $lockedKelas->jadwals()->exists()) {
+                return false;
+            }
+
+            return (bool) $lockedKelas->delete();
+        });
+
+        if (! $deleted) {
+            return redirect()->route('admin.datakelas')
+                ->with('error', 'Kelas tidak dapat dihapus karena masih memiliki murid atau jadwal pelajaran.');
+        }
+
+        return redirect()->route('admin.datakelas')->with('success', 'Data kelas berhasil dihapus.');
     }
 
     private function validatedClass(Request $request): array

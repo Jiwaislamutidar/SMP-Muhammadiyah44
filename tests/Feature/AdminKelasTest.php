@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Kelas;
+use App\Models\Siswa;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
@@ -69,13 +70,48 @@ class AdminKelasTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.datakelas'))
             ->assertOk()
+            ->assertSee('Kode Kelas')
             ->assertSee('Jumlah Murid')
             ->assertSee('Edit')
             ->assertSee('31 Murid')
             ->assertSee('Guru QA')
             ->assertDontSee('Kapasitas Murid')
             ->assertDontSee('<th>Status</th>', false)
+            ->assertDontSee('class-pill-badge', false)
             ->assertDontSee('Detail');
+    }
+
+    public function test_admin_can_delete_an_unused_class_but_not_a_class_with_students(): void
+    {
+        $admin = $this->makeAdmin();
+        $emptyClass = Kelas::create(['nama_kelas' => 'Empty QA '.bin2hex(random_bytes(3))]);
+        $usedClass = Kelas::create(['nama_kelas' => 'Used QA '.bin2hex(random_bytes(3))]);
+        $studentUser = User::create([
+            'name' => 'Murid Kelas QA',
+            'username' => 'murid-kelas-'.bin2hex(random_bytes(4)),
+            'email' => null,
+            'role' => 'siswa',
+            'password' => Hash::make('test-password'),
+        ]);
+        Siswa::create([
+            'user_id' => $studentUser->id,
+            'nisn' => 'nisn-'.bin2hex(random_bytes(4)),
+            'nama_lengkap' => 'Murid Kelas QA',
+            'kelas_id' => $usedClass->id,
+            'status' => 'aktif',
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.kelas.destroy', $emptyClass))
+            ->assertRedirect(route('admin.datakelas'))
+            ->assertSessionHas('success');
+        $this->assertDatabaseMissing('kelas', ['id' => $emptyClass->id]);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.kelas.destroy', $usedClass))
+            ->assertRedirect(route('admin.datakelas'))
+            ->assertSessionHas('error');
+        $this->assertDatabaseHas('kelas', ['id' => $usedClass->id]);
     }
 
     public function test_attendance_report_accepts_a_null_search_filter(): void

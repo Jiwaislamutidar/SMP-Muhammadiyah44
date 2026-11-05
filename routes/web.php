@@ -41,9 +41,11 @@ Route::domain('admin.'.$domain)->group(function () {
         Route::get('/data-murid', [AdminSiswaController::class, 'index'])->name('admin.datamurid');
         Route::post('/data-murid/import', [AdminSiswaController::class, 'import'])->name('admin.siswa.import');
         Route::post('/data-murid/import-manual', [AdminSiswaController::class, 'manualImport'])->name('admin.siswa.manual-import');
+        Route::delete('/data-murid/{siswa}', [AdminSiswaController::class, 'destroy'])->name('admin.siswa.destroy');
         Route::get('/data-kelas', [AdminKelasController::class, 'index'])->name('admin.datakelas');
         Route::post('/data-kelas', [AdminKelasController::class, 'store'])->name('admin.kelas.store');
         Route::put('/data-kelas/{kelas}', [AdminKelasController::class, 'update'])->name('admin.kelas.update');
+        Route::delete('/data-kelas/{kelas}', [AdminKelasController::class, 'destroy'])->name('admin.kelas.destroy');
         Route::get('/mata-pelajaran', fn () => view('pages.admin.matapelajaran'))->name('admin.matapelajaran');
         Route::get('/jadwal-pelajaran', [AdminJadwalController::class, 'index'])->name('admin.jadwalpelajaran');
         Route::post('/jadwal-pelajaran/import', [AdminJadwalController::class, 'import'])->name('admin.jadwalpelajaran.import');

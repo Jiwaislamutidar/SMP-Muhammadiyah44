@@ -1,11 +1,14 @@
 .rekap-actions { display: flex; align-items: center; gap: 8px; }
 .rekap-actions #deleteAttendance { border-color: #fecaca; color: #b91c1c; }
 .rekap-actions #deleteAttendance:hover { border-color: #dc2626; background: #fef2f2; }
+.rekap-actions #deleteAttendance:disabled,
+.rekap-actions #exportAttendance[aria-disabled="true"] { opacity: .5; pointer-events: none; }
 .rekap-toolbar { align-items: end; }
 .rekap-search-form { flex: 1 1 220px; min-width: 180px; margin: 0; }
 .rekap-search-form .admin-search { width: 100%; }
 .rekap-filter-label { display: grid; gap: 5px; color: #374151; font-size: 11px; font-weight: 600; }
 .rekap-filter-label .admin-select { min-width: 150px; }
+.rekap-filter-label .admin-input { min-width: 150px; }
 .summary-item { border-radius: 12px; }
 .summary-item::before { display: none; }
 .summary-count { color: #17211c; }
@@ -18,7 +21,8 @@
 .rekap-class-badge { padding: 3px 8px; border-radius: 6px; background: #f3f4f6; color: #4b5563; font-size: 11px; font-weight: 600; }
 .rekap-status { font-size: 12px; font-weight: 700; }
 .rekap-status--hadir { color: #087443; }
-.rekap-status--izin, .rekap-status--sakit { color: #b45309; }
+.rekap-status--izin { color: #ca8a04; }
+.rekap-status--sakit { color: #b45309; }
 .rekap-status--alfa { color: #dc2626; }
 .rekap-error { padding: 10px 12px; border: 1px solid #fecaca; border-radius: 8px; color: #b91c1c; font-size: 12px; }
 .rekap-success { padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; color: #374151; font-size: 12px; }

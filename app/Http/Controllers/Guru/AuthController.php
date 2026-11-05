@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Guru;
 
 use App\Http\Controllers\Controller;
+use App\Models\Guru;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -14,7 +15,7 @@ class AuthController extends Controller
             return redirect()->route('guru.dashboard');
         }
 
-        return view('auth.guru.login'); 
+        return view('auth.guru.login');
     }
 
     public function login(Request $request)
@@ -31,13 +32,24 @@ class AuthController extends Controller
 
             // CEK ROLE: Pastikan yang berhasil login hanya user dengan role 'guru'
             if ($user->role === 'guru') { // Sesuaikan nama kolom role dengan database-mu
+                $guru = Guru::query()->where('user_id', $user->id)->first()
+                    ?? Guru::query()->where('nip', $user->username)->first();
+
+                if ($guru && $guru->status !== 'aktif') {
+                    Auth::logout();
+
+                    return back()->with('error', 'Akun guru sedang nonaktif. Hubungi administrator.');
+                }
+
                 $request->session()->regenerate();
+
                 // Redirect ke nama route dashboard guru (sesuai dengan web.php)
-                return redirect()->route('guru.dashboard'); 
+                return redirect()->route('guru.dashboard');
             }
 
             // Jika role BUKAN guru (misal, akun siswa yang mencoba masuk)
             Auth::logout(); // Segera keluarkan secara paksa
+
             return back()->with('error', 'Akses ditolak! Halaman ini khusus untuk Guru.')->withInput();
         }
 

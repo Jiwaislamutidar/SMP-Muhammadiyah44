@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('title', 'Data Kelas')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/datakelas.css') }}?v=4">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/datakelas.css') }}?v=5">@endsection
 @section('content')
 
 <div class="admin-page-header">
@@ -13,6 +13,9 @@
 
 @if (session('success'))
   <div class="admin-alert success" role="status">{{ session('success') }}</div>
+@endif
+@if (session('error'))
+  <div class="admin-alert error" role="alert">{{ session('error') }}</div>
 @endif
 @if ($errors->any())
   <div class="admin-alert error" role="alert">{{ $errors->first() }}</div>
@@ -33,7 +36,7 @@
   <table class="admin-table">
     <thead>
       <tr>
-        <th>Kelas &amp; Tingkat</th>
+        <th>Kode Kelas</th>
         <th>Wali Kelas</th>
         <th>Jumlah Murid</th>
         <th>Ruangan</th>
@@ -44,13 +47,7 @@
       @forelse ($kelasList as $kelas)
         <tr>
           <td>
-            <div class="class-identity">
-              <span class="class-pill-badge">{{ $kelas->nama_kelas }}</span>
-              <div>
-                <strong>{{ $kelas->nama_kelas }}</strong>
-                <small>{{ $kelas->tingkat ? 'Tingkat '.$kelas->tingkat : 'Tingkat belum diisi' }}</small>
-              </div>
-            </div>
+            <strong class="class-code">{{ $kelas->nama_kelas }}</strong>
           </td>
           <td><strong>{{ $kelas->wali_kelas ?: 'Belum diisi' }}</strong></td>
           <td><span class="class-count">{{ $kelas->jumlah_murid }} Murid</span></td>
@@ -64,6 +61,9 @@
               data-ruangan="{{ $kelas->ruangan }}"
               data-jumlah="{{ $kelas->jumlah_murid }}"
               data-update-url="{{ route('admin.kelas.update', $kelas) }}">Edit</button>
+            <button class="class-delete-button" type="button" data-delete-class
+              data-code="{{ $kelas->nama_kelas }}"
+              data-delete-url="{{ route('admin.kelas.destroy', $kelas) }}">Hapus</button>
           </td>
         </tr>
       @empty
@@ -72,6 +72,19 @@
     </tbody>
   </table>
 </section>
+
+<dialog class="class-delete-modal" id="deleteClassModal" aria-labelledby="deleteClassTitle">
+  <form method="POST" id="deleteClassForm">
+    @csrf
+    @method('DELETE')
+    <h2 id="deleteClassTitle">Apakah kamu yakin untuk menghapus kelas <span id="deleteClassCode"></span>?</h2>
+    <p>Kelas yang masih memiliki murid atau jadwal tidak dapat dihapus.</p>
+    <div class="class-delete-actions">
+      <button class="admin-action-outline" type="button" id="cancelDeleteClass">Batal</button>
+      <button class="class-delete-confirm" type="submit">Ya, Hapus</button>
+    </div>
+  </form>
+</dialog>
 
 <div class="modal-overlay" id="kelasModal" aria-hidden="true">
   <section class="modal-box kelas-modal" role="dialog" aria-modal="true" aria-labelledby="kelasModalTitle">
@@ -192,6 +205,17 @@
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && modal.classList.contains('show')) closeModal();
   });
+
+  const deleteClassModal = document.getElementById('deleteClassModal');
+  const deleteClassForm = document.getElementById('deleteClassForm');
+  document.querySelectorAll('[data-delete-class]').forEach((button) => {
+    button.addEventListener('click', () => {
+      document.getElementById('deleteClassCode').textContent = button.dataset.code;
+      deleteClassForm.action = button.dataset.deleteUrl;
+      deleteClassModal.showModal();
+    });
+  });
+  document.getElementById('cancelDeleteClass').addEventListener('click', () => deleteClassModal.close());
 
   const oldForm = @json($oldKelasForm);
   if (oldForm.context === 'add') {

@@ -7,6 +7,7 @@ use App\Imports\SiswaImport;
 use App\Models\Kelas;
 use App\Models\Siswa;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -105,5 +106,22 @@ class SiswaController extends Controller
         $count = count($validated['students']);
 
         return back()->with('success', "Berhasil menambahkan {$count} data siswa. Username dan password awal setiap akun menggunakan NIS/NISN.");
+    }
+
+    public function destroy(Siswa $siswa): RedirectResponse
+    {
+        DB::transaction(function () use ($siswa): void {
+            $student = Siswa::query()->lockForUpdate()->findOrFail($siswa->id);
+            $user = User::query()->lockForUpdate()->findOrFail($student->user_id);
+
+            if ($user->role !== 'siswa') {
+                abort(409, 'Akun yang terhubung bukan akun murid.');
+            }
+
+            $student->delete();
+            $user->delete();
+        });
+
+        return redirect()->route('admin.datamurid')->with('success', 'Data murid dan akun terkait berhasil dihapus.');
     }
 }

@@ -129,6 +129,7 @@
   const deleteForm = document.getElementById('deleteAttendanceForm');
   let searchTimer;
   let reportRequestController;
+  let deleteConfirmationPending = false;
 
   function activeFilters() {
     return {
@@ -254,7 +255,15 @@
     window.clearTimeout(searchTimer);
     searchTimer = window.setTimeout(loadReport, 250);
   });
-  document.getElementById('deleteAttendance').addEventListener('click', () => deleteModal.showModal());
+  document.getElementById('deleteAttendance').addEventListener('click', () => {
+    deleteConfirmationPending = true;
+    deleteButton.classList.add('is-awaiting-confirmation');
+    deleteModal.showModal();
+  });
   document.getElementById('cancelDelete').addEventListener('click', () => deleteModal.close());
+  deleteModal.addEventListener('close', () => {
+    if (deleteConfirmationPending) deleteButton.classList.remove('is-awaiting-confirmation');
+    deleteConfirmationPending = false;
+  });
 </script>
 @endsection

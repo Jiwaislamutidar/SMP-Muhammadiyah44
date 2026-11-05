@@ -19,7 +19,7 @@ class Guru extends Model
             $guru = static::query()
                 ->whereNull('user_id')
                 ->where(function ($query) use ($user) {
-                    $query->where('nip', $user->username)
+                    $query->where('nbm', $user->username)
                         ->orWhere('nama_lengkap', $user->name);
                 })
                 ->first();

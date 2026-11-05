@@ -208,14 +208,21 @@
 
   const deleteClassModal = document.getElementById('deleteClassModal');
   const deleteClassForm = document.getElementById('deleteClassForm');
+  let pendingDeleteClassButton = null;
   document.querySelectorAll('[data-delete-class]').forEach((button) => {
     button.addEventListener('click', () => {
+      pendingDeleteClassButton = button;
+      button.classList.add('is-awaiting-confirmation');
       document.getElementById('deleteClassCode').textContent = button.dataset.code;
       deleteClassForm.action = button.dataset.deleteUrl;
       deleteClassModal.showModal();
     });
   });
   document.getElementById('cancelDeleteClass').addEventListener('click', () => deleteClassModal.close());
+  deleteClassModal.addEventListener('close', () => {
+    pendingDeleteClassButton?.classList.remove('is-awaiting-confirmation');
+    pendingDeleteClassButton = null;
+  });
 
   const oldForm = @json($oldKelasForm);
   if (oldForm.context === 'add') {

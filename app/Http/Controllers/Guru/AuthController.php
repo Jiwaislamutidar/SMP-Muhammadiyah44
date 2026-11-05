@@ -33,7 +33,7 @@ class AuthController extends Controller
             // CEK ROLE: Pastikan yang berhasil login hanya user dengan role 'guru'
             if ($user->role === 'guru') { // Sesuaikan nama kolom role dengan database-mu
                 $guru = Guru::query()->where('user_id', $user->id)->first()
-                    ?? Guru::query()->where('nip', $user->username)->first();
+                    ?? Guru::query()->where('nbm', $user->username)->first();
 
                 if ($guru && $guru->status !== 'aktif') {
                     Auth::logout();

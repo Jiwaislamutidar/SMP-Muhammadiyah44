@@ -77,9 +77,8 @@
             @csrf
 
             <div class="floating-field">
-                <!-- Label Disesuaikan (Guru biasanya pakai Username/NIP) -->
                 <input type="text" id="username" name="username" class="input-field" placeholder=" " required />
-                <label class="label" for="username">Username / NIP</label>
+                <label class="label" for="username">Username / NBM</label>
             </div>
 
             <div>

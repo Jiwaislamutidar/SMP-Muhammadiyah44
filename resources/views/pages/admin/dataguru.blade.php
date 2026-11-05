@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('title', 'Data Guru')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/dataguru.css') }}?v=7">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/dataguru.css') }}?v=8">@endsection
 @section('content')
 <div class="admin-page-header">
 	<div>
@@ -48,7 +48,8 @@
 		<tbody id="guruTableBody">
 			@forelse ($gurus as $guru)
 				@php
-					$inisial = collect(explode(' ', $guru->nama_lengkap))->filter()->take(2)->map(fn ($bagian) => mb_substr($bagian, 0, 1))->implode('');
+					$namaGuru = trim($guru->nama_lengkap);
+					$inisial = collect(explode(' ', $namaGuru))->filter()->take(2)->map(fn ($bagian) => mb_substr($bagian, 0, 1))->implode('');
 					$totalJam = $guru->mapels->sum('pivot.jumlah_jam');
 				@endphp
 				<tr data-guru-row="{{ $guru->id }}">
@@ -56,18 +57,23 @@
 						<div class="guru-identity">
 							<span class="initial">{{ mb_strtoupper($inisial) }}</span>
 							<div>
-								<strong>{{ $guru->nama_lengkap }}</strong>
-								<small>{{ $guru->nip ?: 'NBM belum diisi' }}</small>
+								<strong>{{ $namaGuru }}</strong>
+								<small>{{ $guru->nbm ?: 'NBM belum diisi' }}</small>
 							</div>
 						</div>
 					</td>
 					<td>
 						<div class="guru-subjects">
-							@forelse ($guru->mapels as $mapel)
-								<span class="guru-subject">{{ $mapel->nama_mapel }}</span>
-							@empty
+							@if ($guru->mapels->isNotEmpty())
+								@foreach ($guru->mapels as $mapel)
+									<span class="guru-subject">
+										<span>{{ trim($mapel->nama_mapel) }}</span>
+										<span class="guru-subject-code">({{ $mapel->kode }})</span>
+									</span>
+								@endforeach
+							@else
 								<span class="guru-muted">Belum ada mapel</span>
-							@endforelse
+							@endif
 						</div>
 					</td>
 					<td><span class="guru-hours">{{ $totalJam }} JP/Minggu</span></td>
@@ -76,8 +82,8 @@
 						<div class="guru-row-actions">
 							<button class="guru-action-edit" type="button" data-edit-guru
 								data-id="{{ $guru->id }}"
-								data-nama="{{ $guru->nama_lengkap }}"
-								data-nip="{{ $guru->nip }}"
+								data-nama="{{ $namaGuru }}"
+								data-nbm="{{ $guru->nbm }}"
 								data-status="{{ $guru->status }}"
 								data-mapel-items="{{ $guru->mapels->map(fn ($mapel) => ['mapel_id' => $mapel->id, 'jumlah_jam' => $mapel->pivot->jumlah_jam])->values()->toJson() }}">Edit</button>
 							<button class="guru-action-delete" type="button" data-delete-guru data-id="{{ $guru->id }}" data-delete-url="{{ route('admin.guru.destroy', $guru->id) }}">Hapus</button>
@@ -101,12 +107,15 @@
 				<select class="admin-select" data-mapel-select name="mapel_items[__INDEX__][mapel_id]">
 					<option value="">Pilih mata pelajaran</option>
 					@foreach ($mapels as $mapel)
-						<option value="{{ $mapel->id }}">{{ $mapel->nama_mapel }}</option>
+						<option value="{{ $mapel->id }}">{{ $mapel->kode }} · {{ $mapel->nama_mapel }}</option>
 					@endforeach
 				</select>
 			</label>
 			<label>Atau Mapel Baru
 				<input class="admin-input" data-mapel-new type="text" name="mapel_items[__INDEX__][nama_baru]" maxlength="255" placeholder="Nama mata pelajaran">
+			</label>
+			<label>Kode Mapel
+				<input class="admin-input" data-mapel-code type="text" name="mapel_items[__INDEX__][kode_baru]" maxlength="100" placeholder="Contoh: 2'1">
 			</label>
 		</div>
 		<div class="guru-mapel-row-hours">
@@ -124,11 +133,11 @@
 			<div><h2 id="addGuruTitle">Tambah Guru</h2></div>
 			<button class="guru-modal-close" type="button" data-close-modal aria-label="Tutup">&times;</button>
 		</div>
-		<form action="{{ route('admin.guru.store') }}" method="POST" class="guru-form">
+		<form action="{{ route('admin.guru.store') }}" method="POST" class="guru-form" id="addGuruForm">
 			@csrf
 			<input type="hidden" name="form_context" value="add">
 			<label>Nama lengkap<input class="admin-input" type="text" name="nama_lengkap" value="{{ old('form_context') === 'add' ? old('nama_lengkap') : '' }}" required></label>
-			<label>NBM (username &amp; password awal)<input class="admin-input" type="text" name="nip" value="{{ old('form_context') === 'add' ? old('nip') : '' }}" required></label>
+			<label>NBM (username &amp; password awal, opsional)<input class="admin-input" type="text" name="nbm" value="{{ old('form_context') === 'add' ? old('nbm') : '' }}"></label>
 			<label>Status<select class="admin-select" name="status" required><option value="aktif">Aktif</option><option value="nonaktif" @selected (old('form_context') === 'add' && old('status') === 'nonaktif')>Nonaktif</option></select></label>
 			<fieldset class="guru-mapel-fieldset"><legend>Mata Pelajaran &amp; Jam</legend>
 				<div class="guru-mapel-items" data-mapel-items data-next-index="0"></div>
@@ -142,10 +151,10 @@
 <div class="guru-modal-backdrop" id="importGuruModal" hidden>
 	<section class="guru-modal" role="dialog" aria-modal="true" aria-labelledby="importGuruTitle">
 		<div class="guru-modal-heading">
-			<div><h2 id="importGuruTitle">Import Excel</h2><p>Kolom: Kode, Mata Pelajaran, Nama Guru, Jml. Jam</p></div>
+			<div><h2 id="importGuruTitle">Import Excel</h2><p>Kolom: NBM, Nama Guru, Kode Mapel, Mata Pelajaran, Jml. Jam (NBM, mapel, dan jam boleh kosong)</p></div>
 			<button class="guru-modal-close" type="button" data-close-modal aria-label="Tutup">&times;</button>
 		</div>
-		<form action="{{ route('admin.guru.import') }}" method="POST" enctype="multipart/form-data" class="guru-form">
+		<form action="{{ route('admin.guru.import') }}" method="POST" enctype="multipart/form-data" class="guru-form" id="importGuruForm">
 			@csrf
 			<input type="hidden" name="form_context" value="import">
 
@@ -159,7 +168,7 @@
 				📄 File terpilih: <strong id="guruImportFileName"></strong>
 			</div>
 
-			<a class="guru-template-link" href="{{ route('admin.guru.template') }}">📥 Unduh Template CSV</a>
+			<a class="guru-template-link" href="{{ route('admin.guru.template') }}">📥 Unduh Template Excel (.xlsx)</a>
 
 			<div class="guru-modal-actions">
 				<button class="guru-button-secondary" type="button" data-close-modal>Batal</button>
@@ -181,7 +190,7 @@
 			<input type="hidden" name="form_context" value="edit">
 			<input type="hidden" name="edit_guru_id" id="editGuruId">
 			<label>Nama lengkap<input class="admin-input" id="editGuruName" type="text" name="nama_lengkap" required></label>
-			<label>NBM (username)<input class="admin-input" id="editGuruNip" type="text" name="nip" required></label>
+			<label>NBM (username, opsional)<input class="admin-input" id="editGuruNbm" type="text" name="nbm"></label>
 			<label>Status<select class="admin-select" id="editGuruStatus" name="status" required><option value="aktif">Aktif</option><option value="nonaktif">Nonaktif</option></select></label>
 			<fieldset class="guru-mapel-fieldset"><legend>Mata Pelajaran &amp; Jam Mengajar</legend>
 				<div class="guru-mapel-items" data-mapel-items data-next-index="0"></div>
@@ -214,11 +223,27 @@
 		const deleteModal = document.getElementById('deleteGuruModal');
 		let pendingDeleteButton = null;
 		let alertTimer;
-		const closeModal = (modal) => { modal.hidden = true; };
 		const openModal = (id) => {
 			modals.forEach(closeModal);
 			const modal = document.getElementById(id);
-			if (modal) modal.hidden = false;
+			if (modal) {
+				modal.classList.remove('is-closing');
+				modal.hidden = false;
+			}
+		};
+		const closeModal = (modal) => {
+			if (!modal || modal.hidden || modal.classList.contains('is-closing')) return;
+			modal.classList.add('is-closing');
+			if (modal === deleteModal) {
+				pendingDeleteButton?.classList.remove('is-awaiting-confirmation');
+				pendingDeleteButton = null;
+			}
+			window.setTimeout(() => {
+				if (modal.classList.contains('is-closing')) {
+					modal.hidden = true;
+					modal.classList.remove('is-closing');
+				}
+			}, 180);
 		};
 		const showAlert = (message, type = 'success') => {
 			window.clearTimeout(alertTimer);
@@ -252,6 +277,115 @@
 			row.remove();
 			updateCounts(total);
 		};
+		const createGuruRow = (guru) => {
+			const row = document.createElement('tr');
+			row.dataset.guruRow = guru.id;
+			const identityCell = document.createElement('td');
+			const identity = document.createElement('div');
+			identity.className = 'guru-identity';
+			const initial = document.createElement('span');
+			initial.className = 'initial';
+			initial.textContent = guru.nama_lengkap.trim().split(/\s+/).slice(0, 2).map((part) => part.charAt(0)).join('').toUpperCase();
+			const details = document.createElement('div');
+			const name = document.createElement('strong');
+			name.textContent = guru.nama_lengkap;
+			const nbm = document.createElement('small');
+			nbm.textContent = guru.nbm || 'NBM belum diisi';
+			details.append(name, nbm);
+			identity.append(initial, details);
+			identityCell.append(identity);
+
+			const subjectCell = document.createElement('td');
+			const subjects = document.createElement('div');
+			subjects.className = 'guru-subjects';
+			const subject = document.createElement('span');
+			subject.className = guru.mapels.length ? 'guru-subject' : 'guru-muted';
+			subject.textContent = guru.mapels.length ? guru.mapels.join(', ') : 'Belum ada mapel';
+			subjects.append(subject);
+			subjectCell.append(subjects);
+
+			const hoursCell = document.createElement('td');
+			const hours = document.createElement('span');
+			hours.className = 'guru-hours';
+			hours.textContent = `${guru.total_jam} JP/Minggu`;
+			hoursCell.append(hours);
+
+			const statusCell = document.createElement('td');
+			const status = document.createElement('span');
+			status.className = 'guru-status';
+			status.textContent = guru.status.charAt(0).toUpperCase() + guru.status.slice(1);
+			statusCell.append(status);
+
+			const actionsCell = document.createElement('td');
+			const actions = document.createElement('div');
+			actions.className = 'guru-row-actions';
+			const editButton = document.createElement('button');
+			editButton.className = 'guru-action-edit';
+			editButton.type = 'button';
+			editButton.dataset.editGuru = '';
+			editButton.dataset.id = guru.id;
+			editButton.dataset.nama = guru.nama_lengkap;
+			editButton.dataset.nbm = guru.nbm || '';
+			editButton.dataset.status = guru.status;
+			editButton.dataset.mapelItems = JSON.stringify(guru.mapel_items);
+			editButton.textContent = 'Edit';
+			const deleteButton = document.createElement('button');
+			deleteButton.className = 'guru-action-delete';
+			deleteButton.type = 'button';
+			deleteButton.dataset.deleteGuru = '';
+			deleteButton.dataset.id = guru.id;
+			deleteButton.dataset.deleteUrl = @json(route('admin.guru.destroy', ['id' => '__ID__'])).replace('__ID__', guru.id);
+			deleteButton.textContent = 'Hapus';
+			actions.append(editButton, deleteButton);
+			actionsCell.append(actions);
+			row.append(identityCell, subjectCell, hoursCell, statusCell, actionsCell);
+			return row;
+		};
+		const refreshGuruTable = async () => {
+			const response = await fetch(window.location.href, { headers: { Accept: 'application/json' } });
+			const result = await response.json();
+			if (!response.ok) throw new Error(result.message || 'Tabel guru gagal diperbarui.');
+			tableBody.replaceChildren(...result.gurus.map(createGuruRow));
+			updateCounts(result.total_guru);
+		};
+
+		['addGuruForm', 'importGuruForm'].forEach((formId) => {
+			const form = document.getElementById(formId);
+			form.addEventListener('submit', async (event) => {
+				event.preventDefault();
+				const submitButton = form.querySelector('button[type="submit"]');
+				const originalLabel = submitButton.textContent;
+				submitButton.disabled = true;
+				submitButton.textContent = formId === 'importGuruForm' ? 'Mengimpor...' : 'Menyimpan...';
+				try {
+					const response = await fetch(form.action, {
+						method: 'POST',
+						headers: { Accept: 'application/json' },
+						body: new FormData(form),
+					});
+					const result = await response.json();
+					if (!response.ok) {
+						const firstError = Object.values(result.errors || {}).flat()[0];
+						throw new Error(firstError || result.message || 'Data guru gagal disimpan.');
+					}
+
+					closeModal(form.closest('.guru-modal-backdrop'));
+					form.reset();
+					updateImportFile(null);
+					showAlert(result.message);
+					try {
+						await refreshGuruTable();
+					} catch (error) {
+						showAlert(`${result.message} Namun tabel belum dapat diperbarui.`, 'error');
+					}
+				} catch (error) {
+					showAlert(error.message || 'Data guru gagal disimpan.', 'error');
+				} finally {
+					submitButton.disabled = false;
+					submitButton.textContent = originalLabel;
+				}
+			});
+		});
 
 		document.querySelectorAll('[data-open-modal]').forEach((button) => {
 			button.addEventListener('click', () => openModal(button.dataset.openModal));
@@ -275,10 +409,16 @@
 			});
 			const select = row.querySelector('[data-mapel-select]');
 			const newMapel = row.querySelector('[data-mapel-new]');
+			const mapelCode = row.querySelector('[data-mapel-code]');
 			select.value = item.mapel_id || '';
+			newMapel.value = item.nama_baru || '';
+			mapelCode.value = item.kode_baru || '';
 			row.querySelector('input[type="number"]').value = item.jumlah_jam || '';
 			select.addEventListener('change', () => {
-				if (select.value) newMapel.value = '';
+				if (select.value) {
+					newMapel.value = '';
+					mapelCode.value = '';
+				}
 			});
 			newMapel.addEventListener('input', () => {
 				if (newMapel.value.trim()) select.value = '';
@@ -321,10 +461,11 @@
 		}
 
 		const editForm = document.getElementById('editGuruForm');
-		document.querySelectorAll('[data-edit-guru]').forEach((button) => {
-			button.addEventListener('click', () => {
+		tableBody.addEventListener('click', (event) => {
+			const button = event.target.closest('[data-edit-guru]');
+			if (button) {
 				document.getElementById('editGuruName').value = button.dataset.nama;
-				document.getElementById('editGuruNip').value = button.dataset.nip;
+				document.getElementById('editGuruNbm').value = button.dataset.nbm;
 				document.getElementById('editGuruStatus').value = button.dataset.status;
 				document.getElementById('editGuruId').value = button.dataset.id;
 				editForm.action = editForm.dataset.updateUrl.replace(':id', button.dataset.id);
@@ -334,20 +475,21 @@
 				mapelContainer.dataset.nextIndex = '0';
 				mapelItems.forEach((item) => addMapelRow(mapelContainer, item));
 				openModal('editGuruModal');
-			});
+				return;
+			}
+
+			const deleteButton = event.target.closest('[data-delete-guru]');
+			if (deleteButton) {
+				pendingDeleteButton = deleteButton;
+				deleteButton.classList.add('is-awaiting-confirmation');
+				document.getElementById('deleteGuruMessage').textContent =
+					`Data guru ${deleteButton.closest('tr').querySelector('.guru-identity strong').textContent} dan akun login terkait akan dihapus.`;
+				openModal('deleteGuruModal');
+			}
 		});
 
 		document.querySelectorAll('.guru-alert').forEach((alert) => {
 			window.setTimeout(() => alert.remove(), 3000);
-		});
-
-		document.querySelectorAll('[data-delete-guru]').forEach((button) => {
-			button.addEventListener('click', () => {
-				pendingDeleteButton = button;
-				document.getElementById('deleteGuruMessage').textContent =
-					`Data guru ${button.closest('tr').querySelector('.guru-identity strong').textContent} dan akun login terkait akan dihapus.`;
-				openModal('deleteGuruModal');
-			});
 		});
 
 		document.getElementById('confirmDeleteGuru').addEventListener('click', async (event) => {
@@ -363,9 +505,10 @@
 				});
 				const result = await response.json();
 				if (!response.ok) throw new Error(result.message || 'Data guru gagal dihapus.');
-				removeRow(pendingDeleteButton.closest('tr'), result.total_guru);
+				const row = pendingDeleteButton.closest('tr');
+				pendingDeleteButton.classList.remove('is-awaiting-confirmation');
+				removeRow(row, result.total_guru);
 				closeModal(deleteModal);
-				pendingDeleteButton = null;
 				showAlert(result.message);
 			} catch (error) {
 				showAlert(error.message || 'Data guru gagal dihapus.', 'error');
@@ -396,18 +539,16 @@
 					removeRow(row, result.total_guru);
 				} else {
 					row.querySelector('.guru-identity strong').textContent = guru.nama_lengkap;
-					row.querySelector('.guru-identity small').textContent = guru.nip || 'NBM belum diisi';
+					row.querySelector('.guru-identity small').textContent = guru.nbm || 'NBM belum diisi';
 					row.querySelector('.guru-status').textContent = guru.status.charAt(0).toUpperCase() + guru.status.slice(1);
 					row.querySelector('.guru-hours').textContent = `${guru.total_jam} JP/Minggu`;
 					const subjectList = row.querySelector('.guru-subjects');
 					subjectList.replaceChildren();
 					if (guru.mapels.length) {
-						guru.mapels.forEach((name) => {
-							const subject = document.createElement('span');
-							subject.className = 'guru-subject';
-							subject.textContent = name;
-							subjectList.append(subject);
-						});
+						const subject = document.createElement('span');
+						subject.className = 'guru-subject';
+						subject.textContent = guru.mapels.join(', ');
+						subjectList.append(subject);
 					} else {
 						const empty = document.createElement('span');
 						empty.className = 'guru-muted';
@@ -417,7 +558,7 @@
 
 					const editButton = row.querySelector('[data-edit-guru]');
 					editButton.dataset.nama = guru.nama_lengkap;
-					editButton.dataset.nip = guru.nip || '';
+					editButton.dataset.nbm = guru.nbm || '';
 					editButton.dataset.status = guru.status;
 					editButton.dataset.mapelItems = JSON.stringify(guru.mapel_items);
 					const initials = guru.nama_lengkap.trim().split(/\s+/).slice(0, 2).map((part) => part.charAt(0)).join('');
@@ -443,7 +584,7 @@
 				if (errorContext === 'edit') {
 					form.action = form.dataset.updateUrl.replace(':id', @json(old('edit_guru_id')));
 					document.getElementById('editGuruName').value = @json(old('nama_lengkap'));
-					document.getElementById('editGuruNip').value = @json(old('nip'));
+					document.getElementById('editGuruNbm').value = @json(old('nbm'));
 					document.getElementById('editGuruStatus').value = @json(old('status'));
 				}
 			}

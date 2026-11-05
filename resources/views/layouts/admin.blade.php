@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="{{ asset('admin css/admin-page.css') }}?v=6">
   {{-- Page-specific styles --}}
   @yield('styles')
+  <link rel="stylesheet" href="{{ asset('admin css/admin-interactions.css') }}?v={{ filemtime(public_path('admin css/admin-interactions.css')) }}">
 </head>
 <body>
 

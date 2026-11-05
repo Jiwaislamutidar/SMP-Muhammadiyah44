@@ -201,15 +201,22 @@
 		const classOptions = @json($kelasList->map(fn ($kelas) => ['id' => $kelas->id, 'nama' => $kelas->nama_kelas])->values());
 		const deleteStudentModal = document.getElementById('deleteStudentModal');
 		const deleteStudentForm = document.getElementById('deleteStudentForm');
+		let pendingDeleteStudentButton = null;
 
 		document.querySelectorAll('[data-delete-student]').forEach((button) => {
 			button.addEventListener('click', () => {
+				pendingDeleteStudentButton = button;
+				button.classList.add('is-awaiting-confirmation');
 				document.getElementById('deleteStudentName').textContent = button.dataset.name;
 				deleteStudentForm.action = button.dataset.deleteUrl;
 				deleteStudentModal.showModal();
 			});
 		});
 		document.getElementById('cancelDeleteStudent').addEventListener('click', () => deleteStudentModal.close());
+		deleteStudentModal.addEventListener('close', () => {
+			pendingDeleteStudentButton?.classList.remove('is-awaiting-confirmation');
+			pendingDeleteStudentButton = null;
+		});
 
 		const showSelectedFile = () => {
 			fileName.textContent = fileInput.files[0]

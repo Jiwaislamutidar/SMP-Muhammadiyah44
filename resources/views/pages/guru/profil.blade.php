@@ -29,7 +29,7 @@
 					<span class="role-chip">Guru</span>
 					<span class="status-pill hadir">Aktif</span>
 				</div>
-				<p><strong>NIP:</strong> {{ $guru->nip ?? '-' }} <span class="identity-separator">•</span> SMP Muhammadiyah 44 Tangerang Selatan</p>
+				<p><strong>NBM:</strong> {{ $guru->nbm ?? '-' }} <span class="identity-separator">•</span> SMP Muhammadiyah 44 Tangerang Selatan</p>
 			</div>
 		</div>
 
@@ -41,7 +41,7 @@
 				</div>
 				<dl class="details-grid">
 					<div><dt>Nama Lengkap</dt><dd>{{ $guru->nama_lengkap }}</dd></div>
-					<div><dt>NBM (Nomor Baku Muhammadiyah)</dt><dd class="mono">{{ $guru->nip ?? '-' }}</dd></div>
+					<div><dt>NBM (Nomor Baku Muhammadiyah)</dt><dd class="mono">{{ $guru->nbm ?? '-' }}</dd></div>
 					<div><dt>Status Kepegawaian</dt><dd><span class="status-pill hadir">{{ ucfirst($guru->status) }}</span></dd></div>
 					<div><dt>Username Akun</dt><dd class="mono">{{ $user->username }}</dd></div>
 					<div class="detail-wide"><dt>Email Akun</dt><dd>{{ $user->email ?? '-' }}</dd></div>

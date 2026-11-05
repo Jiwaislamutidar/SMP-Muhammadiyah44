@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('title', 'Data Kelas')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/datakelas.css') }}?v=5">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/datakelas.css') }}?v=6">@endsection
 @section('content')
 
 <div class="admin-page-header">

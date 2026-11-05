@@ -32,26 +32,37 @@
 
 .class-edit-button {
   padding: 6px 11px;
-  border: 1px solid var(--line);
+  border: 1px solid #d1d5db;
   border-radius: 7px;
-  color: var(--green-700);
+  color: #2563eb;
   background: #fff;
   font-size: 12px;
   font-weight: 600;
+  cursor: pointer;
+  transition: background-color .18s ease, border-color .18s ease, color .18s ease;
 }
-.class-edit-button:hover { background: var(--surface); }
+.class-edit-button:hover {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #fff;
+}
 .class-delete-button {
   margin-left: 6px;
-  padding: 6px 8px;
-  border: 0;
+  padding: 6px 11px;
+  border: 1px solid #d1d5db;
   border-radius: 7px;
-  color: #b91c1c;
-  background: transparent;
+  color: #dc2626;
+  background: #fff;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  transition: background-color .18s ease, border-color .18s ease, color .18s ease;
 }
-.class-delete-button:hover { background: #fef2f2; }
+.class-delete-button:hover {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: #fff;
+}
 
 .class-delete-modal {
   width: min(440px, calc(100vw - 32px));

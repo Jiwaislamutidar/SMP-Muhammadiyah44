@@ -11,7 +11,17 @@
 .rekap-filter-label .admin-input { min-width: 150px; }
 .summary-item { border-radius: 12px; }
 .summary-item::before { display: none; }
-.summary-count { color: #17211c; }
+.summary-item--present span,
+.summary-item--present .summary-count { color: #2563eb; }
+.summary-item--excused span,
+.summary-item--excused .summary-count { color: #d97706; }
+.summary-item--absent span,
+.summary-item--absent .summary-count { color: #dc2626; }
+.admin-total#rekapTotal {
+  border: 1px solid #6b7280;
+  background: #fff;
+  color: #111827;
+}
 .rekap-identity { display: flex; align-items: center; gap: 10px; }
 .rekap-identity strong { color: #17211c; font-size: 13px; font-weight: 700; }
 .rekap-table { color: #17211c; }

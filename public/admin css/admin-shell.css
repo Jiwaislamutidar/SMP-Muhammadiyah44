@@ -13,7 +13,7 @@
   --green-100: #e8f6ef;
   --ink:     #17211c;
   --muted:   #6b756f;
-  --line:    #e4eae6;
+  --line:    #d1d5db;
   --paper:   #ffffff;
   --surface: #f7f9f8;
   --red:     #ef4444;
@@ -346,7 +346,7 @@ button { font: inherit; border: 0; cursor: pointer; background: transparent; }
 
 /* Date pill */
 .date-pill    { padding: 6px 11px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; font-size: 11.5px; white-space: nowrap; }
-.date-pill .time-html { color: var(--green-700); font-weight: 700; }
+.date-pill .time-html { color: var(--ink); font-weight: 700; }
 .date-pill .sep       { color: var(--muted); }
 
 /* Bell button */

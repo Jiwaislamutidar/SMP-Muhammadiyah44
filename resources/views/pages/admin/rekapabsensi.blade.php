@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('title', 'Rekap Absensi')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/rekapabsensi.css') }}?v=6">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/rekapabsensi.css') }}?v=7">@endsection
 @section('content')
 
 <div class="admin-page-header">
@@ -15,15 +15,15 @@
 </div>
 
 <div class="summary-strip">
-  <div class="summary-item">
+  <div class="summary-item summary-item--present">
     <span>Murid Hadir</span>
     <strong class="summary-count" id="summaryHadir">{{ $report['summary']['hadir'] }}</strong>
   </div>
-  <div class="summary-item">
+  <div class="summary-item summary-item--excused">
     <span>Izin / Sakit</span>
     <strong class="summary-count" id="summaryIzinSakit">{{ $report['summary']['izin_sakit'] }}</strong>
   </div>
-  <div class="summary-item">
+  <div class="summary-item summary-item--absent">
     <span>Alfa (Tanpa Keterangan)</span>
     <strong class="summary-count" id="summaryAlfa">{{ $report['summary']['alfa'] }}</strong>
   </div>

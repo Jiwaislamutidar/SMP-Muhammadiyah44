@@ -7,9 +7,9 @@
   <title>@yield('title') - SMP Muhammadiyah 44</title>
 
   {{-- Global admin shell styles (sidebar + topbar + base) --}}
-  <link rel="stylesheet" href="{{ asset('admin css/admin-shell.css') }}?v=7">
+  <link rel="stylesheet" href="{{ asset('admin css/admin-shell.css') }}?v=8">
   {{-- Shared page-level utilities --}}
-  <link rel="stylesheet" href="{{ asset('admin css/admin-page.css') }}?v=5">
+  <link rel="stylesheet" href="{{ asset('admin css/admin-page.css') }}?v=6">
   {{-- Page-specific styles --}}
   @yield('styles')
 </head>

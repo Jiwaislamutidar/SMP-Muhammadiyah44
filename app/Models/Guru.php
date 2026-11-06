@@ -59,6 +59,20 @@ class Guru extends Model
         return $this->hasMany(PresensiGuru::class);
     }
 
+    public function dashboardPresensiLogs(): HasMany
+    {
+        return $this->hasMany(DashboardAttendanceLog::class, 'guru_id')
+            ->orderByDesc('tanggal')
+            ->orderByDesc('id');
+    }
+
+    public function dashboardAttendanceSessionLogs(): HasMany
+    {
+        return $this->hasMany(DashboardAttendanceSessionLog::class, 'guru_id')
+            ->orderByDesc('tanggal')
+            ->orderByDesc('id');
+    }
+
     public function sesiPelajarans(): HasMany
     {
         return $this->hasMany(SesiPelajaran::class);

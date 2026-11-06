@@ -85,7 +85,7 @@
 								data-nama="{{ $namaGuru }}"
 								data-nbm="{{ $guru->nbm }}"
 								data-status="{{ $guru->status }}"
-								data-mapel-items="{{ $guru->mapels->map(fn ($mapel) => ['mapel_id' => $mapel->id, 'jumlah_jam' => $mapel->pivot->jumlah_jam])->values()->toJson() }}">Edit</button>
+								data-mapel-items="{{ $guru->mapels->map(fn ($mapel) => ['mapel_id' => $mapel->id, 'nama_mapel' => $mapel->nama_mapel, 'kode_mapel' => $mapel->kode, 'jml_jam' => $mapel->pivot->jumlah_jam])->values()->toJson() }}">Edit</button>
 							<button class="guru-action-delete" type="button" data-delete-guru data-id="{{ $guru->id }}" data-delete-url="{{ route('admin.guru.destroy', $guru->id) }}">Hapus</button>
 						</div>
 					</td>
@@ -103,24 +103,16 @@
 <template id="guruMapelRowTemplate">
 	<div class="guru-mapel-row">
 		<div class="guru-mapel-row-fields">
-			<label>Pilih Mapel
-				<select class="admin-select" data-mapel-select name="mapel_items[__INDEX__][mapel_id]">
-					<option value="">Pilih mata pelajaran</option>
-					@foreach ($mapels as $mapel)
-						<option value="{{ $mapel->id }}">{{ $mapel->kode }} · {{ $mapel->nama_mapel }}</option>
-					@endforeach
-				</select>
-			</label>
-			<label>Atau Mapel Baru
-				<input class="admin-input" data-mapel-new type="text" name="mapel_items[__INDEX__][nama_baru]" maxlength="255" placeholder="Nama mata pelajaran">
+			<label>Nama Mapel
+				<input class="admin-input" data-mapel-name type="text" name="mapel_items[__INDEX__][nama_mapel]" maxlength="255" placeholder="Nama mata pelajaran">
 			</label>
 			<label>Kode Mapel
-				<input class="admin-input" data-mapel-code type="text" name="mapel_items[__INDEX__][kode_baru]" maxlength="100" placeholder="Contoh: 2'1">
+				<input class="admin-input" data-mapel-code type="text" name="mapel_items[__INDEX__][kode_mapel]" maxlength="100" placeholder="Contoh: 2'1">
 			</label>
 		</div>
 		<div class="guru-mapel-row-hours">
-			<label>Jam (JP)
-				<input class="admin-input" type="number" name="mapel_items[__INDEX__][jumlah_jam]" min="1" max="65535" step="1" placeholder="Contoh: 6">
+			<label>Jam Mengajar (JP)
+				<input class="admin-input" data-mapel-hours type="number" name="mapel_items[__INDEX__][jml_jam]" min="1" max="65535" step="1" placeholder="Contoh: 6">
 			</label>
 			<button class="guru-remove-mapel" type="button" data-remove-mapel aria-label="Batalkan baris mapel">Batal</button>
 		</div>
@@ -137,7 +129,7 @@
 			@csrf
 			<input type="hidden" name="form_context" value="add">
 			<label>Nama lengkap<input class="admin-input" type="text" name="nama_lengkap" value="{{ old('form_context') === 'add' ? old('nama_lengkap') : '' }}" required></label>
-			<label>NBM (username &amp; password awal, opsional)<input class="admin-input" type="text" name="nbm" value="{{ old('form_context') === 'add' ? old('nbm') : '' }}"></label>
+			<label>NBM (username &amp; password awal, opsional)<input class="admin-input" type="text" name="nbm" value="{{ old('form_context') === 'add' ? old('nbm') : '' }}"><small>Password awal otomatis menggunakan NBM yang diisi.</small></label>
 			<label>Status<select class="admin-select" name="status" required><option value="aktif">Aktif</option><option value="nonaktif" @selected (old('form_context') === 'add' && old('status') === 'nonaktif')>Nonaktif</option></select></label>
 			<fieldset class="guru-mapel-fieldset"><legend>Mata Pelajaran &amp; Jam</legend>
 				<div class="guru-mapel-items" data-mapel-items data-next-index="0"></div>
@@ -191,6 +183,10 @@
 			<input type="hidden" name="edit_guru_id" id="editGuruId">
 			<label>Nama lengkap<input class="admin-input" id="editGuruName" type="text" name="nama_lengkap" required></label>
 			<label>NBM (username, opsional)<input class="admin-input" id="editGuruNbm" type="text" name="nbm"></label>
+			<label>Password Baru
+				<input class="admin-input" id="editGuruPassword" type="password" name="password" minlength="6" autocomplete="new-password">
+				<small>Biarkan kosong jika tidak ingin mengubah password guru saat ini.</small>
+			</label>
 			<label>Status<select class="admin-select" id="editGuruStatus" name="status" required><option value="aktif">Aktif</option><option value="nonaktif">Nonaktif</option></select></label>
 			<fieldset class="guru-mapel-fieldset"><legend>Mata Pelajaran &amp; Jam Mengajar</legend>
 				<div class="guru-mapel-items" data-mapel-items data-next-index="0"></div>
@@ -407,22 +403,9 @@
 			row.querySelectorAll('[name]').forEach((input) => {
 				input.name = input.name.replaceAll('__INDEX__', index);
 			});
-			const select = row.querySelector('[data-mapel-select]');
-			const newMapel = row.querySelector('[data-mapel-new]');
-			const mapelCode = row.querySelector('[data-mapel-code]');
-			select.value = item.mapel_id || '';
-			newMapel.value = item.nama_baru || '';
-			mapelCode.value = item.kode_baru || '';
-			row.querySelector('input[type="number"]').value = item.jumlah_jam || '';
-			select.addEventListener('change', () => {
-				if (select.value) {
-					newMapel.value = '';
-					mapelCode.value = '';
-				}
-			});
-			newMapel.addEventListener('input', () => {
-				if (newMapel.value.trim()) select.value = '';
-			});
+			row.querySelector('[data-mapel-name]').value = item.nama_mapel ?? item.nama_baru ?? '';
+			row.querySelector('[data-mapel-code]').value = item.kode_mapel ?? item.kode_baru ?? '';
+			row.querySelector('[data-mapel-hours]').value = item.jml_jam ?? item.jumlah_jam ?? '';
 			row.querySelector('[data-remove-mapel]').addEventListener('click', () => row.remove());
 			container.append(row);
 		};
@@ -466,6 +449,7 @@
 			if (button) {
 				document.getElementById('editGuruName').value = button.dataset.nama;
 				document.getElementById('editGuruNbm').value = button.dataset.nbm;
+				document.getElementById('editGuruPassword').value = '';
 				document.getElementById('editGuruStatus').value = button.dataset.status;
 				document.getElementById('editGuruId').value = button.dataset.id;
 				editForm.action = editForm.dataset.updateUrl.replace(':id', button.dataset.id);

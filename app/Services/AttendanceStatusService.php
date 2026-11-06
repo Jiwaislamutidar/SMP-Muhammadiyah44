@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\DashboardAttendanceLog;
 use App\Models\Guru;
+use App\Models\PresensiGuru;
 use App\Models\SesiPelajaran;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -75,6 +77,13 @@ class AttendanceStatusService
                     'updated_at' => $timestamp,
                 ])->all()
             );
+
+            PresensiGuru::query()
+                ->whereIn('guru_id', $guruIds)
+                ->whereDate('tanggal', today())
+                ->where('status', 'Alfa')
+                ->get()
+                ->each(fn (PresensiGuru $attendance) => DashboardAttendanceLog::recordFromAttendance($attendance));
         }
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\DashboardAttendanceLog;
+use App\Models\DashboardAttendanceSessionLog;
 use App\Models\Guru;
 use App\Models\Kelas;
 use App\Models\PresensiPelajaran;
@@ -40,10 +42,12 @@ class AttendanceReportController extends Controller
         $gurus = Guru::query()
             ->with([
                 'mapels',
-                'presensiHarian' => fn ($query) => $query
+                'dashboardPresensiLogs' => fn ($query) => $query
                     ->whereDate('tanggal', '>=', $start)
-                    ->whereDate('tanggal', '<=', $end)
-                    ->orderBy('tanggal'),
+                    ->whereDate('tanggal', '<=', $end),
+                'dashboardAttendanceSessionLogs' => fn ($query) => $query
+                    ->whereDate('tanggal', '>=', $start)
+                    ->whereDate('tanggal', '<=', $end),
             ])
             ->orderBy('nama_lengkap')
             ->get();
@@ -54,33 +58,46 @@ class AttendanceReportController extends Controller
             'mapel' => $guru->mapels->pluck('nama_mapel')->join(', ') ?: 'Guru',
         ];
         $hadir = $gurus
-            ->filter(fn (Guru $guru): bool => $guru->presensiHarian->contains('status', 'Hadir'))
+            ->filter(fn (Guru $guru): bool => $guru->dashboardPresensiLogs->contains('status', 'Hadir')
+                || $guru->dashboardAttendanceSessionLogs->isNotEmpty())
             ->map(fn (Guru $guru): array => $mapGuru($guru) + [
-                'tanggal' => $guru->presensiHarian
-                    ->where('status', 'Hadir')
-                    ->map(fn ($attendance): array => [
-                        'tanggal' => $attendance->tanggal->toDateString(),
-                        'jam_masuk' => $attendance->jam_masuk,
+                'tanggal' => $guru->dashboardAttendanceSessionLogs
+                    ->map(fn (DashboardAttendanceSessionLog $session): array => [
+                        'id' => $session->id,
+                        'tanggal' => $session->tanggal->toDateString(),
+                        'session_type' => $session->session_type,
+                        'jam_masuk' => $session->session_type === 'masuk' ? $session->jam : null,
+                        'jam_pulang' => $session->session_type === 'pulang' ? $session->jam : null,
+                        'foto_masuk' => $session->session_type === 'masuk' && $session->foto ? asset('storage/'.$session->foto) : null,
+                        'foto_pulang' => $session->session_type === 'pulang' && $session->foto ? asset('storage/'.$session->foto) : null,
+                        'foto_bukti' => $session->foto ? asset('storage/'.$session->foto) : null,
                     ])
                     ->values(),
             ])
             ->values();
         $tidakHadir = $gurus
-            ->filter(fn (Guru $guru): bool => $guru->presensiHarian->contains(
+            ->filter(fn (Guru $guru): bool => $guru->dashboardPresensiLogs->contains(
                 fn ($attendance): bool => in_array($attendance->status, ['Izin', 'Sakit', 'Alfa'], true)
             ))
             ->map(fn (Guru $guru): array => $mapGuru($guru) + [
-                'tanggal' => $guru->presensiHarian
+                'tanggal' => $guru->dashboardPresensiLogs
                     ->whereIn('status', ['Izin', 'Sakit', 'Alfa'])
-                    ->map(fn ($attendance): array => [
+                    ->map(fn (DashboardAttendanceLog $attendance): array => [
+                        'id' => $attendance->id,
                         'tanggal' => $attendance->tanggal->toDateString(),
                         'status' => $attendance->status,
+                        'jam_masuk' => $attendance->jam_masuk,
+                        'jam_pulang' => $attendance->jam_pulang,
+                        'foto_masuk' => $attendance->foto_masuk ? asset('storage/'.$attendance->foto_masuk) : null,
+                        'foto_pulang' => $attendance->foto_pulang ? asset('storage/'.$attendance->foto_pulang) : null,
+                        'foto_bukti' => $attendance->foto_masuk ? asset('storage/'.$attendance->foto_masuk) : null,
+                        'bukti_izin' => $attendance->bukti_izin ? asset('storage/'.$attendance->bukti_izin) : null,
                     ])
                     ->values(),
             ])
             ->values();
         $belumPresensi = $gurus
-            ->filter(fn (Guru $guru): bool => $guru->presensiHarian->isEmpty())
+            ->filter(fn (Guru $guru): bool => $guru->dashboardPresensiLogs->isEmpty())
             ->map($mapGuru)
             ->values();
 

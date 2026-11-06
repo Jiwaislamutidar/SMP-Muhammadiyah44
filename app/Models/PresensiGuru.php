@@ -22,6 +22,16 @@ class PresensiGuru extends Model
         'tanggal' => 'date',
     ];
 
+    protected static function booted(): void
+    {
+        static::created(fn (self $attendance) => DashboardAttendanceLog::recordFromAttendance($attendance));
+        static::created(fn (self $attendance) => DashboardAttendanceSessionLog::recordFromAttendance($attendance));
+        static::updated(function (self $attendance): void {
+            DashboardAttendanceLog::syncFromAttendance($attendance);
+            DashboardAttendanceSessionLog::syncFromAttendance($attendance);
+        });
+    }
+
     public function guru(): BelongsTo
     {
         return $this->belongsTo(Guru::class);

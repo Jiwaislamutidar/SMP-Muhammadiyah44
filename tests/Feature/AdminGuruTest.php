@@ -35,10 +35,16 @@ class AdminGuruTest extends TestCase
             ->assertSee('Matematika QA')
             ->assertSee('('.$mapel->kode.')')
             ->assertSee('Tambah Guru')
+            ->assertSee('Password Baru')
+            ->assertSee('Biarkan kosong jika tidak ingin mengubah password guru saat ini.')
+            ->assertSee('Password awal otomatis menggunakan NBM yang diisi.')
             ->assertSee('name="nbm"', false)
             ->assertSee('Kode Mapel')
             ->assertSee('Tambah Baris Mapel & Jam')
-            ->assertSee('mapel_items[__INDEX__][jumlah_jam]')
+            ->assertSee('mapel_items[__INDEX__][nama_mapel]')
+            ->assertSee('mapel_items[__INDEX__][kode_mapel]')
+            ->assertSee('mapel_items[__INDEX__][jml_jam]')
+            ->assertDontSee('data-mapel-select')
             ->assertSee('data-delete-guru')
             ->assertDontSee('Nonaktifkan')
             ->assertDontSee('Aktifkan');
@@ -47,6 +53,7 @@ class AdminGuruTest extends TestCase
             ->post(route('admin.guru.store'), [
                 'nama_lengkap' => 'Guru QA '.bin2hex(random_bytes(3)),
                 'nbm' => $nbm,
+                'password' => '',
                 'status' => 'aktif',
                 'mapel_items' => [
                     ['mapel_id' => $mapel->id, 'nama_baru' => '', 'jumlah_jam' => 6],
@@ -63,6 +70,63 @@ class AdminGuruTest extends TestCase
         $mapelBaru = Mapel::where('nama_mapel', 'Mapel Manual QA')->firstOrFail();
         $this->assertSame(3, $guru->mapels->find($mapelBaru->id)->pivot->jumlah_jam);
         $this->assertSame($newMapelCode, $mapelBaru->kode);
+    }
+
+    public function test_admin_can_create_and_update_guru_with_direct_subject_fields(): void
+    {
+        $admin = $this->makeAdmin();
+        $existingMapel = Mapel::create([
+            'kode' => 'DIRECT-'.bin2hex(random_bytes(3)),
+            'nama_mapel' => 'Mapel Langsung',
+        ]);
+        $otherGuru = Guru::create([
+            'nama_lengkap' => 'Guru Relasi QA '.bin2hex(random_bytes(3)),
+            'nbm' => null,
+            'status' => 'aktif',
+        ]);
+        $otherGuru->mapels()->attach($existingMapel->id, ['jumlah_jam' => 9]);
+        $newMapelCode = 'DIRECT-'.bin2hex(random_bytes(3));
+        $namaGuru = 'Guru Input Langsung QA '.bin2hex(random_bytes(3));
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.guru.store'), [
+                'nama_lengkap' => $namaGuru,
+                'nbm' => '',
+                'status' => 'aktif',
+                'mapel_items' => [
+                    ['nama_mapel' => $existingMapel->nama_mapel, 'kode_mapel' => $existingMapel->kode, 'jml_jam' => 6],
+                    ['nama_mapel' => 'IPA Langsung', 'kode_mapel' => $newMapelCode, 'jml_jam' => 3],
+                ],
+            ])
+            ->assertCreated()
+            ->assertJsonPath('guru.mapel_items.0.nama_mapel', 'Mapel Langsung')
+            ->assertJsonPath('guru.mapel_items.0.kode_mapel', $existingMapel->kode);
+
+        $guru = Guru::where('nama_lengkap', $namaGuru)->firstOrFail();
+        $this->assertSame(1, Mapel::where('kode', $existingMapel->kode)->count());
+        $this->assertSame(6, $guru->mapels->find($existingMapel->id)->pivot->jumlah_jam);
+        $this->assertSame(9, $otherGuru->fresh()->mapels->find($existingMapel->id)->pivot->jumlah_jam);
+        $newMapel = Mapel::where('kode', $newMapelCode)->firstOrFail();
+        $this->assertSame(3, $guru->mapels->find($newMapel->id)->pivot->jumlah_jam);
+
+        $this->actingAs($admin)
+            ->putJson(route('admin.guru.update', $guru->id), [
+                'nama_lengkap' => $namaGuru,
+                'nbm' => '',
+                'status' => 'aktif',
+                'mapel_items' => [
+                    ['nama_mapel' => 'Mapel Langsung Diperbarui', 'kode_mapel' => $existingMapel->kode, 'jml_jam' => 7],
+                    ['nama_mapel' => 'IPA Langsung', 'kode_mapel' => $newMapelCode, 'jml_jam' => 4],
+                ],
+            ])
+            ->assertOk()
+            ->assertJsonPath('guru.mapel_items.0.jml_jam', 7);
+
+        $this->assertSame(1, Mapel::where('kode', $existingMapel->kode)->count());
+        $this->assertSame(7, $guru->fresh()->mapels->find($existingMapel->id)->pivot->jumlah_jam);
+        $this->assertSame(4, $guru->fresh()->mapels->find($newMapel->id)->pivot->jumlah_jam);
+        $this->assertSame(9, $otherGuru->fresh()->mapels->find($existingMapel->id)->pivot->jumlah_jam);
+        $this->assertSame('Mapel Langsung Diperbarui', $otherGuru->fresh()->mapels->find($existingMapel->id)->nama_mapel);
     }
 
     public function test_admin_can_update_guru_and_sync_subjects(): void
@@ -93,6 +157,48 @@ class AdminGuruTest extends TestCase
         $this->assertTrue(Hash::check($updatedGuru->nbm, $updatedGuru->user->password));
         $this->assertSame(12, $guru->fresh()->mapels->find($firstMapel->id)->pivot->jumlah_jam);
         $this->assertSame(5, $guru->fresh()->mapels->find($secondMapel->id)->pivot->jumlah_jam);
+    }
+
+    public function test_admin_can_reset_teacher_password_and_keep_it_when_password_is_blank(): void
+    {
+        $admin = $this->makeAdmin();
+        $originalPassword = 'old-teacher-password';
+        $user = User::create([
+            'name' => 'Guru Password',
+            'username' => 'NBM-PASSWORD-'.bin2hex(random_bytes(3)),
+            'email' => null,
+            'role' => 'guru',
+            'password' => Hash::make($originalPassword),
+        ]);
+        $guru = Guru::create([
+            'user_id' => $user->id,
+            'nama_lengkap' => 'Guru Password QA '.bin2hex(random_bytes(3)),
+            'nbm' => $user->username,
+            'status' => 'aktif',
+        ]);
+
+        $this->actingAs($admin)
+            ->putJson(route('admin.guru.update', $guru->id), [
+                'nama_lengkap' => $guru->nama_lengkap,
+                'nbm' => $guru->nbm,
+                'status' => 'aktif',
+                'password' => '',
+            ])
+            ->assertOk();
+
+        $this->assertTrue(Hash::check($originalPassword, $user->fresh()->password));
+
+        $newPassword = 'new-secure-password';
+        $this->actingAs($admin)
+            ->putJson(route('admin.guru.update', $guru->id), [
+                'nama_lengkap' => $guru->nama_lengkap,
+                'nbm' => $guru->nbm,
+                'status' => 'aktif',
+                'password' => $newPassword,
+            ])
+            ->assertOk();
+
+        $this->assertTrue(Hash::check($newPassword, $user->fresh()->password));
     }
 
     public function test_admin_can_delete_guru_and_linked_login_account(): void
@@ -211,6 +317,25 @@ class AdminGuruTest extends TestCase
             ->assertSessionHas('success');
 
         $this->assertSame(20, $guru->fresh()->mapels->find($mapel->id)->pivot->jumlah_jam);
+    }
+
+    public function test_imported_teacher_gets_nbm_as_default_password_and_username(): void
+    {
+        $admin = $this->makeAdmin();
+        $nbm = 'NBM-IMPORT-'.bin2hex(random_bytes(3));
+        $namaGuru = 'Guru Import Credential QA '.bin2hex(random_bytes(3));
+        $csv = "NBM,Nama Guru\n{$nbm},{$namaGuru}\n";
+
+        $this->actingAs($admin)
+            ->post(route('admin.guru.import'), [
+                'file' => UploadedFile::fake()->createWithContent('guru-credentials.csv', $csv),
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $guru = Guru::where('nbm', $nbm)->firstOrFail();
+        $this->assertSame($nbm, $guru->user->username);
+        $this->assertTrue(Hash::check($nbm, $guru->user->password));
     }
 
     public function test_admin_can_import_teacher_with_only_a_trimmed_name(): void

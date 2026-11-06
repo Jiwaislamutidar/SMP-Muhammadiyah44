@@ -8,7 +8,6 @@ use App\Services\AttendanceStatusService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class PresensiGuruController extends Controller
@@ -46,25 +45,10 @@ class PresensiGuruController extends Controller
         $guru = Guru::forUser(Auth::user());
         abort_unless($guru, 403, 'Profil guru belum terhubung ke akun ini.');
 
-        $presensi = $guru->presensiHarian()->get();
-        $foto = $presensi
-            ->flatMap(fn ($record) => [$record->foto_masuk, $record->foto_pulang, $record->bukti_izin])
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
-
-        $disk = Storage::disk('public');
-        foreach ($foto as $path) {
-            if ($disk->exists($path) && ! $disk->delete($path)) {
-                throw new \RuntimeException('Foto presensi tidak berhasil dihapus; riwayat tidak direset.');
-            }
-        }
-
         $guru->presensiHarian()->delete();
 
         return redirect()->route('guru.presensi-guru')
-            ->with('success', 'Seluruh riwayat presensi berhasil direset.');
+            ->with('success', 'Riwayat presensi pribadi berhasil direset. Log dashboard admin tetap tersimpan.');
     }
 
     public function masuk(Request $request, AttendanceStatusService $attendanceStatus): RedirectResponse

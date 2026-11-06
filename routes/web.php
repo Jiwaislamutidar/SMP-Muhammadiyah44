@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AdminJadwalController;
 use App\Http\Controllers\Admin\AdminKelasController;
 use App\Http\Controllers\Admin\AttendanceReportController;
 use App\Http\Controllers\Admin\AuthController as AdminAuth;
+use App\Http\Controllers\Admin\DashboardAttendanceLogController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\SiswaController as AdminSiswaController;
 use App\Http\Controllers\Guru\AuthController as GuruAuth;
@@ -55,6 +56,9 @@ Route::domain('admin.'.$domain)->group(function () {
         Route::get('/rekap-absensi/export', [AttendanceReportController::class, 'export'])->name('admin.rekapabsensi.export');
         Route::delete('/rekap-absensi', [AttendanceReportController::class, 'destroy'])->name('admin.rekapabsensi.destroy');
         Route::get('/dashboard/presensi-guru', [AttendanceReportController::class, 'guruPeriod'])->name('admin.dashboard.guru-period');
+        Route::delete('/dashboard/presensi-guru-session/{sessionLog}', [DashboardAttendanceLogController::class, 'destroySession'])->name('admin.dashboard.guru-session-log.destroy');
+        Route::delete('/dashboard/presensi-guru/{log}', [DashboardAttendanceLogController::class, 'destroy'])->name('admin.dashboard.guru-log.destroy');
+        Route::delete('/dashboard/presensi-guru', [DashboardAttendanceLogController::class, 'destroyPeriod'])->name('admin.dashboard.guru-log.destroy-period');
         Route::get('/profil', fn () => view('pages.admin.profil'))->name('admin.profil');
 
         Route::post('/logout', [AdminAuth::class, 'logout'])->name('admin.logout');

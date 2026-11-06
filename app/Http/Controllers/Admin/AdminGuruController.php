@@ -42,7 +42,6 @@ class AdminGuruController extends Controller
 
         return view('pages.admin.dataguru', [
             'gurus' => $gurus,
-            'mapels' => Mapel::orderBy('nama_mapel')->get(),
             'totalGuru' => Guru::count(),
         ]);
     }
@@ -52,10 +51,14 @@ class AdminGuruController extends Controller
         $validated = $request->validate([
             'nama_lengkap' => ['required', 'string', 'max:255', 'unique:gurus,nama_lengkap'],
             'nbm' => ['nullable', 'string', 'max:100', 'unique:gurus,nbm', 'unique:users,username'],
+            'password' => ['nullable', 'string', 'min:6', 'max:255'],
             'status' => ['required', 'in:aktif,nonaktif'],
             'mapel_items' => ['nullable', 'array'],
             'mapel_items.*' => ['array'],
             'mapel_items.*.mapel_id' => ['nullable', 'integer', 'exists:mapels,id'],
+            'mapel_items.*.nama_mapel' => ['nullable', 'string', 'max:255'],
+            'mapel_items.*.kode_mapel' => ['nullable', 'string', 'max:100'],
+            'mapel_items.*.jml_jam' => ['nullable', 'integer', 'between:1,65535'],
             'mapel_items.*.nama_baru' => ['nullable', 'string', 'max:255'],
             'mapel_items.*.kode_baru' => ['nullable', 'string', 'max:100', 'unique:mapels,kode'],
             'mapel_items.*.jumlah_jam' => ['nullable', 'integer', 'between:1,65535'],
@@ -70,7 +73,9 @@ class AdminGuruController extends Controller
                     'username' => $validated['nbm'],
                     'email' => null,
                     'role' => 'guru',
-                    'password' => Hash::make($validated['nbm']),
+                    'password' => Hash::make(filled($validated['password'] ?? null)
+                        ? $validated['password']
+                        : $validated['nbm']),
                 ]);
             }
 
@@ -156,13 +161,23 @@ class AdminGuruController extends Controller
                 Rule::unique('users', 'username')->ignore($linkedUserId),
             ],
             'status' => ['required', 'in:aktif,nonaktif'],
+            'password' => ['nullable', 'string', 'min:6', 'max:255'],
             'mapel_items' => ['nullable', 'array'],
             'mapel_items.*' => ['array'],
             'mapel_items.*.mapel_id' => ['nullable', 'integer', 'exists:mapels,id'],
+            'mapel_items.*.nama_mapel' => ['nullable', 'string', 'max:255'],
+            'mapel_items.*.kode_mapel' => ['nullable', 'string', 'max:100'],
+            'mapel_items.*.jml_jam' => ['nullable', 'integer', 'between:1,65535'],
             'mapel_items.*.nama_baru' => ['nullable', 'string', 'max:255'],
             'mapel_items.*.kode_baru' => ['nullable', 'string', 'max:100', Rule::unique('mapels', 'kode')],
             'mapel_items.*.jumlah_jam' => ['nullable', 'integer', 'between:1,65535'],
         ]);
+
+        if (filled($validated['password'] ?? null) && ! $linkedUserId && ! filled($validated['nbm'] ?? null)) {
+            throw ValidationException::withMessages([
+                'password' => 'Isi NBM untuk membuat akun login sebelum mengatur password.',
+            ]);
+        }
 
         DB::transaction(function () use ($guru, $linkedUserId, $validated) {
             $user = $guru->user ?? ($linkedUserId ? User::findOrFail($linkedUserId) : null);
@@ -181,6 +196,9 @@ class AdminGuruController extends Controller
             if ($user) {
                 $user->name = $validated['nama_lengkap'];
                 $user->username = $validated['nbm'];
+                if (filled($validated['password'] ?? null)) {
+                    $user->password = Hash::make($validated['password']);
+                }
                 $user->save();
             }
 
@@ -199,18 +217,7 @@ class AdminGuruController extends Controller
 
             return response()->json([
                 'message' => 'Data guru berhasil diperbarui.',
-                'guru' => [
-                    'id' => $guru->id,
-                    'nama_lengkap' => $guru->nama_lengkap,
-                    'nbm' => $guru->nbm,
-                    'status' => $guru->status,
-                    'mapels' => $guru->mapels->pluck('nama_mapel')->values(),
-                    'mapel_items' => $guru->mapels->map(fn ($mapel) => [
-                        'mapel_id' => $mapel->id,
-                        'jumlah_jam' => $mapel->pivot->jumlah_jam,
-                    ])->values(),
-                    'total_jam' => $guru->mapels->sum('pivot.jumlah_jam'),
-                ],
+                'guru' => $this->guruResponseData($guru),
                 'total_guru' => Guru::count(),
             ]);
         }
@@ -254,34 +261,40 @@ class AdminGuruController extends Controller
 
         foreach ($items as $index => $item) {
             $mapelId = $item['mapel_id'] ?? null;
-            $namaBaru = trim((string) ($item['nama_baru'] ?? ''));
-            $kodeBaru = trim((string) ($item['kode_baru'] ?? ''));
-            $jumlahJam = $item['jumlah_jam'] ?? null;
+            $namaMapel = trim((string) ($item['nama_mapel'] ?? $item['nama_baru'] ?? ''));
+            $kodeMapel = trim((string) ($item['kode_mapel'] ?? $item['kode_baru'] ?? ''));
+            $jumlahJam = $item['jml_jam'] ?? $item['jumlah_jam'] ?? null;
 
-            if (! $mapelId && $namaBaru === '' && $kodeBaru === '') {
+            if (! $mapelId && $namaMapel === '' && $kodeMapel === '') {
                 continue;
             }
 
-            if ($mapelId && ($namaBaru !== '' || $kodeBaru !== '')) {
+            if ($mapelId && ($namaMapel !== '' || $kodeMapel !== '')) {
                 throw ValidationException::withMessages([
-                    "mapel_items.{$index}.nama_baru" => 'Pilih mapel yang sudah ada atau isi kode dan nama mapel baru, jangan keduanya.',
+                    "mapel_items.{$index}.nama_mapel" => 'Isi kode dan nama mapel, atau gunakan referensi mapel yang sudah ada.',
                 ]);
             }
 
-            if (! $mapelId && ($namaBaru === '' || $kodeBaru === '')) {
+            if (! $mapelId && ($namaMapel === '' || $kodeMapel === '')) {
                 throw ValidationException::withMessages([
-                    "mapel_items.{$index}.kode_baru" => 'Kode dan nama mata pelajaran wajib diisi untuk membuat mapel baru.',
+                    "mapel_items.{$index}.kode_mapel" => 'Kode dan nama mata pelajaran wajib diisi.',
                 ]);
             }
 
             if ($jumlahJam !== null && $jumlahJam !== '' && (! is_numeric($jumlahJam) || (int) $jumlahJam < 0 || (int) $jumlahJam > 65535)) {
                 throw ValidationException::withMessages([
-                    "mapel_items.{$index}.jumlah_jam" => 'Jumlah jam wajib berupa angka antara 0 dan 65535.',
+                    "mapel_items.{$index}.jml_jam" => 'Jumlah jam wajib berupa angka antara 0 dan 65535.',
                 ]);
             }
 
             if (! $mapelId) {
-                $mapel = Mapel::create(['kode' => $kodeBaru, 'nama_mapel' => $namaBaru]);
+                $mapel = Mapel::firstOrCreate(
+                    ['kode' => $kodeMapel],
+                    ['nama_mapel' => $namaMapel],
+                );
+                if ($mapel->nama_mapel !== $namaMapel) {
+                    $mapel->update(['nama_mapel' => $namaMapel]);
+                }
                 $mapelId = $mapel->id;
             }
 
@@ -301,6 +314,9 @@ class AdminGuruController extends Controller
             'mapels' => $guru->mapels->pluck('nama_mapel')->values(),
             'mapel_items' => $guru->mapels->map(fn ($mapel) => [
                 'mapel_id' => $mapel->id,
+                'nama_mapel' => $mapel->nama_mapel,
+                'kode_mapel' => $mapel->kode,
+                'jml_jam' => $mapel->pivot->jumlah_jam,
                 'jumlah_jam' => $mapel->pivot->jumlah_jam,
             ])->values(),
             'total_jam' => $guru->mapels->sum('pivot.jumlah_jam'),

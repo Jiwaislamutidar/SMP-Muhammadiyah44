@@ -4,6 +4,7 @@
   justify-content: space-between;
 }
 .dash-title-group { display: flex; flex-direction: column; gap: 2px; }
+.dash-feedback { margin: 0; padding: 9px 12px; border: 1px solid #bbf7d0; border-radius: 8px; background: #f0fdf4; color: #166534; font-size: 12px; }
 .dash-title {
   margin: 0;
   color: #17211c;
@@ -69,6 +70,7 @@
   padding-bottom: 12px;
   border-bottom: 1px solid #e5e7eb;
 }
+.dash-attendance-filters { display: flex; align-items: center; gap: 8px; }
 .dash-card-title { margin: 0; color: #17211c; font-size: 13px; font-weight: 700; letter-spacing: .2px; text-transform: uppercase; }
 .dash-tabs { display: flex; gap: 16px; border-bottom: 1px solid #e5e7eb; }
 .dash-tab {
@@ -151,6 +153,30 @@
 .dash-status-badge--hadir { color: #087443; }
 .dash-status-badge--izin, .dash-status-badge--sakit { color: #b45309; }
 .dash-status-badge--alfa { color: #dc2626; }
+.dash-attendance-entry { display: flex; align-items: center; justify-content: flex-end; gap: 7px; }
+.dash-entry-status { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.dash-entry-actions { display: inline-flex; align-items: center; gap: 5px; }
+.dash-delete-button {
+  min-height: 28px;
+  padding: 4px 7px;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #fff;
+  color: #b91c1c;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dash-delete-button:hover { border-color: #dc2626; background: #fef2f2; }
+.dash-photo-preview { min-height: 28px; padding: 4px 7px; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; color: #1d4ed8; font: inherit; font-size: 10px; font-weight: 600; white-space: nowrap; cursor: zoom-in; }
+.dash-photo-preview:hover { border-color: #1d4ed8; background: #eff6ff; }
+.dash-log-toolbar { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding-top: 10px; border-top: 1px solid #e5e7eb; color: #6b756f; font-size: 11px; }
+.dash-log-toolbar label { display: flex; align-items: center; gap: 8px; }
+.dash-photo-modal { position: fixed; inset: 0; width: min(900px, calc(100vw - 32px)); max-width: none; max-height: calc(100vh - 32px); margin: auto; padding: 42px 12px 12px; border: 0; border-radius: 12px; background: #111827; }
+.dash-photo-modal::backdrop { background: rgba(15, 23, 42, .78); }
+.dash-photo-modal img { display: block; max-width: 100%; max-height: calc(100vh - 100px); margin: 0 auto; object-fit: contain; }
+.dash-photo-modal-close { position: absolute; top: 10px; right: 10px; padding: 6px 10px; border: 1px solid #6b7280; border-radius: 6px; background: #1f2937; color: #fff; cursor: pointer; }
 .dash-empty { margin: 8px 0; color: #6b756f; font-size: 12px; text-align: center; }
 .dash-fetch-error { margin: 0; color: #b91c1c; font-size: 11px; }
 .dash-unrecorded { margin-top: 12px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f8fafc; }
@@ -208,9 +234,13 @@
   .dash-name { max-width: 160px; }
 }
 @media (max-width: 560px) {
+  .dash-absent-card .dash-card-header { align-items: flex-start; flex-direction: column; }
   .dash-schedule-header { align-items: flex-start; flex-direction: column; }
+  .dash-attendance-filters { flex-wrap: wrap; }
   .dash-class-filter { width: 100%; }
   .dash-filter-label { width: 100%; }
   .dash-absence-item { align-items: flex-start; }
   .dash-absence-right { max-width: 45%; }
+  .dash-log-toolbar { align-items: stretch; flex-direction: column; }
+  .dash-log-toolbar label { align-items: flex-start; flex-direction: column; }
 }

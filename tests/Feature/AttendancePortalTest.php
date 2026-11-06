@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\DashboardAttendanceLog;
+use App\Models\DashboardAttendanceSessionLog;
 use App\Models\Guru;
 use App\Models\JadwalPelajaran;
 use App\Models\Kelas;
@@ -218,7 +220,230 @@ class AttendancePortalTest extends TestCase
 
         $this->assertNotNull($presensi->fresh()->jam_pulang);
         Storage::disk('public')->assertExists($presensi->fresh()->foto_pulang);
+        $this->assertDatabaseHas('dashboard_presensi_guru_logs', [
+            'source_presensi_id' => $presensi->id,
+            'foto_pulang' => $presensi->fresh()->foto_pulang,
+        ]);
+        $admin = User::create([
+            'name' => 'Admin QA '.bin2hex(random_bytes(4)),
+            'username' => 'admin-qa-'.bin2hex(random_bytes(4)),
+            'email' => null,
+            'role' => 'admin',
+            'password' => Hash::make('test-password'),
+        ]);
+        $periodResponse = $this->actingAs($admin)
+            ->getJson(route('admin.dashboard.guru-period', ['periode' => 'hari']))
+            ->assertOk()
+            ->json();
+        $teacherSessions = collect($periodResponse['hadir'])->firstWhere('id', $guru->id)['tanggal'];
+        $masukEntry = collect($teacherSessions)->firstWhere('session_type', 'masuk');
+        $pulangEntry = collect($teacherSessions)->firstWhere('session_type', 'pulang');
+        $this->assertSame($presensi->fresh()->jam_masuk, $masukEntry['jam_masuk']);
+        $this->assertSame($presensi->fresh()->jam_pulang, $pulangEntry['jam_pulang']);
+        $this->assertSame(asset('storage/'.$presensi->fresh()->foto_masuk), $masukEntry['foto_masuk']);
+        $this->assertSame(asset('storage/'.$presensi->fresh()->foto_pulang), $pulangEntry['foto_pulang']);
+
+        $dashboard = $this->get(route('admin.dashboard'))->assertOk();
+        $dashboard
+            ->assertSee('value="semua"', false)
+            ->assertSee('value="masuk"', false)
+            ->assertSee('value="pulang"', false)
+            ->assertSee('data-attendance-session="masuk"', false)
+            ->assertSee('data-attendance-session="pulang"', false)
+            ->assertSee('Lihat Foto')
+            ->assertDontSee('<img src="'.asset('storage/'.$presensi->fresh()->foto_masuk), false)
+            ->assertDontSee('<img src="'.asset('storage/'.$presensi->fresh()->foto_pulang), false);
         $this->travelBack();
+    }
+
+    public function test_teacher_history_reset_keeps_independent_admin_log_and_photo(): void
+    {
+        [$guruUser, $guru] = $this->makeTeacher();
+        Storage::fake('public');
+        $photoPath = 'presensi_guru/2026/11/check-in.jpg';
+        Storage::disk('public')->put($photoPath, 'photo proof');
+        $attendance = PresensiGuru::create([
+            'guru_id' => $guru->id,
+            'tanggal' => today(),
+            'jam_masuk' => '07:30:00',
+            'foto_masuk' => $photoPath,
+            'status' => 'Hadir',
+        ]);
+        $log = DashboardAttendanceLog::where('source_presensi_id', $attendance->id)->firstOrFail();
+        $sessionLog = DashboardAttendanceSessionLog::where('source_presensi_id', $attendance->id)
+            ->where('session_type', 'masuk')
+            ->firstOrFail();
+
+        $this->actingAs($guruUser)
+            ->delete(route('guru.presensi-riwayat.reset'))
+            ->assertRedirect(route('guru.presensi-guru'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('presensi_gurus', ['id' => $attendance->id]);
+        $this->assertDatabaseHas('dashboard_presensi_guru_logs', [
+            'id' => $log->id,
+            'foto_masuk' => $photoPath,
+        ]);
+        Storage::disk('public')->assertExists($photoPath);
+
+        $admin = User::create([
+            'name' => 'Admin QA '.bin2hex(random_bytes(4)),
+            'username' => 'admin-qa-'.bin2hex(random_bytes(4)),
+            'email' => null,
+            'role' => 'admin',
+            'password' => Hash::make('test-password'),
+        ]);
+        $periodResponse = $this->actingAs($admin)
+            ->getJson(route('admin.dashboard.guru-period', ['periode' => 'hari']))
+            ->assertOk()
+            ->json();
+        $teacherEntry = collect($periodResponse['hadir'])->firstWhere('id', $guru->id);
+        $sessionEntry = collect($teacherEntry['tanggal'])->firstWhere('session_type', 'masuk');
+        $this->assertSame($sessionLog->id, $sessionEntry['id']);
+        $this->assertSame(asset('storage/'.$photoPath), $sessionEntry['foto_bukti']);
+    }
+
+    public function test_admin_can_delete_dashboard_logs_without_deleting_teacher_attendance(): void
+    {
+        [, $guru] = $this->makeTeacher();
+        $attendance = PresensiGuru::create([
+            'guru_id' => $guru->id,
+            'tanggal' => today(),
+            'status' => 'Hadir',
+        ]);
+        $log = DashboardAttendanceLog::where('source_presensi_id', $attendance->id)->firstOrFail();
+        $admin = User::create([
+            'name' => 'Admin QA '.bin2hex(random_bytes(4)),
+            'username' => 'admin-qa-'.bin2hex(random_bytes(4)),
+            'email' => null,
+            'role' => 'admin',
+            'password' => Hash::make('test-password'),
+        ]);
+        $this->actingAs($admin)
+            ->delete(route('admin.dashboard.guru-log.destroy', $log))
+            ->assertRedirect(route('admin.dashboard'));
+
+        $this->assertDatabaseHas('presensi_gurus', ['id' => $attendance->id]);
+        $this->assertDatabaseMissing('dashboard_presensi_guru_logs', ['id' => $log->id]);
+    }
+
+    public function test_admin_can_delete_masuk_and_pulang_session_logs_independently_by_id(): void
+    {
+        [, $guruMasuk] = $this->makeTeacher();
+        $attendanceMasuk = PresensiGuru::create([
+            'guru_id' => $guruMasuk->id,
+            'tanggal' => today(),
+            'jam_masuk' => '07:30:00',
+            'foto_masuk' => 'masuk.jpg',
+            'jam_pulang' => '15:00:00',
+            'foto_pulang' => 'pulang.jpg',
+            'status' => 'Hadir',
+        ]);
+        $masukLog = DashboardAttendanceSessionLog::where('source_presensi_id', $attendanceMasuk->id)
+            ->where('session_type', 'masuk')
+            ->firstOrFail();
+        $pulangLog = DashboardAttendanceSessionLog::where('source_presensi_id', $attendanceMasuk->id)
+            ->where('session_type', 'pulang')
+            ->firstOrFail();
+        $admin = User::create([
+            'name' => 'Admin QA '.bin2hex(random_bytes(4)),
+            'username' => 'admin-qa-'.bin2hex(random_bytes(4)),
+            'email' => null,
+            'role' => 'admin',
+            'password' => Hash::make('test-password'),
+        ]);
+        $this->actingAs($admin)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee(route('admin.dashboard.guru-session-log.destroy', $masukLog), false)
+            ->assertSee(route('admin.dashboard.guru-session-log.destroy', $pulangLog), false);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.dashboard.guru-session-log.destroy', $masukLog))
+            ->assertRedirect(route('admin.dashboard'));
+
+        $this->assertDatabaseMissing('dashboard_presensi_guru_session_logs', ['id' => $masukLog->id]);
+        $this->assertDatabaseHas('dashboard_presensi_guru_session_logs', ['id' => $pulangLog->id]);
+        $this->assertDatabaseHas('presensi_gurus', ['id' => $attendanceMasuk->id]);
+        $this->assertDatabaseHas('dashboard_presensi_guru_logs', [
+            'source_presensi_id' => $attendanceMasuk->id,
+            'jam_masuk' => '07:30:00',
+            'jam_pulang' => '15:00:00',
+        ]);
+        $attendanceMasuk->update(['jam_pulang' => '15:01:00']);
+        $this->assertDatabaseMissing('dashboard_presensi_guru_session_logs', ['id' => $masukLog->id]);
+        $this->assertDatabaseHas('dashboard_presensi_guru_session_logs', ['id' => $pulangLog->id]);
+
+        [, $guruPulang] = $this->makeTeacher();
+        $attendancePulang = PresensiGuru::create([
+            'guru_id' => $guruPulang->id,
+            'tanggal' => today(),
+            'jam_masuk' => '07:45:00',
+            'foto_masuk' => 'masuk-2.jpg',
+            'jam_pulang' => '15:10:00',
+            'foto_pulang' => 'pulang-2.jpg',
+            'status' => 'Hadir',
+        ]);
+        $masukLog = DashboardAttendanceSessionLog::where('source_presensi_id', $attendancePulang->id)
+            ->where('session_type', 'masuk')
+            ->firstOrFail();
+        $pulangLog = DashboardAttendanceSessionLog::where('source_presensi_id', $attendancePulang->id)
+            ->where('session_type', 'pulang')
+            ->firstOrFail();
+
+        $this->delete(route('admin.dashboard.guru-session-log.destroy', $pulangLog))
+            ->assertRedirect(route('admin.dashboard'));
+
+        $this->assertDatabaseHas('dashboard_presensi_guru_session_logs', ['id' => $masukLog->id]);
+        $this->assertDatabaseMissing('dashboard_presensi_guru_session_logs', ['id' => $pulangLog->id]);
+        $this->assertDatabaseHas('presensi_gurus', ['id' => $attendancePulang->id]);
+        $attendancePulang->update(['jam_masuk' => '07:46:00']);
+        $this->assertDatabaseHas('dashboard_presensi_guru_session_logs', ['id' => $masukLog->id]);
+        $this->assertDatabaseMissing('dashboard_presensi_guru_session_logs', ['id' => $pulangLog->id]);
+    }
+
+    public function test_admin_bulk_delete_only_removes_dashboard_logs_in_selected_period(): void
+    {
+        [, $recentGuru] = $this->makeTeacher();
+        [, $oldGuru] = $this->makeTeacher();
+        $recentAttendance = PresensiGuru::create([
+            'guru_id' => $recentGuru->id,
+            'tanggal' => today(),
+            'jam_masuk' => '07:30:00',
+            'jam_pulang' => '15:00:00',
+            'status' => 'Hadir',
+        ]);
+        $oldAttendance = PresensiGuru::create([
+            'guru_id' => $oldGuru->id,
+            'tanggal' => today()->subDays(40),
+            'jam_masuk' => '07:30:00',
+            'jam_pulang' => '15:00:00',
+            'status' => 'Hadir',
+        ]);
+        $recentLog = DashboardAttendanceLog::where('source_presensi_id', $recentAttendance->id)->firstOrFail();
+        $oldLog = DashboardAttendanceLog::where('source_presensi_id', $oldAttendance->id)->firstOrFail();
+        $admin = User::create([
+            'name' => 'Admin QA '.bin2hex(random_bytes(4)),
+            'username' => 'admin-qa-'.bin2hex(random_bytes(4)),
+            'email' => null,
+            'role' => 'admin',
+            'password' => Hash::make('test-password'),
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.dashboard.guru-log.destroy-period'), ['periode' => 'bulan'])
+            ->assertRedirect(route('admin.dashboard'));
+
+        $this->assertDatabaseMissing('dashboard_presensi_guru_logs', ['id' => $recentLog->id]);
+        $this->assertDatabaseHas('dashboard_presensi_guru_logs', ['id' => $oldLog->id]);
+        $this->assertDatabaseMissing('dashboard_presensi_guru_session_logs', [
+            'source_presensi_id' => $recentAttendance->id,
+        ]);
+        $this->assertDatabaseHas('dashboard_presensi_guru_session_logs', [
+            'source_presensi_id' => $oldAttendance->id,
+        ]);
+        $this->assertDatabaseHas('presensi_gurus', ['id' => $recentAttendance->id]);
+        $this->assertDatabaseHas('presensi_gurus', ['id' => $oldAttendance->id]);
     }
 
     public function test_expired_open_sessions_become_complete_and_unscanned_students_become_alfa(): void

@@ -92,6 +92,9 @@ class GuruImport implements ToCollection
                     $user->name = $namaGuru;
                     $user->username = $nbm;
                     $user->role = 'guru';
+                    if (blank($user->password)) {
+                        $user->password = Hash::make($nbm);
+                    }
                     $user->save();
 
                     if (! $guru->user_id) {

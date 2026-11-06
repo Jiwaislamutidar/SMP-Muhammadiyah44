@@ -40,22 +40,24 @@ class DashboardController extends Controller
         $gurus = Guru::query()
             ->with([
                 'mapels',
-                'presensiHarian' => fn ($query) => $query->whereDate('tanggal', today()),
+                'dashboardPresensiLogs' => fn ($query) => $query->whereDate('tanggal', today()),
+                'dashboardAttendanceSessionLogs' => fn ($query) => $query->whereDate('tanggal', today()),
             ])
             ->orderBy('nama_lengkap')
             ->get();
         $guruHadir = $gurus
-            ->filter(fn (Guru $guru): bool => $guru->presensiHarian->first()?->status === 'Hadir')
+            ->filter(fn (Guru $guru): bool => $guru->dashboardPresensiLogs->contains('status', 'Hadir')
+                || $guru->dashboardAttendanceSessionLogs->isNotEmpty())
             ->values();
         $guruTidakHadir = $gurus
             ->filter(fn (Guru $guru): bool => in_array(
-                $guru->presensiHarian->first()?->status,
+                $guru->dashboardPresensiLogs->first()?->status,
                 ['Izin', 'Sakit', 'Alfa'],
                 true
             ))
             ->values();
         $guruBelumPresensi = $gurus
-            ->filter(fn (Guru $guru): bool => $guru->presensiHarian->isEmpty())
+            ->filter(fn (Guru $guru): bool => $guru->dashboardPresensiLogs->isEmpty())
             ->values();
 
         $hariIni = mb_strtolower(Carbon::now()->locale('id')->isoFormat('dddd'));

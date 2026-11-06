@@ -43,6 +43,7 @@ Route::domain('admin.'.$domain)->group(function () {
         Route::get('/data-murid/template', [AdminSiswaController::class, 'template'])->name('admin.siswa.template');
         Route::post('/data-murid/import', [AdminSiswaController::class, 'import'])->name('admin.siswa.import');
         Route::post('/data-murid/import-manual', [AdminSiswaController::class, 'manualImport'])->name('admin.siswa.manual-import');
+        Route::put('/data-murid/{siswa}', [AdminSiswaController::class, 'update'])->name('admin.siswa.update');
         Route::delete('/data-murid/{siswa}', [AdminSiswaController::class, 'destroy'])->name('admin.siswa.destroy');
         Route::get('/data-kelas', [AdminKelasController::class, 'index'])->name('admin.datakelas');
         Route::post('/data-kelas', [AdminKelasController::class, 'store'])->name('admin.kelas.store');

@@ -213,4 +213,82 @@ class SiswaImportTest extends TestCase
         $this->assertDatabaseMissing('siswas', ['id' => $student->id]);
         $this->assertDatabaseMissing('users', ['id' => $user->id]);
     }
+
+    public function test_admin_can_edit_student_data_and_optionally_change_the_password(): void
+    {
+        $admin = User::create([
+            'name' => 'Admin Student Edit Test',
+            'username' => 'admin-student-edit-'.bin2hex(random_bytes(4)),
+            'email' => null,
+            'role' => 'admin',
+            'password' => Hash::make('test-password'),
+        ]);
+        $kelasAwal = Kelas::create(['nama_kelas' => '7.'.random_int(1, 9)]);
+        $kelasBaru = Kelas::create(['nama_kelas' => '8.'.random_int(1, 9)]);
+        $nisnAwal = 'nisn-awal-'.bin2hex(random_bytes(4));
+        $nisnBaru = 'nisn-baru-'.bin2hex(random_bytes(4));
+        $passwordAwal = 'password-awal';
+        $user = User::create([
+            'name' => 'Murid Sebelum Edit',
+            'username' => $nisnAwal,
+            'email' => null,
+            'role' => 'siswa',
+            'password' => Hash::make($passwordAwal),
+        ]);
+        $student = Siswa::create([
+            'user_id' => $user->id,
+            'nisn' => $nisnAwal,
+            'nama_lengkap' => 'Murid Sebelum Edit',
+            'kelas_id' => $kelasAwal->id,
+            'status' => 'aktif',
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.datamurid'))
+            ->assertOk()
+            ->assertSee('data-edit-student', false)
+            ->assertSee('id="editStudentModal"', false)
+            ->assertSee('name="kode_kelas"', false)
+            ->assertSee('Password Baru')
+            ->assertSee('Biarkan kosong jika tidak ingin mengubah password siswa saat ini.');
+
+        $this->actingAs($admin)
+            ->put(route('admin.siswa.update', $student), [
+                'form_context' => 'edit',
+                'edit_siswa_id' => $student->id,
+                'nisn' => $nisnBaru,
+                'nama_lengkap' => 'Murid Sesudah Edit',
+                'kode_kelas' => $kelasBaru->nama_kelas,
+                'password' => '',
+            ])
+            ->assertRedirect(route('admin.datamurid'))
+            ->assertSessionHas('success', 'Data murid berhasil diperbarui.');
+
+        $this->assertDatabaseHas('siswas', [
+            'id' => $student->id,
+            'nisn' => $nisnBaru,
+            'nama_lengkap' => 'Murid Sesudah Edit',
+            'kelas_id' => $kelasBaru->id,
+        ]);
+        $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'username' => $nisnBaru,
+            'name' => 'Murid Sesudah Edit',
+        ]);
+        $this->assertTrue(Hash::check($passwordAwal, $user->fresh()->password));
+
+        $passwordBaru = 'password-baru';
+        $this->actingAs($admin)
+            ->put(route('admin.siswa.update', $student), [
+                'form_context' => 'edit',
+                'edit_siswa_id' => $student->id,
+                'nisn' => $nisnBaru,
+                'nama_lengkap' => 'Murid Sesudah Edit',
+                'kode_kelas' => $kelasBaru->nama_kelas,
+                'password' => $passwordBaru,
+            ])
+            ->assertRedirect(route('admin.datamurid'));
+
+        $this->assertTrue(Hash::check($passwordBaru, $user->fresh()->password));
+    }
 }

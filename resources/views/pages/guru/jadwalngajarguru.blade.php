@@ -28,7 +28,7 @@
 						@forelse($jadwals as $jadwal)
 							<tr>
 								<td>{{ $jadwal->hari }}</td><td class="time">{{ substr($jadwal->jam_mulai, 0, 5) }} - {{ substr($jadwal->jam_selesai, 0, 5) }}</td>
-								<td><strong>{{ $jadwal->mapel->nama_mapel }}</strong><small>Ruang KBM: {{ $jadwal->ruangan ?? '-' }}</small></td><td><span class="class-chip">{{ $jadwal->kelas->nama_kelas }}</span></td>
+								<td><strong>{{ $jadwal->mapel->nama_mapel }}</strong><small>Ruang KBM: {{ $jadwal->kelas?->ruangan ?? '-' }}</small></td><td><span class="class-chip">{{ $jadwal->kelas->nama_kelas }}</span></td>
 								<td><a class="detail-btn" href="{{ route('guru.presensi-murid', ['jadwal' => $jadwal->id]) }}">Kelola Presensi</a></td>
 							</tr>
 						@empty<tr><td colspan="5">Tidak ada jadwal mengajar yang tersimpan.</td></tr>@endforelse

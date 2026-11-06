@@ -106,7 +106,7 @@
 					<td><span class="schedule-subject">{{ $jadwal->mapel->nama_mapel }}</span></td>
 					<td><span class="schedule-teacher">{{ $jadwal->guru->nama_lengkap }}</span></td>
 					<td><span class="schedule-class">{{ $jadwal->kelas->nama_kelas }}</span></td>
-					<td><span class="schedule-room">{{ $jadwal->ruangan ?: '-' }}</span></td>
+					<td><span class="schedule-room">{{ $jadwal->kelas?->ruangan ?: '-' }}</span></td>
 					<td>
 						<button class="schedule-delete-button admin-delete-button" type="button" data-delete-schedule
 							data-delete-url="{{ route('admin.jadwalpelajaran.destroy', $jadwal) }}"

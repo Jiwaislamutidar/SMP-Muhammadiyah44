@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('title', 'Data Guru')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/dataguru.css') }}?v=9">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/dataguru.css') }}?v=10">@endsection
 @section('content')
 <div class="admin-page-header">
 	<div>
@@ -31,7 +31,7 @@
 		<option value="aktif" @selected (request('status') === 'aktif')>Aktif</option>
 		<option value="nonaktif" @selected (request('status') === 'nonaktif')>Nonaktif</option>
 	</select>
-	<span class="admin-total" id="guruTotal">Total {{ $totalGuru }} Guru</span>
+	<span class="guru-total" id="guruTotal">Total {{ $totalGuru }} Guru</span>
 </form>
 
 <section class="panel admin-table-wrap">

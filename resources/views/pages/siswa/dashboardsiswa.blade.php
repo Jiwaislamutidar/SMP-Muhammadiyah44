@@ -472,7 +472,7 @@ $rTotal = $rHadir + $rIzin + $rSakit + $rAlfa;
                   <th>Jam</th>
                   <th>Mapel</th>
                   <th>Guru</th>
-                  <th>Kelas</th>
+                  <th>Kelas / Ruangan</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -485,11 +485,12 @@ $rTotal = $rHadir + $rIzin + $rSakit + $rAlfa;
                     <td data-label="Guru">{{ $jadwal->guru->nama_lengkap }}</td>
                     <td data-label="Kelas">
                       <span class="kelas-chip">{{ $jadwal->kelas->nama_kelas }}</span>
+                      <small>{{ $jadwal->kelas?->ruangan ?? '-' }}</small>
                     </td>
                   </tr>
                 @empty
                   <tr>
-                    <td colspan="5" data-label="Info">
+                    <td colspan="6" data-label="Info">
                       Tidak ada jadwal pembelajaran tersimpan untuk kelas Anda.
                     </td>
                   </tr>

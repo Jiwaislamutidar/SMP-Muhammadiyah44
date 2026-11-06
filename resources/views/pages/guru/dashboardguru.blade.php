@@ -114,7 +114,7 @@
           </div>
 
           <div class="session-footer">
-            <span>Ruang kelas: {{ $jadwalSaatIni?->ruangan ?? '-' }}</span>
+            <span>Ruang kelas: {{ $jadwalSaatIni?->kelas?->ruangan ?? '-' }}</span>
             <strong>{{ $sesiBerlangsung ? 'Sesi aktif otomatis tersinkron' : 'Jadwal hari ini' }}</strong>
           </div>
         </div>

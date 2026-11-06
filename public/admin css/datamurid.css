@@ -234,6 +234,122 @@
 }
 .student-delete-button:hover { background: #fef2f2; }
 
+.student-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.student-edit-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(15, 30, 22, .48);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: studentModalFadeIn .2s ease;
+}
+.student-edit-backdrop[hidden] { display: none !important; }
+.student-edit-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 580px);
+  min-width: 0;
+  max-height: calc(100vh - 36px);
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 24px 60px rgba(15, 30, 22, .22);
+  animation: studentModalIn .22s cubic-bezier(.16, 1, .3, 1);
+}
+.student-edit-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.student-edit-heading h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 700;
+}
+.student-edit-close {
+  display: grid;
+  flex: 0 0 30px;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all .15s;
+}
+.student-edit-close:hover {
+  border-color: #fca5a5;
+  background: #fee2e2;
+  color: #dc2626;
+}
+.student-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  padding: 20px 24px;
+}
+.student-edit-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.student-edit-form small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+.student-edit-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.student-edit-cancel {
+  padding: 9px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+}
+.student-edit-cancel:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+
 .student-delete-modal {
   width: min(440px, calc(100vw - 32px));
   padding: 24px;

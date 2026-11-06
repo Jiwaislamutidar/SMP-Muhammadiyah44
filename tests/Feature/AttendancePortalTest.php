@@ -798,7 +798,10 @@ class AttendancePortalTest extends TestCase
     {
         [$guruUser, $guru] = $this->makeTeacher();
         [, $guruPemilikJadwal] = $this->makeTeacher();
-        $kelas = Kelas::create(['nama_kelas' => 'Kelas Mingguan QA '.bin2hex(random_bytes(3))]);
+        $kelas = Kelas::create([
+            'nama_kelas' => 'Kelas Mingguan QA '.bin2hex(random_bytes(3)),
+            'ruangan' => 'Ruang Lama Mingguan QA',
+        ]);
         $mapelDiampu = Mapel::create([
             'kode' => 'MINGGUAN-'.bin2hex(random_bytes(3)),
             'nama_mapel' => 'Mapel Mingguan QA',
@@ -820,8 +823,13 @@ class AttendancePortalTest extends TestCase
                 'hari' => $hari,
                 'jam_mulai' => '07:00:00',
                 'jam_selesai' => '07:40:00',
+                'ruangan' => 'Ruang Salinan Jadwal Lama',
             ]);
         }
+        $kelas->update([
+            'nama_kelas' => 'Kelas Terbaru Mingguan QA',
+            'ruangan' => 'Ruang Terbaru Mingguan QA',
+        ]);
 
         $this->actingAs($guruUser)
             ->get(route('guru.jadwal'))
@@ -829,6 +837,9 @@ class AttendancePortalTest extends TestCase
             ->assertSee('Jadwal mingguan Anda')
             ->assertSee('Selasa')
             ->assertSee($mapelDiampu->nama_mapel)
+            ->assertSee('Kelas Terbaru Mingguan QA')
+            ->assertSee('Ruang Terbaru Mingguan QA')
+            ->assertDontSee('Ruang Salinan Jadwal Lama')
             ->assertDontSee($mapelLain->nama_mapel);
     }
 
@@ -1160,6 +1171,57 @@ class AttendancePortalTest extends TestCase
             'user_id' => $guruUser->id,
             'nama_lengkap' => $guruUser->name,
         ]);
+    }
+
+    public function test_teacher_dashboard_shows_todays_schedule_and_only_the_current_time_slot(): void
+    {
+        $this->travelTo(Carbon::parse('2026-11-06 09:30:00', 'Asia/Jakarta'));
+        [$guruUser, $guru] = $this->makeTeacher();
+        $kelas = Kelas::create(['nama_kelas' => 'Dashboard QA '.bin2hex(random_bytes(4))]);
+        $mapel = Mapel::create([
+            'kode' => 'DASHBOARD-'.bin2hex(random_bytes(4)),
+            'nama_mapel' => 'Mapel Dashboard Aktif QA',
+        ]);
+        $mapelHariLain = Mapel::create([
+            'kode' => 'DASHBOARD-'.bin2hex(random_bytes(4)),
+            'nama_mapel' => 'Mapel Dashboard Hari Lain QA',
+        ]);
+        JadwalPelajaran::create([
+            'guru_id' => $guru->id,
+            'kelas_id' => $kelas->id,
+            'mapel_id' => $mapel->id,
+            'hari' => 'Jumat',
+            'jam_mulai' => '09:00:00',
+            'jam_selesai' => '10:00:00',
+        ]);
+        JadwalPelajaran::create([
+            'guru_id' => $guru->id,
+            'kelas_id' => $kelas->id,
+            'mapel_id' => $mapelHariLain->id,
+            'hari' => 'Selasa',
+            'jam_mulai' => '09:00:00',
+            'jam_selesai' => '10:00:00',
+        ]);
+
+        $this->actingAs($guruUser)
+            ->get(route('guru.dashboard'))
+            ->assertOk()
+            ->assertSee('Jadwal Mengajar Hari Ini')
+            ->assertSee('Sesi Mengajar Saat Ini')
+            ->assertSee('Sedang Berlangsung')
+            ->assertSee($mapel->nama_mapel)
+            ->assertSee($kelas->nama_kelas)
+            ->assertSee('Jam: 09:00–10:00 WIB')
+            ->assertDontSee($mapelHariLain->nama_mapel);
+
+        $this->travelTo(Carbon::parse('2026-11-06 10:00:00', 'Asia/Jakarta'));
+        $this->actingAs($guruUser)
+            ->get(route('guru.dashboard'))
+            ->assertOk()
+            ->assertSee('Tidak ada sesi aktif')
+            ->assertSee($mapel->nama_mapel);
+
+        $this->travelBack();
     }
 
     public function test_guru_login_rejects_non_string_credentials(): void

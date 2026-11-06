@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('title', 'Data Murid')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/datamurid.css') }}?v=6">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/datamurid.css') }}?v=7">@endsection
 @section('content')
 <div class="admin-page-header">
 	<div>
@@ -72,9 +72,18 @@
 					<td><span class="student-nisn">{{ $siswa->nisn }}</span></td>
 					<td><span class="student-class">{{ $siswa->kelas->nama_kelas ?? 'Belum ada kelas' }}</span></td>
 					<td><span class="student-status">{{ ucfirst($siswa->status) }}</span></td>
-					<td><button class="student-delete-button admin-delete-button" type="button" data-delete-student
-						data-name="{{ $nama }}"
-						data-delete-url="{{ route('admin.siswa.destroy', $siswa) }}">Hapus</button></td>
+					<td>
+						<div class="student-row-actions">
+							<button class="student-edit-button" type="button" data-edit-student
+								data-id="{{ $siswa->id }}"
+								data-nama="{{ $nama }}"
+								data-nisn="{{ $siswa->nisn }}"
+								data-kode-kelas="{{ $siswa->kelas->nama_kelas ?? '' }}">Edit</button>
+							<button class="student-delete-button admin-delete-button" type="button" data-delete-student
+								data-name="{{ $nama }}"
+								data-delete-url="{{ route('admin.siswa.destroy', $siswa) }}">Hapus</button>
+						</div>
+					</td>
 				</tr>
 			@empty
 				<tr><td class="admin-empty-row" colspan="5">Belum ada data murid yang sesuai.</td></tr>
@@ -111,6 +120,43 @@
 		</div>
 	</form>
 </dialog>
+
+<div class="student-edit-backdrop" id="editStudentModal" data-reopen="{{ old('form_context') === 'edit' ? 'true' : 'false' }}" hidden>
+	<section class="student-edit-modal" role="dialog" aria-modal="true" aria-labelledby="editStudentTitle">
+		<div class="student-edit-heading">
+			<div><h2 id="editStudentTitle">Edit Siswa</h2></div>
+			<button class="student-edit-close" type="button" data-close-student-edit aria-label="Tutup">&times;</button>
+		</div>
+		<form id="editStudentForm" method="POST" class="student-edit-form" data-update-url="{{ route('admin.siswa.update', ':id') }}">
+			@csrf
+			@method('PUT')
+			<input type="hidden" name="form_context" value="edit">
+			<input type="hidden" name="edit_siswa_id" id="editStudentId" value="{{ old('edit_siswa_id') }}">
+			<label>Nama lengkap
+				<input class="admin-input" id="editStudentName" type="text" name="nama_lengkap" value="{{ old('nama_lengkap') }}" maxlength="255" required>
+			</label>
+			<label>NISN
+				<input class="admin-input" id="editStudentNisn" type="text" name="nisn" value="{{ old('nisn') }}" maxlength="255" required>
+			</label>
+			<label>Kelas
+				<select class="admin-select" id="editStudentClass" name="kode_kelas">
+					<option value="">Belum ada kelas</option>
+					@foreach($kelasList as $kelas)
+						<option value="{{ $kelas->nama_kelas }}" @selected(old('kode_kelas') === $kelas->nama_kelas)>{{ $kelas->nama_kelas }}</option>
+					@endforeach
+				</select>
+			</label>
+			<label>Password Baru
+				<input class="admin-input" id="editStudentPassword" type="password" name="password" minlength="6" maxlength="255" autocomplete="new-password">
+				<small>Biarkan kosong jika tidak ingin mengubah password siswa saat ini.</small>
+			</label>
+			<div class="student-edit-actions">
+				<button class="student-edit-cancel" type="button" data-close-student-edit>Batal</button>
+				<button class="admin-action" type="submit">Simpan Perubahan</button>
+			</div>
+		</form>
+	</section>
+</div>
 
 <div class="admin-modal-backdrop" id="importModal" data-reopen="{{ $errors->has('file') ? 'true' : 'false' }}" hidden>
 	<section class="admin-import-modal" role="dialog" aria-modal="true" aria-labelledby="importModalTitle">
@@ -202,6 +248,8 @@
 		const classOptions = @json($kelasList->map(fn ($kelas) => ['id' => $kelas->id, 'nama' => $kelas->nama_kelas])->values());
 		const deleteStudentModal = document.getElementById('deleteStudentModal');
 		const deleteStudentForm = document.getElementById('deleteStudentForm');
+		const editStudentModal = document.getElementById('editStudentModal');
+		const editStudentForm = document.getElementById('editStudentForm');
 		let pendingDeleteStudentButton = null;
 
 		document.querySelectorAll('.admin-import-alert').forEach((alert) => {
@@ -222,6 +270,35 @@
 			pendingDeleteStudentButton?.classList.remove('is-awaiting-confirmation');
 			pendingDeleteStudentButton = null;
 		});
+
+		const closeEditStudentModal = () => {
+			editStudentModal.hidden = true;
+		};
+		document.querySelectorAll('[data-edit-student]').forEach((button) => {
+			button.addEventListener('click', () => {
+				document.getElementById('editStudentId').value = button.dataset.id;
+				document.getElementById('editStudentName').value = button.dataset.nama;
+				document.getElementById('editStudentNisn').value = button.dataset.nisn;
+				document.getElementById('editStudentClass').value = button.dataset.kodeKelas;
+				document.getElementById('editStudentPassword').value = '';
+				editStudentForm.action = editStudentForm.dataset.updateUrl.replace(':id', button.dataset.id);
+				editStudentModal.hidden = false;
+				document.getElementById('editStudentName').focus();
+			});
+		});
+		document.querySelectorAll('[data-close-student-edit]').forEach((button) => {
+			button.addEventListener('click', closeEditStudentModal);
+		});
+		editStudentModal.addEventListener('click', (event) => {
+			if (event.target === editStudentModal) closeEditStudentModal();
+		});
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape' && !editStudentModal.hidden) closeEditStudentModal();
+		});
+		if (editStudentModal.dataset.reopen === 'true') {
+			editStudentForm.action = editStudentForm.dataset.updateUrl.replace(':id', document.getElementById('editStudentId').value);
+			editStudentModal.hidden = false;
+		}
 
 		const showSelectedFile = () => {
 			fileName.textContent = fileInput.files[0]

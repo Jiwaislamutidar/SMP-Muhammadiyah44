@@ -159,7 +159,7 @@ class SiswaController extends Controller
             $hari = now()->locale('id')->isoFormat('dddd');
             $jadwalQuery = JadwalPelajaran::with([
                 'guru',
-                'kelas',
+                'kelas:id,nama_kelas,ruangan',
                 'mapel',
                 'sesiPelajarans' => fn ($query) => $query->whereDate('tanggal', today()),
             ])
@@ -258,7 +258,7 @@ class SiswaController extends Controller
                 'verifikator' => $jadwalAktif?->guru?->nama_lengkap ?? '-',
                 'mapel' => $jadwalKartuAktif?->mapel?->nama_mapel ?? '-',
                 'sesi' => $jadwalAktif ? 'Berlangsung' : '-',
-                'ruang' => $jadwalKartuAktif?->ruangan ?? '-',
+                'ruang' => $jadwalKartuAktif?->kelas?->ruangan ?? '-',
                 'jam' => $jadwalAktif
                     ? substr($blokAktif['start'], 0, 5).' - '.substr($blokAktif['end'], 0, 5)
                     : '-',
@@ -277,7 +277,7 @@ class SiswaController extends Controller
                 'status' => $jadwalAktif ? 'Berlangsung' : 'Tidak ada sesi aktif',
                 'mapel' => $jadwalAktif?->mapel?->nama_mapel ?? '-',
                 'kelas_ruang' => $jadwalAktif
-                    ? $jadwalAktif->kelas->nama_kelas.' ('.($jadwalAktif->ruangan ?? '-').')'
+                    ? $jadwalAktif->kelas->nama_kelas.' ('.($jadwalAktif->kelas->ruangan ?? '-').')'
                     : '-',
                 'jam' => $jadwalAktif
                     ? substr($jadwalAktif->jam_mulai, 0, 5).' - '.substr($jadwalAktif->jam_selesai, 0, 5).' WIB'

@@ -76,6 +76,48 @@ class JadwalImportTest extends TestCase
             ->assertDontSee('class="schedule-subject"', false);
     }
 
+    public function test_schedule_uses_latest_class_name_and_room_after_class_is_updated(): void
+    {
+        $suffix = bin2hex(random_bytes(4));
+        $admin = $this->makeAdmin($suffix);
+        $guru = Guru::create(['nama_lengkap' => 'Guru Kelas Dinamis QA '.$suffix, 'status' => 'aktif']);
+        $kelas = Kelas::create([
+            'nama_kelas' => 'Kelas Lama QA '.$suffix,
+            'tingkat' => 'VII',
+            'wali_kelas' => 'Wali Kelas QA',
+            'ruangan' => 'Ruang Lama QA',
+            'jumlah_murid' => 0,
+        ]);
+        $mapel = Mapel::create(['kode' => 'DINAMIS-'.$suffix, 'nama_mapel' => 'Mapel Dinamis QA']);
+        JadwalPelajaran::create([
+            'guru_id' => $guru->id,
+            'kelas_id' => $kelas->id,
+            'mapel_id' => $mapel->id,
+            'hari' => 'Senin',
+            'jam_mulai' => '07:00:00',
+            'jam_selesai' => '07:40:00',
+            'ruangan' => 'Ruang Salinan Jadwal Lama',
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('admin.kelas.update', $kelas), [
+                'nama_kelas' => 'Kelas Terbaru QA '.$suffix,
+                'tingkat' => 'VIII',
+                'wali_kelas' => 'Wali Kelas QA',
+                'ruangan' => 'Ruang Terbaru QA',
+                'jumlah_murid' => 0,
+            ])
+            ->assertRedirect(route('admin.datakelas'))
+            ->assertSessionHas('success', 'Data kelas berhasil diperbarui.');
+
+        $this->get(route('admin.jadwalpelajaran'))
+            ->assertOk()
+            ->assertSee('Kelas Terbaru QA '.$suffix)
+            ->assertSee('Ruang Terbaru QA')
+            ->assertDontSee('Kelas Lama QA '.$suffix)
+            ->assertDontSee('Ruang Salinan Jadwal Lama');
+    }
+
     public function test_admin_can_delete_schedule_and_related_lesson_attendance(): void
     {
         $suffix = bin2hex(random_bytes(4));

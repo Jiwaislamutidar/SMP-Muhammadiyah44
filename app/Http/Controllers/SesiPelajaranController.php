@@ -207,7 +207,7 @@ class SesiPelajaranController extends Controller
                 'kelas' => $sesi->jadwal->kelas->nama_kelas,
                 'jam_mulai' => $sesi->jadwal->jam_mulai,
                 'jam_selesai' => $sesi->jadwal->jam_selesai,
-                'ruangan' => $sesi->jadwal->ruangan,
+                'ruangan' => $sesi->jadwal->kelas->ruangan,
             ],
             'presensi' => $sesi->presensiPelajarans->map(fn ($presensi) => [
                 'id' => $presensi->id,

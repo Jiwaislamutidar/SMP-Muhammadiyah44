@@ -21,16 +21,13 @@ class PortalGuruController extends Controller
         $guru = Guru::forUser(Auth::user());
         abort_unless($guru, 403, 'Profil guru belum terhubung ke akun ini.');
 
-        $jadwals = $this->jadwalsHariIni($guru);
-        $jadwalBloks = (new SiswaScheduleGrouper)->blocks($jadwals, now());
-        $waktuSekarang = now()->format('H:i:s');
-        $hariIni = now()->locale('id')->translatedFormat('l');
-        $jadwalSaatIni = JadwalPelajaran::with(['kelas', 'mapel'])
-            ->where('guru_id', $guru->id)
-            ->whereRaw('LOWER(hari) = ?', [mb_strtolower($hariIni)])
-            ->whereTime('jam_mulai', '<=', $waktuSekarang)
-            ->whereTime('jam_selesai', '>=', $waktuSekarang)
-            ->get()
+        $now = now();
+        $jadwals = $this->jadwalsHariIni($guru, $now);
+        $jadwalBloks = (new SiswaScheduleGrouper)->blocks($jadwals, $now);
+        $waktuSekarang = $now->format('H:i:s');
+        $jadwalSaatIni = $jadwals
+            ->filter(fn (JadwalPelajaran $jadwal): bool => substr($jadwal->jam_mulai, 0, 8) <= $waktuSekarang
+                && $waktuSekarang < substr($jadwal->jam_selesai, 0, 8))
             ->sortBy(fn (JadwalPelajaran $jadwal) => Carbon::parse($jadwal->jam_mulai)
                 ->diffInSeconds(Carbon::parse($jadwal->jam_selesai)))
             ->first();
@@ -56,7 +53,7 @@ class PortalGuruController extends Controller
         $guru = Guru::forUser(Auth::user());
         abort_unless($guru, 403, 'Profil guru belum terhubung ke akun ini.');
 
-        $jadwals = JadwalPelajaran::with(['guru', 'mapel', 'kelas'])
+        $jadwals = JadwalPelajaran::with(['guru', 'mapel', 'kelas:id,nama_kelas,ruangan'])
             ->where(function ($query) use ($guru) {
                 $query->where('guru_id', $guru->id)
                     ->orWhereHas('mapel.gurus', fn ($query) => $query->whereKey($guru->id));
@@ -163,18 +160,18 @@ class PortalGuruController extends Controller
         ]);
     }
 
-    private function jadwalsHariIni(Guru $guru)
+    private function jadwalsHariIni(Guru $guru, Carbon $now)
     {
-        $hari = Carbon::now()->locale('id')->isoFormat('dddd');
+        $hari = mb_strtolower($now->copy()->locale('id')->isoFormat('dddd'));
 
         return JadwalPelajaran::with([
             'guru',
-            'kelas',
+            'kelas:id,nama_kelas,ruangan',
             'mapel',
             'sesiPelajarans' => fn ($query) => $query->whereDate('tanggal', today()),
         ])
             ->where('guru_id', $guru->id)
-            ->whereRaw('LOWER(hari) = ?', [mb_strtolower($hari)])
+            ->whereRaw('LOWER(TRIM(hari)) = ?', [$hari])
             ->orderBy('jam_mulai')
             ->get();
     }

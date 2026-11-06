@@ -19,7 +19,11 @@ class AdminJadwalController extends Controller
 {
     public function index(Request $request)
     {
-        $jadwals = JadwalPelajaran::with(['guru', 'kelas', 'mapel'])
+        $jadwals = JadwalPelajaran::with([
+            'guru',
+            'kelas:id,nama_kelas,ruangan',
+            'mapel',
+        ])
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search')->toString();
                 $query->where(function ($query) use ($search) {

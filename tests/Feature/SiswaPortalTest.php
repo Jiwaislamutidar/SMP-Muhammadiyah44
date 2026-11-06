@@ -200,6 +200,15 @@ class SiswaPortalTest extends TestCase
             ]);
         }
 
+        JadwalPelajaran::where('kelas_id', $student->kelas_id)
+            ->firstOrFail()
+            ->update(['ruangan' => 'Ruang Salinan Jadwal Lama']);
+        $updatedClassName = 'Kelas Terbaru Mingguan QA';
+        $student->kelas()->update([
+            'nama_kelas' => $updatedClassName,
+            'ruangan' => 'Ruang Terbaru Mingguan QA',
+        ]);
+
         $this->actingAs($user)
             ->get(route('siswa.dashboard'))
             ->assertOk()
@@ -209,7 +218,9 @@ class SiswaPortalTest extends TestCase
             ->assertSee($mapelSenin->nama_mapel)
             ->assertSee($mapelKamis->nama_mapel)
             ->assertSee($guru->nama_lengkap)
-            ->assertSee($student->kelas->nama_kelas)
+            ->assertSee($updatedClassName)
+            ->assertSee('Ruang Terbaru Mingguan QA')
+            ->assertDontSee('Ruang Salinan Jadwal Lama')
             ->assertDontSee($mapelKelasLain->nama_mapel);
     }
 

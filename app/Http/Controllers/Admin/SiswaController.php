@@ -12,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
 
@@ -112,6 +113,48 @@ class SiswaController extends Controller
         $count = count($validated['students']);
 
         return back()->with('success', "Berhasil menambahkan {$count} data siswa. Username dan password awal setiap akun menggunakan NIS/NISN.");
+    }
+
+    public function update(Request $request, Siswa $siswa): RedirectResponse
+    {
+        $validated = $request->validate([
+            'nisn' => ['required', 'string', 'max:255', Rule::unique('siswas', 'nisn')->ignore($siswa->id), Rule::unique('users', 'username')->ignore($siswa->user_id)],
+            'nama_lengkap' => ['required', 'string', 'max:255'],
+            'kode_kelas' => ['nullable', 'string', 'max:255', 'exists:kelas,nama_kelas'],
+            'password' => ['nullable', 'string', 'min:6', 'max:255'],
+            'edit_siswa_id' => ['required', 'integer', Rule::in([$siswa->id])],
+            'form_context' => ['required', Rule::in(['edit'])],
+        ], [
+            'nisn.unique' => 'NIS/NISN tersebut sudah digunakan.',
+            'kode_kelas.exists' => 'Kelas yang dipilih tidak tersedia.',
+            'password.min' => 'Password harus terdiri dari minimal 6 karakter.',
+        ]);
+
+        DB::transaction(function () use ($siswa, $validated): void {
+            $student = Siswa::query()->lockForUpdate()->findOrFail($siswa->id);
+            $user = User::query()->lockForUpdate()->findOrFail($student->user_id);
+
+            if ($user->role !== 'siswa') {
+                abort(409, 'Akun yang terhubung bukan akun murid.');
+            }
+
+            $student->update([
+                'nisn' => $validated['nisn'],
+                'nama_lengkap' => $validated['nama_lengkap'],
+                'kelas_id' => filled($validated['kode_kelas'] ?? null)
+                    ? Kelas::query()->where('nama_kelas', $validated['kode_kelas'])->value('id')
+                    : null,
+            ]);
+
+            $user->name = $validated['nama_lengkap'];
+            $user->username = $validated['nisn'];
+            if (filled($validated['password'] ?? null)) {
+                $user->password = Hash::make($validated['password']);
+            }
+            $user->save();
+        });
+
+        return redirect()->route('admin.datamurid')->with('success', 'Data murid berhasil diperbarui.');
     }
 
     public function destroy(Siswa $siswa): RedirectResponse

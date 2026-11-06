@@ -9,7 +9,7 @@
     <p>Data presensi murid berdasarkan tanggal yang dipilih</p>
   </div>
   <div class="admin-header-actions rekap-actions">
-    <button class="admin-action admin-action-outline" id="deleteAttendance" type="button">Hapus Data</button>
+    <button class="admin-action admin-action-outline admin-delete-button" id="deleteAttendance" type="button">Hapus Data</button>
     <a class="admin-action" id="exportAttendance" href="{{ route('admin.rekapabsensi.export', ['date' => $selectedDate]) }}">↓ Export Rekap</a>
   </div>
 </div>
@@ -110,7 +110,7 @@
     <p>Data presensi yang sesuai dengan filter aktif akan dihapus permanen.</p>
     <div class="rekap-delete-actions">
       <button class="admin-action admin-action-outline" type="button" id="cancelDelete">Batal</button>
-      <button class="admin-action rekap-danger-button" type="submit">Ya, Hapus Data</button>
+      <button class="admin-action rekap-danger-button admin-delete-button admin-delete-button--solid" type="submit">Ya, Hapus Data</button>
     </div>
   </form>
 </dialog>

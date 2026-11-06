@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('title', 'Data Guru')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/dataguru.css') }}?v=8">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/dataguru.css') }}?v=9">@endsection
 @section('content')
 <div class="admin-page-header">
 	<div>
@@ -86,7 +86,7 @@
 								data-nbm="{{ $guru->nbm }}"
 								data-status="{{ $guru->status }}"
 								data-mapel-items="{{ $guru->mapels->map(fn ($mapel) => ['mapel_id' => $mapel->id, 'nama_mapel' => $mapel->nama_mapel, 'kode_mapel' => $mapel->kode, 'jml_jam' => $mapel->pivot->jumlah_jam])->values()->toJson() }}">Edit</button>
-							<button class="guru-action-delete" type="button" data-delete-guru data-id="{{ $guru->id }}" data-delete-url="{{ route('admin.guru.destroy', $guru->id) }}">Hapus</button>
+							<button class="guru-action-delete admin-delete-button" type="button" data-delete-guru data-id="{{ $guru->id }}" data-delete-url="{{ route('admin.guru.destroy', $guru->id) }}">Hapus</button>
 						</div>
 					</td>
 				</tr>
@@ -199,13 +199,13 @@
 
 <div class="guru-modal-backdrop" id="deleteGuruModal" hidden>
 	<section class="guru-modal guru-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="deleteGuruTitle">
-		<div class="guru-modal-heading">
-			<div><h2 id="deleteGuruTitle">Hapus Data Guru?</h2><p id="deleteGuruMessage">Data guru dan akun login terkait akan dihapus.</p></div>
-			<button class="guru-modal-close" type="button" data-close-modal aria-label="Tutup">&times;</button>
+		<div class="guru-confirm-content">
+			<h2 id="deleteGuruTitle">Apakah kamu yakin untuk menghapus guru <span id="deleteGuruName"></span>?</h2>
+			<p id="deleteGuruMessage">Data guru dan akun login terkait akan dihapus permanen.</p>
 		</div>
 		<div class="guru-modal-actions">
 			<button class="guru-button-secondary" type="button" data-close-modal>Batal</button>
-			<button class="guru-action-delete" id="confirmDeleteGuru" type="button">Hapus</button>
+			<button class="admin-delete-button admin-delete-button--solid" id="confirmDeleteGuru" type="button">Ya, Hapus</button>
 		</div>
 	</section>
 </div>
@@ -466,8 +466,8 @@
 			if (deleteButton) {
 				pendingDeleteButton = deleteButton;
 				deleteButton.classList.add('is-awaiting-confirmation');
-				document.getElementById('deleteGuruMessage').textContent =
-					`Data guru ${deleteButton.closest('tr').querySelector('.guru-identity strong').textContent} dan akun login terkait akan dihapus.`;
+				document.getElementById('deleteGuruName').textContent =
+					deleteButton.closest('tr').querySelector('.guru-identity strong').textContent;
 				openModal('deleteGuruModal');
 			}
 		});

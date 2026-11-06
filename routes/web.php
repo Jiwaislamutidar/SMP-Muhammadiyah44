@@ -40,6 +40,7 @@ Route::domain('admin.'.$domain)->group(function () {
         Route::put('/admin/guru/{id}', [AdminGuruController::class, 'update'])->name('admin.guru.update');
         Route::delete('/admin/guru/{id}', [AdminGuruController::class, 'destroy'])->name('admin.guru.destroy');
         Route::get('/data-murid', [AdminSiswaController::class, 'index'])->name('admin.datamurid');
+        Route::get('/data-murid/template', [AdminSiswaController::class, 'template'])->name('admin.siswa.template');
         Route::post('/data-murid/import', [AdminSiswaController::class, 'import'])->name('admin.siswa.import');
         Route::post('/data-murid/import-manual', [AdminSiswaController::class, 'manualImport'])->name('admin.siswa.manual-import');
         Route::delete('/data-murid/{siswa}', [AdminSiswaController::class, 'destroy'])->name('admin.siswa.destroy');

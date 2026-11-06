@@ -61,7 +61,7 @@
               data-ruangan="{{ $kelas->ruangan }}"
               data-jumlah="{{ $kelas->jumlah_murid }}"
               data-update-url="{{ route('admin.kelas.update', $kelas) }}">Edit</button>
-            <button class="class-delete-button" type="button" data-delete-class
+            <button class="class-delete-button admin-delete-button" type="button" data-delete-class
               data-code="{{ $kelas->nama_kelas }}"
               data-delete-url="{{ route('admin.kelas.destroy', $kelas) }}">Hapus</button>
           </td>
@@ -81,7 +81,7 @@
     <p>Kelas yang masih memiliki murid atau jadwal tidak dapat dihapus.</p>
     <div class="class-delete-actions">
       <button class="admin-action-outline" type="button" id="cancelDeleteClass">Batal</button>
-      <button class="class-delete-confirm" type="submit">Ya, Hapus</button>
+      <button class="class-delete-confirm admin-delete-button admin-delete-button--solid" type="submit">Ya, Hapus</button>
     </div>
   </form>
 </dialog>

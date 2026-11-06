@@ -93,7 +93,7 @@
                       <form method="POST" action="{{ route('admin.dashboard.guru-session-log.destroy', $sessionLog) }}" onsubmit="return confirm('Hapus log sesi presensi ini dari dashboard admin?')">
                         @csrf
                         @method('DELETE')
-                        <button class="dash-delete-button" type="submit" aria-label="Hapus log absen {{ $sessionLog->session_type }} {{ $guru->nama_lengkap }}">Hapus</button>
+                        <button class="dash-delete-button admin-delete-button" type="submit" aria-label="Hapus log absen {{ $sessionLog->session_type }} {{ $guru->nama_lengkap }}">Hapus</button>
                       </form>
                     </div>
                   </div>
@@ -134,7 +134,7 @@
                       <form method="POST" action="{{ route('admin.dashboard.guru-log.destroy', $record) }}" onsubmit="return confirm('Hapus log presensi ini dari dashboard admin?')">
                         @csrf
                         @method('DELETE')
-                        <button class="dash-delete-button" type="submit" aria-label="Hapus log {{ $guru->nama_lengkap }}">Hapus</button>
+                        <button class="dash-delete-button admin-delete-button" type="submit" aria-label="Hapus log {{ $guru->nama_lengkap }}">Hapus</button>
                       </form>
                     </div>
                   </div>
@@ -170,7 +170,7 @@
             <option value="semua">Semua riwayat</option>
           </select>
         </label>
-        <button class="dash-delete-button" type="submit">Hapus Periode</button>
+        <button class="dash-delete-button admin-delete-button" type="submit">Hapus Periode</button>
       </form>
     </div>
   </section>

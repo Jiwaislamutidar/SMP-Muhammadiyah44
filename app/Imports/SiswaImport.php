@@ -2,71 +2,78 @@
 
 namespace App\Imports;
 
-use App\Models\User;
-use App\Models\Siswa;
 use App\Models\Kelas;
+use App\Models\Siswa;
+use App\Models\User;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToCollection;
+use RuntimeException;
 
 class SiswaImport implements ToCollection
 {
     public int $importedCount = 0;
 
-    public function collection(Collection $rows)
+    public function collection(Collection $rows): void
     {
-        $currentKelasId = null;
+        if ($rows->isEmpty()) {
+            return;
+        }
+
+        $headers = $rows->shift()->map(fn ($header) => Str::of((string) $header)
+            ->ascii()
+            ->lower()
+            ->replaceMatches('/[^a-z0-9]+/', '_')
+            ->trim('_')
+            ->toString());
+        $columns = [
+            'nisn' => $headers->search('nisn', true),
+            'nama_lengkap' => $headers->search('nama_lengkap', true),
+            'kode_kelas' => $headers->search('kode_kelas', true),
+        ];
+
+        if (in_array(false, $columns, true)) {
+            throw new RuntimeException('Template siswa wajib memuat kolom nisn, nama_lengkap, dan kode_kelas.');
+        }
 
         foreach ($rows as $row) {
-            // 1. Cari penanda "Kelas : X.X" di seluruh sel baris ini
-            $rowString = implode(' ', array_filter($row->toArray()));
+            $nisn = trim((string) ($row[$columns['nisn']] ?? ''));
+            $nama = trim((string) ($row[$columns['nama_lengkap']] ?? ''));
+            $kodeKelas = trim((string) ($row[$columns['kode_kelas']] ?? ''));
 
-            if (preg_match('/Kelas\s*:\s*([789]\.[123])/i', $rowString, $matches)) {
-                $namaKelas = trim($matches[1]);
-                $kelas = Kelas::firstOrCreate(['nama_kelas' => $namaKelas]);
-                $currentKelasId = $kelas->id;
+            if ($nisn === '' || $nama === '') {
                 continue;
             }
 
-            // 2. Ambil Kolom 0 (NO), Kolom 1 (NIS), Kolom 2 (NAMA)
-            $no   = trim((string) ($row[0] ?? ''));
-            $nis  = trim((string) ($row[1] ?? ''));
-            $nama = trim((string) ($row[2] ?? ''));
-
-            // 3. Validasi: Baris siswa valid jika NO & NIS berupa angka dan panjang NIS >= 6 digit
-            if (is_numeric($no) && is_numeric($nis) && strlen($nis) >= 6 && !empty($nama)) {
-                if (!$currentKelasId) {
-                    continue; // Lewati jika belum ketemu penanda kelas
-                }
-
-                // Lewati jika NIS/Username sudah ada di database (mencegah duplikat)
-                if (User::where('username', $nis)->exists()) {
-                    continue;
-                }
-
-                DB::transaction(function () use ($nis, $nama, $currentKelasId) {
-                    // Buat Akun Login User
-                    $user = User::create([
-                        'name'     => $nama,
-                        'username' => $nis,
-                        'email'    => null,
-                        'role'     => 'siswa',
-                        'password' => Hash::make($nis),
-                    ]);
-
-                    // Buat Profil Siswa
-                    Siswa::create([
-                        'user_id'      => $user->id,
-                        'nisn'         => $nis,
-                        'nama_lengkap' => $nama,
-                        'kelas_id'     => $currentKelasId,
-                        'status'       => 'aktif',
-                    ]);
-                });
-
-                $this->importedCount++;
+            if (User::query()->where('username', $nisn)->exists()
+                || Siswa::query()->where('nisn', $nisn)->exists()) {
+                continue;
             }
+
+            DB::transaction(function () use ($nisn, $nama, $kodeKelas): void {
+                $kelas = $kodeKelas === ''
+                    ? null
+                    : Kelas::query()->firstOrCreate(['nama_kelas' => $kodeKelas]);
+                $user = User::create([
+                    'name' => $nama,
+                    'username' => $nisn,
+                    'email' => null,
+                    'role' => 'siswa',
+                    'password' => Hash::make($nisn),
+                ]);
+
+                Siswa::create([
+                    'user_id' => $user->id,
+                    'nisn' => $nisn,
+                    'nama_lengkap' => $nama,
+                    'kelas_id' => $kelas?->id,
+                    'status' => 'aktif',
+                ]);
+            });
+
+            $this->importedCount++;
         }
     }
 }

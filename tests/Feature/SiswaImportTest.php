@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Exports\SiswaTemplateExport;
 use App\Imports\SiswaImport;
 use App\Models\Kelas;
 use App\Models\Siswa;
@@ -23,9 +24,9 @@ class SiswaImportTest extends TestCase
         } while (User::where('username', $nis)->exists());
 
         $nisKedua = '98' . str_pad((string) random_int(0, 99999999), 8, '0', STR_PAD_LEFT);
-        $kelasPertama = '7.1';
-        $kelasKedua = '8.2';
-        $csv = "NO,NIS,NAMA\nKelas : {$kelasPertama},,\n1,{$nis},Alya Putri\nKelas : {$kelasKedua},,\n2,{$nisKedua},Fajar Ramadhan\n";
+        $kelasPertama = Kelas::create(['nama_kelas' => 'Import 7.'.random_int(1, 9)]);
+        $kelasKedua = Kelas::create(['nama_kelas' => 'Import 8.'.random_int(1, 9)]);
+        $csv = "nisn,nama_lengkap,kode_kelas\n{$nis},Alya Putri,{$kelasPertama->nama_kelas}\n{$nisKedua},Fajar Ramadhan,{$kelasKedua->nama_kelas}\n";
         $file = UploadedFile::fake()->createWithContent('siswa.csv', $csv);
         $import = new SiswaImport();
 
@@ -39,17 +40,18 @@ class SiswaImportTest extends TestCase
             'role' => 'siswa',
         ]);
         $this->assertTrue(Hash::check($nis, User::where('username', $nis)->value('password')));
-        $this->assertDatabaseHas('kelas', ['nama_kelas' => $kelasPertama]);
         $this->assertDatabaseHas('siswas', [
             'nisn' => $nis,
             'nama_lengkap' => 'Alya Putri',
+            'kelas_id' => $kelasPertama->id,
             'status' => 'aktif',
         ]);
+        $this->assertSame($kelasKedua->id, Siswa::where('nisn', $nisKedua)->value('kelas_id'));
 
         $duplicateImport = new SiswaImport();
         Excel::import($duplicateImport, UploadedFile::fake()->createWithContent(
             'duplikat.csv',
-            "NO,NIS,NAMA\nKelas : {$kelasPertama},,\n1,{$nis},Alya Putri\n"
+            "nama_lengkap,kode_kelas,nisn\nAlya Putri,{$kelasPertama->nama_kelas},{$nis}\n"
         ));
 
         $this->assertSame(0, $duplicateImport->importedCount);
@@ -66,7 +68,8 @@ class SiswaImportTest extends TestCase
             'password' => Hash::make('test-password'),
         ]);
         $nis = '97' . str_pad((string) random_int(0, 99999999), 8, '0', STR_PAD_LEFT);
-        $csv = "NO,NIS,NAMA\nKelas : 9.1,,\n1,{$nis},Murid Tes\n";
+        $kelas = Kelas::create(['nama_kelas' => '9.'.random_int(1, 9)]);
+        $csv = "nisn,nama_lengkap,kode_kelas\n{$nis},Murid Tes,{$kelas->nama_kelas}\n";
 
         $response = $this->actingAs($admin)->post(route('admin.siswa.import'), [
             'file' => UploadedFile::fake()->createWithContent('siswa.csv', $csv),
@@ -75,6 +78,30 @@ class SiswaImportTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('success', 'Berhasil mengimpor data siswa!');
         $this->assertDatabaseHas('siswas', ['nisn' => $nis, 'nama_lengkap' => 'Murid Tes']);
+        $this->assertTrue(Hash::check($nis, User::where('username', $nis)->value('password')));
+    }
+
+    public function test_admin_can_download_student_template_with_three_columns_and_sample_data(): void
+    {
+        $admin = User::create([
+            'name' => 'Admin Siswa Template',
+            'username' => 'admin-siswa-template-'.bin2hex(random_bytes(4)),
+            'email' => null,
+            'role' => 'admin',
+            'password' => Hash::make('test-password'),
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.siswa.template'))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->assertHeader('content-disposition', 'attachment; filename=template-data-siswa.xlsx');
+
+        $template = (new SiswaTemplateExport)->array();
+        $this->assertSame(['nisn', 'nama_lengkap', 'kode_kelas'], $template[0]);
+        $this->assertCount(3, $template[0]);
+        $this->assertCount(2, $template);
+        $this->assertSame('Alya Putri', $template[1][1]);
     }
 
     public function test_admin_can_manually_add_multiple_students_and_their_login_accounts(): void
@@ -93,7 +120,12 @@ class SiswaImportTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.datamurid'))
             ->assertOk()
-            ->assertSee('+ Tambah Manual')
+            ->assertSee('+ Tambah Siswa')
+            ->assertSee('Import Excel')
+            ->assertSee('Unduh Template')
+            ->assertSee('nisn, nama_lengkap, kode_kelas')
+            ->assertSee('id="manualImportModal"', false)
+            ->assertSee('id="importModal"', false)
             ->assertSee('students[0][nama_lengkap]')
             ->assertSee('NIS / NISN')
             ->assertSee('Hapus')

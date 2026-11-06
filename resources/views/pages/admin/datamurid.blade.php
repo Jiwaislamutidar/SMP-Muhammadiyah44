@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('title', 'Data Murid')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/datamurid.css') }}?v=5">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/datamurid.css') }}?v=6">@endsection
 @section('content')
 <div class="admin-page-header">
 	<div>
@@ -8,8 +8,9 @@
 		<p>Kelola data siswa terdaftar</p>
 	</div>
 	<div class="admin-header-actions">
-		<button class="admin-action admin-action-outline admin-manual-trigger" type="button" id="openManualImportModal">+ Tambah Manual</button>
 		<button class="admin-action admin-import-trigger" type="button" id="openImportModal">↑ Import Excel</button>
+		<a class="admin-action admin-action-outline admin-template-trigger" href="{{ route('admin.siswa.template') }}">↓ Unduh Template</a>
+		<button class="admin-action admin-manual-trigger" type="button" id="openManualImportModal">+ Tambah Siswa</button>
 	</div>
 </div>
 
@@ -44,7 +45,7 @@
 			<option value="{{ $kelas->id }}" @selected((string) request('kelas_id') === (string) $kelas->id)>{{ $kelas->nama_kelas }}</option>
 		@endforeach
 	</select>
-	<span class="admin-total">Total {{ $totalSiswa }} Murid</span>
+	<span>Total {{ $totalSiswa }} Murid</span>
 </form>
 
 <section class="panel admin-table-wrap">
@@ -71,7 +72,7 @@
 					<td><span class="student-nisn">{{ $siswa->nisn }}</span></td>
 					<td><span class="student-class">{{ $siswa->kelas->nama_kelas ?? 'Belum ada kelas' }}</span></td>
 					<td><span class="student-status">{{ ucfirst($siswa->status) }}</span></td>
-					<td><button class="student-delete-button" type="button" data-delete-student
+					<td><button class="student-delete-button admin-delete-button" type="button" data-delete-student
 						data-name="{{ $nama }}"
 						data-delete-url="{{ route('admin.siswa.destroy', $siswa) }}">Hapus</button></td>
 				</tr>
@@ -106,22 +107,22 @@
 		<p>Data murid, akun login, dan catatan presensinya akan dihapus permanen.</p>
 		<div class="student-delete-actions">
 			<button type="button" id="cancelDeleteStudent">Batal</button>
-			<button class="student-delete-confirm" type="submit">Ya, Hapus</button>
+			<button class="student-delete-confirm admin-delete-button admin-delete-button--solid" type="submit">Ya, Hapus</button>
 		</div>
 	</form>
 </dialog>
 
-<div class="admin-modal-backdrop" id="importModal" hidden>
+<div class="admin-modal-backdrop" id="importModal" data-reopen="{{ $errors->has('file') ? 'true' : 'false' }}" hidden>
 	<section class="admin-import-modal" role="dialog" aria-modal="true" aria-labelledby="importModalTitle">
 		<div class="admin-modal-heading">
-			<div><h2 id="importModalTitle">Import Data Murid</h2><p>.xlsx / .xls / .csv &mdash; maks. 2 MB</p></div>
+			<div><h2 id="importModalTitle">Import Excel</h2><p>Kolom: nisn, nama_lengkap, kode_kelas &mdash; .xlsx / .xls / .csv, maks. 2 MB</p></div>
 			<button type="button" class="admin-modal-close" id="closeImportModal" aria-label="Tutup">&times;</button>
 		</div>
 		<form action="{{ route('admin.siswa.import') }}" method="POST" enctype="multipart/form-data">
 			@csrf
 			<label class="admin-file-dropzone" id="studentImportDropzone" for="studentImportFile">
 				<span class="admin-file-copy">
-					<strong>Pilih file daftar siswa</strong>
+					<strong>Pilih atau seret file daftar siswa ke sini</strong>
 					<small>Format .xlsx, .xls, atau .csv. Maksimal 2 MB.</small>
 				</span>
 				<span class="admin-file-pick">Pilih File</span>
@@ -140,18 +141,18 @@
 	<section class="admin-import-modal admin-manual-modal" role="dialog" aria-modal="true" aria-labelledby="manualImportModalTitle">
 		<div class="admin-modal-heading">
 			<div>
-				<h2 id="manualImportModalTitle">Input Siswa Manual</h2>
+				<h2 id="manualImportModalTitle">Tambah Siswa</h2>
 				<p>Tambah hingga 50 siswa sekaligus.</p>
 			</div>
 			<button type="button" class="admin-modal-close" id="closeManualImportModal" aria-label="Tutup">&times;</button>
 		</div>
-		<div class="admin-manual-account-note"><strong>Akun login otomatis.</strong> NIS/NISN = username &amp; password awal.</div>
+		<div class="admin-manual-account-note"><strong>Akun login otomatis.</strong> NIS/NISN digunakan sebagai username dan password awal.</div>
 		<form action="{{ route('admin.siswa.manual-import') }}" method="POST">
 			@csrf
 			<div class="admin-manual-rows" id="manualStudentRows">
 				@foreach(old('students', [['nama_lengkap' => '', 'nisn' => '', 'kelas_id' => '']]) as $index => $student)
 					<div class="admin-manual-row">
-						<div class="admin-manual-row-heading"><strong>Data siswa</strong><button type="button" class="admin-row-remove" aria-label="Hapus baris siswa">Hapus</button></div>
+						<div class="admin-manual-row-heading"><strong>Data siswa</strong><button type="button" class="admin-row-remove admin-delete-button" aria-label="Hapus baris siswa">Hapus</button></div>
 						<div class="admin-manual-fields">
 							<label>Nama lengkap
 								<input type="text" name="students[{{ $index }}][nama_lengkap]" value="{{ $student['nama_lengkap'] ?? '' }}" maxlength="255" placeholder="Contoh: Alya Putri" required>
@@ -202,6 +203,10 @@
 		const deleteStudentModal = document.getElementById('deleteStudentModal');
 		const deleteStudentForm = document.getElementById('deleteStudentForm');
 		let pendingDeleteStudentButton = null;
+
+		document.querySelectorAll('.admin-import-alert').forEach((alert) => {
+			window.setTimeout(() => alert.remove(), 3000);
+		});
 
 		document.querySelectorAll('[data-delete-student]').forEach((button) => {
 			button.addEventListener('click', () => {
@@ -284,7 +289,7 @@
 				const option = new Option(kelas.nama, kelas.id);
 				return option.outerHTML;
 			}).join('');
-			row.innerHTML = `<div class="admin-manual-row-heading"><strong>Siswa</strong><button type="button" class="admin-row-remove" aria-label="Hapus baris siswa">Hapus</button></div>
+			row.innerHTML = `<div class="admin-manual-row-heading"><strong>Siswa</strong><button type="button" class="admin-row-remove admin-delete-button" aria-label="Hapus baris siswa">Hapus</button></div>
 				<div class="admin-manual-fields">
 					<label>Nama lengkap<input type="text" name="students[${index}][nama_lengkap]" maxlength="255" placeholder="Contoh: Alya Putri" required></label>
 					<label>NIS / NISN<input type="text" name="students[${index}][nisn]" maxlength="255" placeholder="Nomor induk siswa" required></label>
@@ -316,6 +321,7 @@
 		});
 		updateManualRows();
 		if (manualModal.dataset.reopen === 'true') manualModal.hidden = false;
+		if (modal.dataset.reopen === 'true') modal.hidden = false;
 	})();
 </script>
 @endsection

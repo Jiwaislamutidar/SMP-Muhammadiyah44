@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Exports\SiswaTemplateExport;
 use App\Imports\SiswaImport;
 use App\Models\Kelas;
 use App\Models\Siswa;
@@ -55,6 +56,11 @@ class SiswaController extends Controller
         } catch (Throwable $exception) {
             return back()->with('error', 'Gagal mengimpor data: ' . $exception->getMessage());
         }
+    }
+
+    public function template()
+    {
+        return Excel::download(new SiswaTemplateExport, 'template-data-siswa.xlsx');
     }
 
     public function manualImport(Request $request)

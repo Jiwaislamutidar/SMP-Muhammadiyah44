@@ -17,11 +17,13 @@ class JadwalImport implements ToCollection
 
     private const HEADER_ALIASES = [
         'hari' => ['hari'],
+        'jam_ke' => ['jam_ke'],
+        'waktu' => ['waktu'],
         'jam_mulai' => ['jam_mulai'],
         'jam_selesai' => ['jam_selesai'],
         'kode_mapel' => ['kode_mapel', 'mapel'],
         'nama_guru' => ['nama_guru', 'guru'],
-        'nama_kelas' => ['nama_kelas', 'kelas'],
+        'kode_kelas' => ['kode_kelas', 'nama_kelas', 'kelas'],
         'ruangan' => ['ruangan'],
     ];
 
@@ -48,44 +50,58 @@ class JadwalImport implements ToCollection
                 }
             }
 
-            // 'ruangan' boleh kosong, kolomnya tetap harus ada di template
-            if ($columns[$field] === false) {
-                $label = str_replace('_', ' ', $field);
-                throw new JadwalImportException("Header wajib '{$label}' tidak ditemukan pada baris 1.");
+        }
+
+        foreach (['hari', 'kode_mapel', 'kode_kelas'] as $required) {
+            if ($columns[$required] === false) {
+                throw new JadwalImportException("Header wajib '".str_replace('_', ' ', $required)."' tidak ditemukan pada baris 1.");
             }
         }
 
-        // FIX 2: semua-atau-tidak-sama-sekali. Kalau ada 1 baris error,
-        // baris sebelumnya tidak tersimpan setengah-setengah.
-        DB::transaction(function () use ($rows, $columns) {
+        $usesPeriods = $columns['jam_ke'] !== false;
+        if (! $usesPeriods && ($columns['jam_mulai'] === false || $columns['jam_selesai'] === false)) {
+            throw new JadwalImportException("Header wajib 'jam_mulai' dan 'jam_selesai' tidak ditemukan pada baris 1.");
+        }
+
+        DB::transaction(function () use ($rows, $columns, $usesPeriods) {
             $rowNumber = 2;
             foreach ($rows as $row) {
-                $values = collect($columns)->map(fn ($column) => trim((string) ($row[$column] ?? '')));
+                $values = collect($columns)->map(fn ($column) => $column === false
+                    ? ''
+                    : trim((string) ($row[$column] ?? '')));
                 if ($values->every(fn ($value) => $value === '')) {
                     $rowNumber++;
+
                     continue;
                 }
 
                 $hari = $this->normalizeHari($values['hari'], $rowNumber);
-
-                $namaGuru = preg_replace('/\s+/', ' ', $values['nama_guru']);
-                $guru = Guru::whereRaw('LOWER(TRIM(nama_lengkap)) = ?', [mb_strtolower($namaGuru)])->first();
-                if (! $guru) {
-                    throw new JadwalImportException("Baris {$rowNumber}: Guru '{$values['nama_guru']}' tidak ditemukan di database.");
-                }
-
-                $kelas = Kelas::whereRaw('LOWER(TRIM(nama_kelas)) = ?', [mb_strtolower($values['nama_kelas'])])->first();
+                $kelasInput = preg_replace('/\s+/', ' ', $values['kode_kelas']);
+                $kelas = Kelas::whereRaw('LOWER(TRIM(nama_kelas)) = ?', [mb_strtolower($kelasInput)])->first();
                 if (! $kelas) {
-                    throw new JadwalImportException("Baris {$rowNumber}: Kelas '{$values['nama_kelas']}' tidak ditemukan di database.");
+                    throw new JadwalImportException("Baris {$rowNumber}: Kelas '{$values['kode_kelas']}' tidak ditemukan di database.");
                 }
 
-                $mapel = $this->findMapel($values['kode_mapel'], $guru->id);
+                $guru = null;
+                if ($values['nama_guru'] !== '') {
+                    $namaGuru = preg_replace('/\s+/', ' ', $values['nama_guru']);
+                    $guru = Guru::whereRaw('LOWER(TRIM(nama_lengkap)) = ?', [mb_strtolower($namaGuru)])->first();
+                    if (! $guru) {
+                        throw new JadwalImportException("Baris {$rowNumber}: Guru '{$values['nama_guru']}' tidak ditemukan di database.");
+                    }
+                }
+
+                $mapel = $this->findMapel($values['kode_mapel'], $guru?->id);
                 if (! $mapel) {
                     throw new JadwalImportException("Baris {$rowNumber}: Kode/Nama Mapel '{$values['kode_mapel']}' tidak ditemukan di database.");
                 }
 
-                $jamMulai = $this->formatTime($values['jam_mulai'], $rowNumber, 'Jam Mulai');
-                $jamSelesai = $this->formatTime($values['jam_selesai'], $rowNumber, 'Jam Selesai');
+                $guru ??= $this->findGuruForMapel($mapel, $rowNumber);
+                [$jamMulai, $jamSelesai] = $this->resolveTimes(
+                    $values,
+                    $usesPeriods,
+                    $rowNumber
+                );
 
                 if ($jamMulai >= $jamSelesai) {
                     throw new JadwalImportException("Baris {$rowNumber}: Jam Selesai ({$jamSelesai}) harus setelah Jam Mulai ({$jamMulai}).");
@@ -128,7 +144,7 @@ class JadwalImport implements ToCollection
      * dibatasi ke mapel yang diampu guru tsb (karena nama seperti "Lifeskill",
      * "Public Speaking", "Pend. Agama Islam" dipakai banyak guru).
      */
-    private function findMapel(string $input, int $guruId): ?Mapel
+    private function findMapel(string $input, ?int $guruId): ?Mapel
     {
         // samakan variasi tanda apostrof: ’ ‘ ´ ` ′ → '
         $input = str_replace(['’', '‘', '´', '`', '′'], "'", $input);
@@ -139,11 +155,72 @@ class JadwalImport implements ToCollection
             return $mapel;
         }
 
-        $mapelIdGuru = DB::table('guru_mapel')->where('guru_id', $guruId)->pluck('mapel_id');
+        $mapels = Mapel::query()
+            ->whereRaw('LOWER(TRIM(nama_mapel)) = ?', [$input]);
 
-        return Mapel::whereIn('id', $mapelIdGuru)
-            ->whereRaw('LOWER(TRIM(nama_mapel)) = ?', [$input])
-            ->first();
+        if ($guruId !== null) {
+            $mapels->whereHas('gurus', fn ($query) => $query->where('gurus.id', $guruId));
+        }
+
+        $matches = $mapels->limit(2)->get();
+
+        return $matches->count() === 1 ? $matches->first() : null;
+    }
+
+    private function findGuruForMapel(Mapel $mapel, int $rowNumber): Guru
+    {
+        $gurus = $mapel->gurus()->orderBy('gurus.id')->get();
+
+        if ($gurus->isEmpty()) {
+            throw new JadwalImportException("Baris {$rowNumber}: Tidak ada guru pengampu yang terhubung ke kode mapel '{$mapel->kode}'.");
+        }
+
+        if ($gurus->count() > 1) {
+            throw new JadwalImportException("Baris {$rowNumber}: Kode mapel '{$mapel->kode}' memiliki lebih dari satu guru pengampu. Tambahkan kolom Nama Guru untuk menentukan pengampu.");
+        }
+
+        return $gurus->first();
+    }
+
+    private function resolveTimes(Collection $values, bool $usesPeriods, int $rowNumber): array
+    {
+        if (! $usesPeriods) {
+            return [
+                $this->formatTime($values['jam_mulai'], $rowNumber, 'Jam Mulai'),
+                $this->formatTime($values['jam_selesai'], $rowNumber, 'Jam Selesai'),
+            ];
+        }
+
+        $jamKe = $this->normalizePeriod($values['jam_ke'], $rowNumber);
+        $waktu = trim($values['waktu']);
+
+        if ($waktu === '') {
+            $start = (new \DateTimeImmutable('07:00'))->modify('+'.(($jamKe - 1) * 40).' minutes');
+
+            return [
+                $start->format('H:i:s'),
+                $start->modify('+40 minutes')->format('H:i:s'),
+            ];
+        }
+
+        $parts = preg_split('/\s*(?:-|–|—)\s*/u', $waktu);
+        if (count($parts) !== 2 || trim($parts[0]) === '' || trim($parts[1]) === '') {
+            throw new JadwalImportException("Baris {$rowNumber}: format Waktu '{$waktu}' tidak valid. Gunakan rentang seperti 07:00-07:40.");
+        }
+
+        return [
+            $this->formatTime(trim($parts[0]), $rowNumber, 'Waktu Mulai'),
+            $this->formatTime(trim($parts[1]), $rowNumber, 'Waktu Selesai'),
+        ];
+    }
+
+    private function normalizePeriod(string $value, int $rowNumber): int
+    {
+        if (! preg_match('/^(10|[1-9])(?:\.0+)?$/', trim($value))) {
+            throw new JadwalImportException("Baris {$rowNumber}: Jam Ke '{$value}' harus berupa angka 1 sampai 10.");
+        }
+
+        return (int) $value;
     }
 
     private function normalizeHari(string $value, int $rowNumber): string

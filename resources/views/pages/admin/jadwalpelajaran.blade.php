@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('title', 'Jadwal Pelajaran')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/jadwalpelajaran.css') }}?v=3">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/jadwalpelajaran.css') }}?v=4">@endsection
 @section('content')
 
 <div class="admin-page-header">
@@ -47,7 +47,7 @@
 					📄 File terpilih: <strong id="filePreviewName"></strong>
 				</div>
 
-				<p class="import-note">Kolom: <code>Hari, Jam Mulai, Jam Selesai, Kode Mapel, Nama Guru, Nama Kelas, Ruangan</code>. Format jam contoh: <strong>07.30</strong>.</p>
+				<p class="import-note">Kolom template: <code>hari, jam_ke, waktu, kode_kelas, kode_mapel</code>. Guru dan mata pelajaran dicocokkan otomatis dari kode mapel. Jika waktu kosong, sistem memakai slot 40 menit mulai pukul 07.00 sesuai jam_ke.</p>
 
 				<a class="template-shortcut-link" href="{{ route('admin.jadwalpelajaran.template') }}">📥 Unduh Template File</a>
 			</div>
@@ -81,7 +81,7 @@
 		@endforeach
 	</select>
 	<button class="admin-action" type="submit">Filter</button>
-	<span class="admin-total">Total {{ $totalJadwal }} Jadwal</span>
+	<span class="schedule-total">Total {{ $totalJadwal }} Jadwal</span>
 </form>
 
 <section class="panel admin-table-wrap schedule-card">

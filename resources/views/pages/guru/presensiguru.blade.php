@@ -7,7 +7,7 @@
 	<title>Presensi Guru - SMP Muhammadiyah 44</title>
 	<link rel="stylesheet" href="{{ asset('guru css/presensiguru.css') }}?v=6">
 	<link rel="stylesheet" href="{{ asset('guru css/portal-responsive.css') }}?v=1">
-	<link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=6">
+	<link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=7">
 	<style>
 		.attendance-card h3 { font-size: 17px; }
 		.attendance-card small, .history-description { font-size: 12px; line-height: 1.5; }
@@ -197,7 +197,7 @@
 							<option value="bulan" {{ $periode === 'bulan' ? 'selected' : '' }}>Sebulan terakhir</option>
 						</select>
 					</label>
-					<button class="btn btn-primary" type="submit">Tampilkan</button>
+					<button class="btn btn-primary processing-filter-button" type="submit">Tampilkan</button>
 				</form>
 
 				<div class="history-actions">
@@ -435,6 +435,6 @@
 			URL.revokeObjectURL(url);
 		});
 	</script>
-	<script src="{{ asset('guru css/guru-ui.js') }}?v=1"></script>
+	<script src="{{ asset('guru css/guru-ui.js') }}?v=2"></script>
 </body>
 </html>

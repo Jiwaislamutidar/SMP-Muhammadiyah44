@@ -44,7 +44,7 @@
         }, { once: true });
     </script>
     <title>SMP Muhammadiyah 44</title>
-    <link rel="stylesheet" href="{{ asset('siswa css/riwayatsiswa.css') }}?v=13">
+    <link rel="stylesheet" href="{{ asset('siswa css/riwayatsiswa.css') }}?v=14">
     <link rel="stylesheet" href="{{ asset('siswa css/siswa-ui.css') }}?v=11">
 </head>
 <body>
@@ -278,7 +278,7 @@
                     </div>
 
                     <div class="filter-actions">
-                        <button class="btn-apply" type="submit">Terapkan</button>
+                        <button class="btn-apply processing-filter-button" type="submit">Terapkan</button>
                         <a class="btn-reset" href="{{ route('siswa.riwayat') }}" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;">Reset</a>
                     </div>
                 </form>
@@ -546,6 +546,6 @@
         })();
 
     </script>
-    <script src="{{ asset('siswa js/siswa-ui.js') }}?v=7" defer></script>
+    <script src="{{ asset('siswa js/siswa-ui.js') }}?v=8" defer></script>
 </body>
 </html>

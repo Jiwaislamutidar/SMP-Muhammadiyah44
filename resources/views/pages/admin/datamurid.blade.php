@@ -8,8 +8,8 @@
 		<p>Kelola data siswa terdaftar</p>
 	</div>
 	<div class="admin-header-actions">
-		<button class="admin-action admin-import-trigger" type="button" id="openImportModal">↑ Import Excel</button>
-		<a class="admin-action admin-action-outline admin-template-trigger" href="{{ route('admin.siswa.template') }}">↓ Unduh Template</a>
+		<button class="admin-action admin-import-trigger admin-glass-button" type="button" id="openImportModal">↑ Import Excel</button>
+		<a class="admin-action admin-action-outline admin-template-trigger admin-glass-button" href="{{ route('admin.siswa.template') }}">↓ Unduh Template</a>
 		<button class="admin-action admin-manual-trigger" type="button" id="openManualImportModal">+ Tambah Siswa</button>
 	</div>
 </div>
@@ -131,7 +131,7 @@
 			<p class="admin-file-selected" id="studentImportFileName" aria-live="polite">Belum ada file dipilih</p>
 			<div class="admin-modal-actions">
 				<button class="admin-modal-cancel" type="button" id="cancelImportModal">Batal</button>
-				<button class="admin-action admin-import-submit" type="submit">Import Data</button>
+				<button class="admin-action admin-import-submit admin-glass-button" type="submit">Import Data</button>
 			</div>
 		</form>
 	</section>

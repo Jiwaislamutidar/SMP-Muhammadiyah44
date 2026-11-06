@@ -164,6 +164,55 @@ class SiswaPortalTest extends TestCase
         $this->assertSame('Sakit', $sickAttendance->fresh()->status);
     }
 
+    public function test_student_dashboard_lists_weekly_schedules_for_the_students_class_only(): void
+    {
+        [$user, $student] = $this->makeStudent();
+        $guru = Guru::create([
+            'nama_lengkap' => 'Guru Mingguan QA',
+            'status' => 'aktif',
+        ]);
+        $kelasLain = Kelas::create(['nama_kelas' => 'Kelas Lain Mingguan QA']);
+        $mapelSenin = Mapel::create([
+            'kode' => 'SENIN-'.bin2hex(random_bytes(3)),
+            'nama_mapel' => 'Mapel Senin Mingguan QA',
+        ]);
+        $mapelKamis = Mapel::create([
+            'kode' => 'KAMIS-'.bin2hex(random_bytes(3)),
+            'nama_mapel' => 'Mapel Kamis Mingguan QA',
+        ]);
+        $mapelKelasLain = Mapel::create([
+            'kode' => 'LAIN-'.bin2hex(random_bytes(3)),
+            'nama_mapel' => 'Mapel Kelas Lain QA',
+        ]);
+
+        foreach ([
+            [$student->kelas_id, $mapelSenin, 'Senin'],
+            [$student->kelas_id, $mapelKamis, 'Kamis'],
+            [$kelasLain->id, $mapelKelasLain, 'Rabu'],
+        ] as [$kelasId, $mapel, $hari]) {
+            JadwalPelajaran::create([
+                'guru_id' => $guru->id,
+                'kelas_id' => $kelasId,
+                'mapel_id' => $mapel->id,
+                'hari' => $hari,
+                'jam_mulai' => '07:00:00',
+                'jam_selesai' => '07:40:00',
+            ]);
+        }
+
+        $this->actingAs($user)
+            ->get(route('siswa.dashboard'))
+            ->assertOk()
+            ->assertSee('Jadwal Mingguan')
+            ->assertSee('Senin')
+            ->assertSee('Kamis')
+            ->assertSee($mapelSenin->nama_mapel)
+            ->assertSee($mapelKamis->nama_mapel)
+            ->assertSee($guru->nama_lengkap)
+            ->assertSee($student->kelas->nama_kelas)
+            ->assertDontSee($mapelKelasLain->nama_mapel);
+    }
+
     public function test_student_login_rejects_non_string_credentials(): void
     {
         $this->postJson(route('login'), [

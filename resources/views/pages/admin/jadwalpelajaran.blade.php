@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('title', 'Jadwal Pelajaran')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/jadwalpelajaran.css') }}?v=4">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/jadwalpelajaran.css') }}?v=6">@endsection
 @section('content')
 
 <div class="admin-page-header">
@@ -9,8 +9,9 @@
 		<p>Kelola jadwal mengajar</p>
 	</div>
 	<div class="admin-header-actions">
-		<a class="admin-action admin-action-outline" href="{{ route('admin.jadwalpelajaran.template') }}">↓ Unduh Template</a>
-		<button type="button" class="admin-action" id="openImportModalBtn">↑ Import Jadwal</button>
+		<button type="button" class="admin-action schedule-reset-button" id="openResetSchedulesBtn">Hapus Semua Jadwal</button>
+		<a class="admin-action admin-action-outline admin-glass-button" href="{{ route('admin.jadwalpelajaran.template') }}">↓ Unduh Template</a>
+		<button type="button" class="admin-action admin-glass-button" id="openImportModalBtn">↑ Import Jadwal</button>
 	</div>
 </div>
 
@@ -49,12 +50,12 @@
 
 				<p class="import-note">Kolom template: <code>hari, jam_ke, waktu, kode_kelas, kode_mapel</code>. Guru dan mata pelajaran dicocokkan otomatis dari kode mapel. Jika waktu kosong, sistem memakai slot 40 menit mulai pukul 07.00 sesuai jam_ke.</p>
 
-				<a class="template-shortcut-link" href="{{ route('admin.jadwalpelajaran.template') }}">📥 Unduh Template File</a>
+				<a class="template-shortcut-link admin-glass-button" href="{{ route('admin.jadwalpelajaran.template') }}">📥 Unduh Template File</a>
 			</div>
 
 			<div class="modal-footer">
 				<button type="button" class="admin-action admin-action-outline" id="cancelImportBtn">Batal</button>
-				<button type="submit" class="admin-action admin-action-primary" id="submitImportBtn">Import Data</button>
+				<button type="submit" class="admin-action admin-action-primary admin-glass-button" id="submitImportBtn">Import Data</button>
 			</div>
 		</form>
 	</div>
@@ -80,7 +81,7 @@
 			<option value="{{ $mapel->id }}" @selected((string) request('mapel_id') === (string) $mapel->id)>{{ $mapel->nama_mapel }}</option>
 		@endforeach
 	</select>
-	<button class="admin-action" type="submit">Filter</button>
+	<button class="admin-action processing-filter-button" type="submit">Filter</button>
 	<span class="schedule-total">Total {{ $totalJadwal }} Jadwal</span>
 </form>
 
@@ -94,21 +95,27 @@
 				<th>Guru Pengampu</th>
 				<th>Kelas</th>
 				<th>Ruangan</th>
+				<th>Aksi</th>
 			</tr>
 		</thead>
 		<tbody>
 			@forelse($jadwals as $jadwal)
 				<tr>
-					<td><span class="schedule-day schedule-day--{{ strtolower($jadwal->hari) }}">{{ $jadwal->hari }}</span></td>
+					<td><span class="schedule-day">{{ $jadwal->hari }}</span></td>
 					<td><span class="schedule-time">{{ substr($jadwal->jam_mulai, 0, 5) }} – {{ substr($jadwal->jam_selesai, 0, 5) }}</span></td>
 					<td><span class="schedule-subject">{{ $jadwal->mapel->nama_mapel }}</span></td>
 					<td><span class="schedule-teacher">{{ $jadwal->guru->nama_lengkap }}</span></td>
 					<td><span class="schedule-class">{{ $jadwal->kelas->nama_kelas }}</span></td>
 					<td><span class="schedule-room">{{ $jadwal->ruangan ?: '-' }}</span></td>
+					<td>
+						<button class="schedule-delete-button admin-delete-button" type="button" data-delete-schedule
+							data-delete-url="{{ route('admin.jadwalpelajaran.destroy', $jadwal) }}"
+							aria-label="Hapus jadwal {{ $jadwal->hari }} {{ substr($jadwal->jam_mulai, 0, 5) }} kelas {{ $jadwal->kelas->nama_kelas }}">Hapus</button>
+					</td>
 				</tr>
 			@empty
 				<tr>
-					<td class="admin-empty-row" colspan="6">Belum ada jadwal tersimpan. Gunakan tombol import di atas.</td>
+					<td class="admin-empty-row" colspan="7">Belum ada jadwal tersimpan. Gunakan tombol import di atas.</td>
 				</tr>
 			@endforelse
 		</tbody>
@@ -130,6 +137,32 @@
 		</div>
 	</div>
 </section>
+
+<dialog class="schedule-delete-modal" id="deleteScheduleModal" aria-labelledby="deleteScheduleTitle">
+	<form method="POST" id="deleteScheduleForm">
+		@csrf
+		@method('DELETE')
+		<h2 id="deleteScheduleTitle">Apakah kamu yakin ingin menghapus jadwal ini?</h2>
+		<p>Sesi pelajaran dan catatan presensi yang terkait juga akan dihapus.</p>
+		<div class="schedule-delete-actions">
+			<button class="admin-action-outline" type="button" id="cancelDeleteSchedule">Batal</button>
+			<button class="admin-delete-button admin-delete-button--solid" type="submit">Ya, Hapus</button>
+		</div>
+	</form>
+</dialog>
+
+<dialog class="schedule-delete-modal" id="resetSchedulesModal" aria-labelledby="resetSchedulesTitle">
+	<form method="POST" action="{{ route('admin.jadwalpelajaran.destroy-all') }}" id="resetSchedulesForm">
+		@csrf
+		@method('DELETE')
+		<h2 id="resetSchedulesTitle">Hapus semua jadwal pelajaran?</h2>
+		<p>Semua jadwal pada database aktif beserta sesi pelajaran dan catatan presensi terkait akan dihapus. Data guru, mata pelajaran, dan kelas tidak akan terpengaruh. Tindakan ini tidak dapat dibatalkan.</p>
+		<div class="schedule-delete-actions">
+			<button class="admin-action-outline" type="button" id="cancelResetSchedules">Batal</button>
+			<button class="admin-delete-button admin-delete-button--solid" type="submit" id="confirmResetSchedules">Ya, Hapus Semua</button>
+		</div>
+	</form>
+</dialog>
 
 <script>
 (function () {
@@ -188,6 +221,39 @@
 	form.addEventListener('submit', function () {
 		submitBtn.disabled = true;
 		submitBtn.textContent = 'Mengimpor...';
+	});
+
+	const deleteScheduleModal = document.getElementById('deleteScheduleModal');
+	const deleteScheduleForm = document.getElementById('deleteScheduleForm');
+	let pendingDeleteScheduleButton = null;
+	document.querySelectorAll('[data-delete-schedule]').forEach((button) => {
+		button.addEventListener('click', function () {
+			pendingDeleteScheduleButton = button;
+			button.classList.add('is-awaiting-confirmation');
+			deleteScheduleForm.action = button.dataset.deleteUrl;
+			deleteScheduleModal.showModal();
+		});
+	});
+	document.getElementById('cancelDeleteSchedule').addEventListener('click', function () {
+		deleteScheduleModal.close();
+	});
+	deleteScheduleModal.addEventListener('close', function () {
+		pendingDeleteScheduleButton?.classList.remove('is-awaiting-confirmation');
+		pendingDeleteScheduleButton = null;
+	});
+
+	const resetSchedulesModal = document.getElementById('resetSchedulesModal');
+	const resetSchedulesForm = document.getElementById('resetSchedulesForm');
+	document.getElementById('openResetSchedulesBtn').addEventListener('click', function () {
+		resetSchedulesModal.showModal();
+	});
+	document.getElementById('cancelResetSchedules').addEventListener('click', function () {
+		resetSchedulesModal.close();
+	});
+	resetSchedulesForm.addEventListener('submit', function () {
+		const confirmButton = document.getElementById('confirmResetSchedules');
+		confirmButton.disabled = true;
+		confirmButton.textContent = 'Menghapus...';
 	});
 })();
 </script>

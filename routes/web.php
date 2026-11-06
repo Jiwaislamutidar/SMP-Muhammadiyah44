@@ -52,6 +52,8 @@ Route::domain('admin.'.$domain)->group(function () {
         Route::get('/jadwal-pelajaran', [AdminJadwalController::class, 'index'])->name('admin.jadwalpelajaran');
         Route::post('/jadwal-pelajaran/import', [AdminJadwalController::class, 'import'])->name('admin.jadwalpelajaran.import');
         Route::get('/jadwal-pelajaran/template', [AdminJadwalController::class, 'template'])->name('admin.jadwalpelajaran.template');
+        Route::delete('/jadwal-pelajaran', [AdminJadwalController::class, 'destroyAll'])->name('admin.jadwalpelajaran.destroy-all');
+        Route::delete('/jadwal-pelajaran/{jadwal}', [AdminJadwalController::class, 'destroy'])->name('admin.jadwalpelajaran.destroy');
         Route::get('/rekap-absensi', [AttendanceReportController::class, 'index'])->name('admin.rekapabsensi');
         Route::get('/rekap-absensi/data', [AttendanceReportController::class, 'studentData'])->name('admin.rekapabsensi.data');
         Route::get('/rekap-absensi/export', [AttendanceReportController::class, 'export'])->name('admin.rekapabsensi.export');

@@ -7,6 +7,9 @@ use App\Models\Guru;
 use App\Models\JadwalPelajaran;
 use App\Models\Kelas;
 use App\Models\Mapel;
+use App\Models\PresensiPelajaran;
+use App\Models\SesiPelajaran;
+use App\Models\Siswa;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
@@ -60,13 +63,125 @@ class JadwalImportTest extends TestCase
             ->assertSee('value="Rabu"', false)
             ->assertSee('value="Kamis"', false)
             ->assertSee('value="Jumat"', false)
-            ->assertSee('value="'.$kelas->id.'"', false);
+            ->assertSee('value="'.$kelas->id.'"', false)
+            ->assertSee('data-delete-schedule', false)
+            ->assertSee('Apakah kamu yakin ingin menghapus jadwal ini?')
+            ->assertSee('Hapus Semua Jadwal')
+            ->assertSee('Semua jadwal pada database aktif');
 
         $this->actingAs($admin)
             ->get(route('admin.jadwalpelajaran', ['hari' => 'Selasa', 'kelas_id' => $kelas->id]))
             ->assertOk()
             ->assertSee('Belum ada jadwal tersimpan.')
             ->assertDontSee('class="schedule-subject"', false);
+    }
+
+    public function test_admin_can_delete_schedule_and_related_lesson_attendance(): void
+    {
+        $suffix = bin2hex(random_bytes(4));
+        $admin = $this->makeAdmin($suffix);
+        $guru = Guru::create(['nama_lengkap' => 'Guru Hapus QA '.$suffix, 'status' => 'aktif']);
+        $kelas = Kelas::create(['nama_kelas' => 'Kelas Hapus QA '.$suffix]);
+        $mapel = Mapel::create(['kode' => 'HAPUS-'.$suffix, 'nama_mapel' => 'Mapel Hapus QA']);
+        $jadwal = JadwalPelajaran::create([
+            'guru_id' => $guru->id,
+            'kelas_id' => $kelas->id,
+            'mapel_id' => $mapel->id,
+            'hari' => 'Senin',
+            'jam_mulai' => '07:00:00',
+            'jam_selesai' => '07:40:00',
+        ]);
+        $sesi = SesiPelajaran::create([
+            'jadwal_id' => $jadwal->id,
+            'guru_id' => $guru->id,
+            'tanggal' => '2026-11-06',
+            'status_sesi' => 'Selesai',
+        ]);
+        $studentUser = User::create([
+            'name' => 'Siswa Hapus QA '.$suffix,
+            'username' => 'siswa-hapus-'.$suffix,
+            'email' => null,
+            'role' => 'siswa',
+            'password' => Hash::make('test-password'),
+        ]);
+        $siswa = Siswa::create([
+            'user_id' => $studentUser->id,
+            'nisn' => 'NISN'.$suffix,
+            'nama_lengkap' => 'Siswa Hapus QA '.$suffix,
+            'kelas_id' => $kelas->id,
+        ]);
+        $presensi = PresensiPelajaran::create([
+            'sesi_pelajaran_id' => $sesi->id,
+            'siswa_id' => $siswa->id,
+            'status' => 'Hadir',
+        ]);
+
+        $this->actingAs($admin)
+            ->delete(route('admin.jadwalpelajaran.destroy', $jadwal))
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Jadwal pelajaran berhasil dihapus.');
+
+        $this->assertDatabaseMissing('jadwal_pelajarans', ['id' => $jadwal->id]);
+        $this->assertDatabaseMissing('sesi_pelajarans', ['id' => $sesi->id]);
+        $this->assertDatabaseMissing('presensi_pelajarans', ['id' => $presensi->id]);
+        $this->assertDatabaseHas('siswas', ['id' => $siswa->id]);
+        $this->assertDatabaseHas('gurus', ['id' => $guru->id]);
+    }
+
+    public function test_admin_can_delete_all_schedules_without_deleting_master_data(): void
+    {
+        $suffix = bin2hex(random_bytes(4));
+        $admin = $this->makeAdmin($suffix);
+        $guru = Guru::create(['nama_lengkap' => 'Guru Reset QA '.$suffix, 'status' => 'aktif']);
+        $kelas = Kelas::create(['nama_kelas' => 'Kelas Reset QA '.$suffix]);
+        $mapel = Mapel::create(['kode' => 'RESET-'.$suffix, 'nama_mapel' => 'Mapel Reset QA']);
+        $jadwal = JadwalPelajaran::create([
+            'guru_id' => $guru->id,
+            'kelas_id' => $kelas->id,
+            'mapel_id' => $mapel->id,
+            'hari' => 'Senin',
+            'jam_mulai' => '07:00:00',
+            'jam_selesai' => '07:40:00',
+        ]);
+        $sesi = SesiPelajaran::create([
+            'jadwal_id' => $jadwal->id,
+            'guru_id' => $guru->id,
+            'tanggal' => '2026-11-06',
+            'status_sesi' => 'Selesai',
+        ]);
+        $studentUser = User::create([
+            'name' => 'Siswa Reset QA '.$suffix,
+            'username' => 'siswa-reset-'.$suffix,
+            'email' => null,
+            'role' => 'siswa',
+            'password' => Hash::make('test-password'),
+        ]);
+        $siswa = Siswa::create([
+            'user_id' => $studentUser->id,
+            'nisn' => 'RESET'.$suffix,
+            'nama_lengkap' => 'Siswa Reset QA '.$suffix,
+            'kelas_id' => $kelas->id,
+        ]);
+        $presensi = PresensiPelajaran::create([
+            'sesi_pelajaran_id' => $sesi->id,
+            'siswa_id' => $siswa->id,
+            'status' => 'Hadir',
+        ]);
+        $scheduleCount = JadwalPelajaran::count();
+
+        $this->actingAs($admin)
+            ->delete(route('admin.jadwalpelajaran.destroy-all'))
+            ->assertRedirect()
+            ->assertSessionHas('success', "Berhasil menghapus {$scheduleCount} jadwal pelajaran.");
+
+        $this->assertSame(0, JadwalPelajaran::count());
+        $this->assertDatabaseMissing('jadwal_pelajarans', ['id' => $jadwal->id]);
+        $this->assertDatabaseMissing('sesi_pelajarans', ['id' => $sesi->id]);
+        $this->assertDatabaseMissing('presensi_pelajarans', ['id' => $presensi->id]);
+        $this->assertDatabaseHas('gurus', ['id' => $guru->id]);
+        $this->assertDatabaseHas('mapels', ['id' => $mapel->id]);
+        $this->assertDatabaseHas('kelas', ['id' => $kelas->id]);
+        $this->assertDatabaseHas('siswas', ['id' => $siswa->id]);
     }
 
     public function test_import_accepts_header_aliases_and_trims_case_differences(): void

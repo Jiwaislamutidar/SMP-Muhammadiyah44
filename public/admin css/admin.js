@@ -112,4 +112,15 @@
     });
   });
 
+  document.addEventListener('submit', (event) => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement)) return;
+
+    const button = form.querySelector('.processing-filter-button');
+    if (!button) return;
+
+    button.classList.add('is-processing');
+    button.setAttribute('aria-busy', 'true');
+  });
+
 })();

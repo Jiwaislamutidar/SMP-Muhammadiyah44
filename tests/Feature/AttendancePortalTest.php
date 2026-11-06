@@ -794,6 +794,44 @@ class AttendancePortalTest extends TestCase
             ->assertDontSee('Ust. Ahmad Fauzi');
     }
 
+    public function test_teacher_weekly_schedule_includes_assigned_subjects_and_excludes_unassigned_subjects(): void
+    {
+        [$guruUser, $guru] = $this->makeTeacher();
+        [, $guruPemilikJadwal] = $this->makeTeacher();
+        $kelas = Kelas::create(['nama_kelas' => 'Kelas Mingguan QA '.bin2hex(random_bytes(3))]);
+        $mapelDiampu = Mapel::create([
+            'kode' => 'MINGGUAN-'.bin2hex(random_bytes(3)),
+            'nama_mapel' => 'Mapel Mingguan QA',
+        ]);
+        $mapelLain = Mapel::create([
+            'kode' => 'BUKAN-'.bin2hex(random_bytes(3)),
+            'nama_mapel' => 'Mapel Bukan Ampu QA',
+        ]);
+        $guru->mapels()->attach($mapelDiampu->id);
+
+        foreach ([
+            [$mapelDiampu, 'Selasa'],
+            [$mapelLain, 'Rabu'],
+        ] as [$mapel, $hari]) {
+            JadwalPelajaran::create([
+                'guru_id' => $guruPemilikJadwal->id,
+                'kelas_id' => $kelas->id,
+                'mapel_id' => $mapel->id,
+                'hari' => $hari,
+                'jam_mulai' => '07:00:00',
+                'jam_selesai' => '07:40:00',
+            ]);
+        }
+
+        $this->actingAs($guruUser)
+            ->get(route('guru.jadwal'))
+            ->assertOk()
+            ->assertSee('Jadwal mingguan Anda')
+            ->assertSee('Selasa')
+            ->assertSee($mapelDiampu->nama_mapel)
+            ->assertDontSee($mapelLain->nama_mapel);
+    }
+
     public function test_guru_can_update_password_from_profile(): void
     {
         [$guruUser] = $this->makeTeacher();
@@ -903,7 +941,7 @@ class AttendancePortalTest extends TestCase
 
         $this->actingAs($guruUser)->get(route('guru.jadwal'))->assertOk()
             ->assertSee('href="'.route('guru.presensi-murid', ['jadwal' => $jadwal->id]).'"', false)
-            ->assertSee('3 jadwal hari ini');
+            ->assertSee('7 jadwal minggu ini');
 
         $response = $this->actingAs($guruUser)->get(route('guru.presensi-murid'))->assertOk()
             ->assertSee('3 jadwal dari database')

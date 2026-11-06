@@ -56,12 +56,18 @@ class PortalGuruController extends Controller
         $guru = Guru::forUser(Auth::user());
         abort_unless($guru, 403, 'Profil guru belum terhubung ke akun ini.');
 
-        $jadwals = $this->jadwalsHariIni($guru);
+        $jadwals = JadwalPelajaran::with(['guru', 'mapel', 'kelas'])
+            ->where(function ($query) use ($guru) {
+                $query->where('guru_id', $guru->id)
+                    ->orWhereHas('mapel.gurus', fn ($query) => $query->whereKey($guru->id));
+            })
+            ->orderByRaw("CASE LOWER(hari) WHEN 'senin' THEN 1 WHEN 'selasa' THEN 2 WHEN 'rabu' THEN 3 WHEN 'kamis' THEN 4 WHEN 'jumat' THEN 5 ELSE 6 END")
+            ->orderBy('jam_mulai')
+            ->get();
 
         return view('pages.guru.jadwalngajarguru', [
             'guru' => $guru,
             'jadwals' => $jadwals,
-            'jadwalBloks' => (new SiswaScheduleGrouper)->blocks($jadwals, now()),
         ]);
     }
 
@@ -162,6 +168,7 @@ class PortalGuruController extends Controller
         $hari = Carbon::now()->locale('id')->isoFormat('dddd');
 
         return JadwalPelajaran::with([
+            'guru',
             'kelas',
             'mapel',
             'sesiPelajarans' => fn ($query) => $query->whereDate('tanggal', today()),

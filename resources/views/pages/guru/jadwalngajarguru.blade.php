@@ -19,24 +19,22 @@
 		@include('pages.guru.partials.sidebar', ['activePage' => 'jadwal', 'sidebarRole' => 'Guru'])
 		@include('pages.guru.partials.topbar', ['profileRole' => 'Guru'])
 		<main class="content">
-			<div class="page-header"><div><h1>Jadwal Mengajar</h1><p>{{ now()->locale('id')->translatedFormat('l, j F Y') }}</p></div><div class="term-chip"><span class="dot"></span>{{ $jadwalBloks->count() }} jadwal hari ini</div></div>
+			<div class="page-header"><div><h1>Jadwal Mengajar</h1><p>Jadwal mingguan Anda</p></div><div class="term-chip"><span class="dot"></span>{{ $jadwals->count() }} jadwal minggu ini</div></div>
 			<section class="schedule-card">
 				<div class="table-heading"><div><h2>Daftar Jadwal Mengajar</h2></div><span>{{ $guru->nama_lengkap }}</span></div>
 				<div class="table-scroll"><table class="schedule-table">
-					<thead><tr><th>Hari</th><th>Jam</th><th>Mata Pelajaran &amp; Ruang KBM</th><th>Kelas</th><th>Status</th><th>Aksi</th></tr></thead>
+					<thead><tr><th>Hari</th><th>Jam</th><th>Mata Pelajaran &amp; Ruang KBM</th><th>Kelas</th><th>Aksi</th></tr></thead>
 					<tbody>
-						@forelse($jadwalBloks as $blok)
-							@php($jadwal = $blok['jadwal'])
-							<tr class="{{ $blok['status'] === 'Berlangsung' ? 'active-row' : '' }}">
-								<td>{{ $jadwal->hari }}</td><td class="time">{{ $blok['jam'] }}@if(count($blok['segments']) > 1)<small class="schedule-block-duration">{{ $blok['durasi'] }}</small>@endif</td>
+						@forelse($jadwals as $jadwal)
+							<tr>
+								<td>{{ $jadwal->hari }}</td><td class="time">{{ substr($jadwal->jam_mulai, 0, 5) }} - {{ substr($jadwal->jam_selesai, 0, 5) }}</td>
 								<td><strong>{{ $jadwal->mapel->nama_mapel }}</strong><small>Ruang KBM: {{ $jadwal->ruangan ?? '-' }}</small></td><td><span class="class-chip">{{ $jadwal->kelas->nama_kelas }}</span></td>
-								<td><span class="status {{ $blok['status'] === 'Selesai' ? 'done' : ($blok['status'] === 'Berlangsung' ? 'ongoing' : 'upcoming') }}"><i></i>{{ $blok['status'] }}</span></td>
 								<td><a class="detail-btn" href="{{ route('guru.presensi-murid', ['jadwal' => $jadwal->id]) }}">Kelola Presensi</a></td>
 							</tr>
-						@empty<tr><td colspan="6">Tidak ada jadwal mengajar untuk hari ini.</td></tr>@endforelse
+						@empty<tr><td colspan="5">Tidak ada jadwal mengajar yang tersimpan.</td></tr>@endforelse
 					</tbody>
 				</table></div>
-				<div class="table-footer"><span>Menampilkan <strong>{{ $jadwalBloks->count() }} sesi</strong> dari jadwal tersimpan.</span><span class="sync"><i></i>Data jadwal hari ini</span></div>
+				<div class="table-footer"><span>Menampilkan <strong>{{ $jadwals->count() }} jadwal</strong> dari jadwal tersimpan.</span><span class="sync"><i></i>Data jadwal mingguan</span></div>
 			</section>
 			<footer class="footer"><span>Sistem Presensi &amp; Manajemen Akademik SMP Muhammadiyah 44 Tangerang Selatan</span><span>© {{ date('Y') }} SMP Muhammadiyah 44 Tangerang Selatan</span></footer>
 		</main>

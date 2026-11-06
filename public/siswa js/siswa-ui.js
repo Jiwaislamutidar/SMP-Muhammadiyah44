@@ -44,6 +44,17 @@
     window.setInterval(updateLiveDatetime, 1000);
   }
 
+  document.addEventListener('submit', function (event) {
+    var form = event.target;
+    if (!(form instanceof HTMLFormElement)) return;
+
+    var button = form.querySelector('.processing-filter-button');
+    if (!button) return;
+
+    button.classList.add('is-processing');
+    button.setAttribute('aria-busy', 'true');
+  });
+
   if (!sidebar || !burger || !notificationToggle || !notificationPanel || !notificationOverlay) return;
 
   var badge = notificationToggle.querySelector('.badge-dot');

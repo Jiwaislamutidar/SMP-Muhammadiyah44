@@ -363,6 +363,15 @@ html::-webkit-scrollbar-thumb { background: #087443; border-radius: 999px; borde
 .btn-apply, .btn-reset, .btn-export { font-family: inherit; cursor: pointer; border-radius: 10px; -webkit-tap-highlight-color: transparent; }
 .btn-apply { border: none; background: var(--green-700); color: #fff; padding: 0 22px; height: 44px; font-size: 14px; font-weight: 600; transition: background .2s ease; }
 .btn-apply:hover { background: #066236; }
+.processing-filter-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease, opacity .18s ease; }
+.processing-filter-button.is-processing { cursor: wait; opacity: .84; box-shadow: inset 0 0 0 1px rgba(255,255,255,.22); }
+.processing-filter-button.is-processing::after { width: 14px; height: 14px; flex: 0 0 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; content: ""; animation: studentFilterButtonSpin .7s linear infinite; }
+@keyframes studentFilterButtonSpin { to { transform: rotate(360deg); } }
+.processing-filter-button:focus-visible { outline: 3px solid rgba(8,116,67,.25); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .processing-filter-button,
+  .processing-filter-button.is-processing::after { transition-duration: .01ms; animation-duration: .01ms; }
+}
 .btn-reset { border: 1px solid var(--border); background: #fff; color: var(--muted); padding: 0 18px; height: 44px; font-size: 14px; font-weight: 500; }
 
 .table-card { padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 360px; box-shadow: var(--shadow-3); }

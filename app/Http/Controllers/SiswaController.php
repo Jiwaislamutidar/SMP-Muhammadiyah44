@@ -21,7 +21,7 @@ class SiswaController extends Controller
 {
     public function dashboard(): View
     {
-        return view('pages.siswa.dashboardsiswa', $this->pageData());
+        return view('pages.siswa.dashboardsiswa', $this->pageData(includeWeeklySchedule: true));
     }
 
     public function scanQr(): View
@@ -138,7 +138,7 @@ class SiswaController extends Controller
         return redirect()->route('siswa.profil')->with('success', 'Kata sandi berhasil diperbarui!');
     }
 
-    private function pageData(?Siswa $siswaModel = null): array
+    private function pageData(?Siswa $siswaModel = null, bool $includeWeeklySchedule = false): array
     {
         $user = Auth::user();
         $siswaModel ??= Siswa::where('user_id', $user->id)->with('kelas')->first();
@@ -152,20 +152,33 @@ class SiswaController extends Controller
         $academicStartYear = $month >= 7 ? now()->year : now()->year - 1;
         $semesterName = $month >= 7 || $month <= 1 ? 'Ganjil' : 'Genap';
         $kelas = $siswaModel?->kelas?->nama_kelas ?? 'Belum Ada Kelas';
+        $jadwalMingguan = collect();
         $jadwalRecords = collect();
 
         if ($siswaModel?->kelas_id) {
             $hari = now()->locale('id')->isoFormat('dddd');
-            $jadwalRecords = JadwalPelajaran::with([
+            $jadwalQuery = JadwalPelajaran::with([
                 'guru',
                 'kelas',
                 'mapel',
                 'sesiPelajarans' => fn ($query) => $query->whereDate('tanggal', today()),
             ])
-                ->where('kelas_id', $siswaModel->kelas_id)
-                ->whereRaw('LOWER(hari) = ?', [mb_strtolower($hari)])
-                ->orderBy('jam_mulai')
-                ->get();
+                ->where('kelas_id', $siswaModel->kelas_id);
+
+            if ($includeWeeklySchedule) {
+                $jadwalMingguan = $jadwalQuery
+                    ->orderByRaw("CASE LOWER(hari) WHEN 'senin' THEN 1 WHEN 'selasa' THEN 2 WHEN 'rabu' THEN 3 WHEN 'kamis' THEN 4 WHEN 'jumat' THEN 5 ELSE 6 END")
+                    ->orderBy('jam_mulai')
+                    ->get();
+                $jadwalRecords = $jadwalMingguan
+                    ->filter(fn (JadwalPelajaran $jadwal) => mb_strtolower($jadwal->hari) === mb_strtolower($hari))
+                    ->values();
+            } else {
+                $jadwalRecords = $jadwalQuery
+                    ->whereRaw('LOWER(hari) = ?', [mb_strtolower($hari)])
+                    ->orderBy('jam_mulai')
+                    ->get();
+            }
         }
 
         $scheduleGrouper = new SiswaScheduleGrouper;
@@ -254,6 +267,7 @@ class SiswaController extends Controller
                     : '-',
             ],
             'jadwalHariIni' => $jadwalHariIni,
+            'jadwalMingguan' => $jadwalMingguan,
             'absensiTerbaru' => $absensiTerbaru,
             'notifikasiPresensi' => $absensiTerbaru,
             'sesiBerikutnya' => $sesiBerikutnya

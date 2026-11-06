@@ -9,6 +9,7 @@ use App\Imports\JadwalImportException;
 use App\Models\JadwalPelajaran;
 use App\Models\Kelas;
 use App\Models\Mapel;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
@@ -72,5 +73,24 @@ class AdminJadwalController extends Controller
     public function template()
     {
         return Excel::download(new JadwalTemplateExport, 'template-jadwal-pelajaran.xlsx');
+    }
+
+    public function destroyAll(): RedirectResponse
+    {
+        $deleted = DB::transaction(fn (): int => JadwalPelajaran::query()->delete());
+
+        return back()->with('success', "Berhasil menghapus {$deleted} jadwal pelajaran.");
+    }
+
+    public function destroy(JadwalPelajaran $jadwal): RedirectResponse
+    {
+        DB::transaction(function () use ($jadwal): void {
+            JadwalPelajaran::query()
+                ->lockForUpdate()
+                ->findOrFail($jadwal->id)
+                ->delete();
+        });
+
+        return back()->with('success', 'Jadwal pelajaran berhasil dihapus.');
     }
 }

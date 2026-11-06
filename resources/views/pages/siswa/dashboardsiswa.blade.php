@@ -457,10 +457,10 @@ $rTotal = $rHadir + $rIzin + $rSakit + $rAlfa;
           <div class="card-header">
             <div class="card-title">
               <span class="bar"></span>
-              <h2>Jadwal Hari Ini</h2>
+              <h2>Jadwal Mingguan</h2>
             </div>
             <div class="date-chip">
-              {{ $siswa->kelas ?? '-' }} • {{ collect($jadwalHariIni ?? [])->where('kind', 'lesson')->count() }} Sesi Pembelajaran
+              {{ $siswa->kelas ?? '-' }} • {{ collect($jadwalMingguan ?? [])->count() }} Sesi Pembelajaran
             </div>
           </div>
 
@@ -468,6 +468,7 @@ $rTotal = $rHadir + $rIzin + $rSakit + $rAlfa;
             <table class="jadwal">
               <thead>
                 <tr>
+                  <th>Hari</th>
                   <th>Jam</th>
                   <th>Mapel</th>
                   <th>Guru</th>
@@ -476,34 +477,20 @@ $rTotal = $rHadir + $rIzin + $rSakit + $rAlfa;
                 </tr>
               </thead>
               <tbody>
-                @forelse($jadwalHariIni ?? [] as $j)
-                  @if(($j['kind'] ?? 'lesson') === 'break')
-                    <tr class="jadwal-break">
-                      <td colspan="5"><span>{{ $j['label'] }}</span><span>{{ $j['jam'] }}</span></td>
-                    </tr>
-                  @else
-                    <tr class="{{ $j['status'] === 'Berlangsung' ? 'berlangsung' : ($j['status'] === 'Selesai' ? 'selesai' : '') }}">
-                      <td data-label="Jam">{{ $j['jam'] }}<small class="jadwal-duration">{{ $j['durasi'] }}</small></td>
-                      <td data-label="Mapel">{{ $j['mapel'] }}</td>
-                      <td data-label="Guru">{{ $j['guru'] ?? '-' }}</td>
-                      <td data-label="Kelas">
-                        <span class="kelas-chip">{{ $j['kelas'] ?? $siswa->kelas ?? '-' }}</span>
-                      </td>
-                      <td data-label="Status">
-                        @if($j['status'] === 'Selesai')
-                          <span class="status-selesai">Selesai</span>
-                        @elseif($j['status'] === 'Berlangsung')
-                          <span class="status-berlangsung">Berlangsung</span>
-                        @else
-                          <span class="status-netral">{{ $j['status'] }}</span>
-                        @endif
-                      </td>
-                    </tr>
-                  @endif
+                @forelse($jadwalMingguan ?? [] as $jadwal)
+                  <tr>
+                    <td data-label="Hari">{{ $jadwal->hari }}</td>
+                    <td data-label="Jam">{{ substr($jadwal->jam_mulai, 0, 5) }} - {{ substr($jadwal->jam_selesai, 0, 5) }}</td>
+                    <td data-label="Mapel">{{ $jadwal->mapel->nama_mapel }}</td>
+                    <td data-label="Guru">{{ $jadwal->guru->nama_lengkap }}</td>
+                    <td data-label="Kelas">
+                      <span class="kelas-chip">{{ $jadwal->kelas->nama_kelas }}</span>
+                    </td>
+                  </tr>
                 @empty
                   <tr>
                     <td colspan="5" data-label="Info">
-                      Tidak ada jadwal pembelajaran untuk kelas Anda hari ini.
+                      Tidak ada jadwal pembelajaran tersimpan untuk kelas Anda.
                     </td>
                   </tr>
                 @endforelse
@@ -512,10 +499,7 @@ $rTotal = $rHadir + $rIzin + $rSakit + $rAlfa;
           </div>
 
           <div class="jadwal-footer">
-            <span>
-              Menampilkan jadwal aktif
-              {{ $tanggalHariIni ?? now()->locale('id')->translatedFormat('l, j F Y') }}
-            </span>
+            <span>Menampilkan seluruh jadwal mingguan</span>
             <span>Jadwal {{ $siswa->kelas ?? '-' }}</span>
           </div>
         </section>

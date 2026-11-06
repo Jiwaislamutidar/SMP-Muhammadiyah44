@@ -8,7 +8,7 @@
 		<p>Kelola guru &amp; staf pendidik</p>
 	</div>
 	<div class="admin-header-actions">
-		<button class="admin-action admin-action-outline guru-import-trigger" type="button" data-open-modal="importGuruModal" aria-haspopup="dialog">↑ Import Excel</button>
+		<button class="admin-action admin-action-outline guru-import-trigger admin-glass-button" type="button" data-open-modal="importGuruModal" aria-haspopup="dialog">↑ Import Excel</button>
 		<button class="admin-action guru-manual-trigger" type="button" data-open-modal="addGuruModal">+ Tambah Guru</button>
 	</div>
 </div>
@@ -160,11 +160,11 @@
 				📄 File terpilih: <strong id="guruImportFileName"></strong>
 			</div>
 
-			<a class="guru-template-link" href="{{ route('admin.guru.template') }}">📥 Unduh Template Excel (.xlsx)</a>
+			<a class="guru-template-link admin-glass-button" href="{{ route('admin.guru.template') }}">📥 Unduh Template Excel (.xlsx)</a>
 
 			<div class="guru-modal-actions">
 				<button class="guru-button-secondary" type="button" data-close-modal>Batal</button>
-				<button class="admin-action" id="guruImportSubmit" type="submit">Import Data</button>
+				<button class="admin-action admin-glass-button" id="guruImportSubmit" type="submit">Import Data</button>
 			</div>
 		</form>
 	</section>

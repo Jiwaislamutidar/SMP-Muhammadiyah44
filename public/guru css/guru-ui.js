@@ -8,6 +8,17 @@
   var notificationOverlay = document.getElementById('notificationOverlay');
   var liveDatetime = document.getElementById('liveDatetime');
 
+  document.addEventListener('submit', function (event) {
+    var form = event.target;
+    if (!(form instanceof HTMLFormElement)) return;
+
+    var button = form.querySelector('.processing-filter-button');
+    if (!button) return;
+
+    button.classList.add('is-processing');
+    button.setAttribute('aria-busy', 'true');
+  });
+
   function setSidebarOpen(open) {
     sidebar.classList.toggle('open', open);
     sidebarOverlay.classList.toggle('show', open);

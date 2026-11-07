@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('title', 'Rekap Absensi')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/rekapabsensi.css') }}?v=8">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/rekapabsensi.css') }}?v=11">@endsection
 @section('content')
 
 <div class="admin-page-header">
@@ -42,25 +42,30 @@
     <input class="admin-input" id="rekapDate" type="date" value="{{ $selectedDate }}" required>
   </label>
   <fieldset class="rekap-export-range">
-    <legend>Rentang PDF</legend>
-    <label class="rekap-filter-label" for="rekapExportDateFrom">
-      Dari
-      <input class="admin-input" id="rekapExportDateFrom" type="date" value="{{ $selectedDate }}">
-    </label>
-    <label class="rekap-filter-label" for="rekapExportDateTo">
-      Sampai
-      <input class="admin-input" id="rekapExportDateTo" type="date" value="{{ $selectedDate }}">
-    </label>
+    <legend>Rentang PDF Dari & Sampai</legend>
+    <div class="rekap-range-inputs">
+      <label class="rekap-filter-label" for="rekapExportDateFrom">
+        Dari
+        <input class="admin-input" id="rekapExportDateFrom" type="date" value="{{ $selectedDate }}">
+      </label>
+      <label class="rekap-filter-label" for="rekapExportDateTo">
+        Sampai
+        <input class="admin-input" id="rekapExportDateTo" type="date" value="{{ $selectedDate }}">
+      </label>
+    </div>
   </fieldset>
   <form class="rekap-search-form" method="GET" action="{{ route('admin.rekapabsensi') }}" id="rekapSearchForm">
-    <input class="admin-search" id="rekapSearch" name="search" type="search" placeholder="Cari nama atau NISN murid..." aria-label="Cari murid">
+    <label class="rekap-filter-label" for="rekapSearch">
+      Cari Murid
+      <input class="admin-search admin-input" id="rekapSearch" name="search" type="search" value="{{ $selectedSearch }}" placeholder="Nama / NISN..." aria-label="Cari murid">
+    </label>
   </form>
   <label class="rekap-filter-label" for="rekapClass">
     Kelas
     <select class="admin-select" id="rekapClass">
       <option value="">Semua Kelas</option>
       @foreach($kelasList as $kelas)
-        <option value="{{ $kelas->id }}">{{ $kelas->nama_kelas }}</option>
+        <option value="{{ $kelas->id }}" @selected((string) $selectedClass === (string) $kelas->id)>{{ $kelas->nama_kelas }}</option>
       @endforeach
     </select>
   </label>
@@ -69,11 +74,13 @@
     <select class="admin-select" id="rekapStatus">
       <option value="">Semua Status</option>
       @foreach(['Hadir', 'Izin', 'Sakit', 'Alfa'] as $status)
-        <option value="{{ $status }}">{{ $status }}</option>
+        <option value="{{ $status }}" @selected($selectedStatus === $status)>{{ $status }}</option>
       @endforeach
     </select>
   </label>
-  <span class="admin-total" id="rekapTotal">Total {{ $report['total'] }} Data</span>
+  <div class="rekap-total-wrapper">
+    <span class="admin-total" id="rekapTotal">Total {{ $report['total'] }} Data</span>
+  </div>
 </div>
 
 <p class="rekap-error" id="rekapError" role="alert" hidden></p>
@@ -272,14 +279,19 @@
   updateActionUrls(activeFilters());
   [exportDateFrom, exportDateTo].forEach((filter) => filter.addEventListener('change', () => updateActionUrls(activeFilters())));
   [dateFilter, classFilter, statusFilter].forEach((filter) => filter.addEventListener('change', loadReport));
-  document.getElementById('rekapSearchForm').addEventListener('submit', (event) => {
-    event.preventDefault();
+  
+  function submitSearch() {
     window.clearTimeout(searchTimer);
     loadReport();
+  }
+
+  document.getElementById('rekapSearchForm').addEventListener('submit', (event) => {
+    event.preventDefault();
+    submitSearch();
   });
   searchFilter.addEventListener('input', () => {
     window.clearTimeout(searchTimer);
-    searchTimer = window.setTimeout(loadReport, 250);
+    searchTimer = window.setTimeout(submitSearch, 250);
   });
   document.getElementById('deleteAttendance').addEventListener('click', () => {
     deleteConfirmationPending = true;

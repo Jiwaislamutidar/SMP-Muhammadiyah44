@@ -670,6 +670,31 @@ class AttendancePortalTest extends TestCase
         $this->assertSame(count($periodResponse['tidak_hadir']), $periodResponse['counts']['tidak_hadir']);
     }
 
+    public function test_admin_student_report_page_initializes_live_filters_from_query(): void
+    {
+        [, , $jadwal] = $this->makeSchedule();
+        $admin = User::create([
+            'name' => 'Admin QA '.bin2hex(random_bytes(4)),
+            'username' => 'admin-qa-'.bin2hex(random_bytes(4)),
+            'email' => null,
+            'role' => 'admin',
+            'password' => Hash::make('test-password'),
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.rekapabsensi', [
+                'date' => today()->toDateString(),
+                'kelas' => $jadwal->kelas_id,
+                'status' => 'Hadir',
+                'search' => 'Report Search',
+            ]))
+            ->assertOk()
+            ->assertSee('value="Report Search"', false)
+            ->assertSee('value="'.$jadwal->kelas_id.'" selected', false)
+            ->assertSee('value="Hadir" selected', false)
+            ->assertDontSee('Terapkan');
+    }
+
     public function test_admin_student_report_filters_rows_summaries_export_and_bulk_delete(): void
     {
         [, , $jadwal] = $this->makeSchedule();
@@ -709,8 +734,9 @@ class AttendancePortalTest extends TestCase
             ->assertOk()
             ->assertSee($siswa->nama_lengkap)
             ->assertSee('Hapus Data')
-            ->assertSee('Export Rekap')
+            ->assertSee('Unduh Rekap PDF')
             ->assertSee('type="date"', false)
+            ->assertDontSee('Terapkan')
             ->assertDontSee('00654321');
 
         $this->actingAs($admin)

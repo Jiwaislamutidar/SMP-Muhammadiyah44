@@ -21,15 +21,20 @@ class AttendanceReportController extends Controller
 {
     public function index(Request $request): View
     {
-        $validated = $request->validate([
-            'date' => ['sometimes', 'date_format:Y-m-d'],
-        ]);
-        $date = $validated['date'] ?? today()->toDateString();
+        $filters = $this->validatedStudentFilters($request);
 
         return view('pages.admin.rekapabsensi', [
             'kelasList' => Kelas::query()->orderBy('nama_kelas')->get(),
-            'selectedDate' => $date,
-            'report' => $this->studentReport($date, null, null, ''),
+            'selectedDate' => $filters['date'],
+            'selectedClass' => $filters['kelas'],
+            'selectedStatus' => $filters['status'],
+            'selectedSearch' => $filters['search'],
+            'report' => $this->studentReport(
+                $filters['date'],
+                $filters['kelas'],
+                $filters['status'],
+                $filters['search']
+            ),
         ]);
     }
 

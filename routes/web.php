@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminGuruController;
 use App\Http\Controllers\Admin\AdminJadwalController;
 use App\Http\Controllers\Admin\AdminKelasController;
+use App\Http\Controllers\Admin\AdminMapelController;
 use App\Http\Controllers\Admin\AttendanceReportController;
 use App\Http\Controllers\Admin\AuthController as AdminAuth;
 use App\Http\Controllers\Admin\DashboardAttendanceLogController;
@@ -52,7 +53,7 @@ Route::domain('admin.'.$domain)->group(function () {
         Route::post('/data-kelas', [AdminKelasController::class, 'store'])->name('admin.kelas.store');
         Route::put('/data-kelas/{kelas}', [AdminKelasController::class, 'update'])->name('admin.kelas.update');
         Route::delete('/data-kelas/{kelas}', [AdminKelasController::class, 'destroy'])->name('admin.kelas.destroy');
-        Route::get('/mata-pelajaran', fn () => view('pages.admin.matapelajaran'))->name('admin.matapelajaran');
+        Route::get('/mata-pelajaran', [AdminMapelController::class, 'index'])->name('admin.matapelajaran');
         Route::get('/jadwal-pelajaran', [AdminJadwalController::class, 'index'])->name('admin.jadwalpelajaran');
         Route::get('/jadwal-pelajaran/export-pdf', [AdminJadwalController::class, 'exportPdf'])->name('admin.jadwalpelajaran.export-pdf');
         Route::post('/jadwal-pelajaran/import', [AdminJadwalController::class, 'import'])->name('admin.jadwalpelajaran.import');

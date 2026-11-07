@@ -10,7 +10,6 @@ class GuruTemplateExport implements FromArray
     {
         return [
             ['nbm', 'nama_lengkap', 'kode_mapel', 'nama_mapel', 'jml_jam'],
-            ['123456', 'Asep Gunawan, S.Pd', '2', 'bahasa rusia', '9'],
         ];
     }
 }

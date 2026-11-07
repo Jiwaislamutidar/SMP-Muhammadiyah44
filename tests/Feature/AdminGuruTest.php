@@ -15,6 +15,59 @@ class AdminGuruTest extends TestCase
 {
     use DatabaseTransactions;
 
+    public function test_admin_mapel_page_shows_assigned_subjects_and_aggregates_all_teachers(): void
+    {
+        $admin = $this->makeAdmin();
+        $mapel = Mapel::create([
+            'kode' => 'MAPEL-'.bin2hex(random_bytes(3)),
+            'nama_mapel' => 'Mapel Dinamis QA',
+        ]);
+        $guru = Guru::create([
+            'nama_lengkap' => 'Guru Dinamis QA '.bin2hex(random_bytes(3)),
+            'nbm' => 'NBM-'.bin2hex(random_bytes(4)),
+            'status' => 'aktif',
+        ]);
+        $guru->mapels()->attach($mapel->id, ['jumlah_jam' => 6]);
+        $guruLain = Guru::create([
+            'nama_lengkap' => 'Guru Kedua QA '.bin2hex(random_bytes(3)),
+            'nbm' => 'NBM-'.bin2hex(random_bytes(4)),
+            'status' => 'aktif',
+        ]);
+        $guruLain->mapels()->attach($mapel->id, ['jumlah_jam' => 4]);
+        Mapel::create([
+            'kode' => 'KOSONG-'.bin2hex(random_bytes(3)),
+            'nama_mapel' => 'Mapel Tanpa Pengampu QA',
+        ]);
+        $totalMapel = Mapel::query()->whereHas('gurus')->count();
+
+        $response = $this->actingAs($admin)
+            ->get(route('admin.matapelajaran'))
+            ->assertOk()
+            ->assertSee("Total {$totalMapel} Mapel")
+            ->assertSee('Mapel Dinamis QA')
+            ->assertSee($mapel->kode)
+            ->assertSee('2 Guru')
+            ->assertSee('10 JP/Minggu')
+            ->assertSee($guru->nama_lengkap)
+            ->assertSee($guru->nbm)
+            ->assertSee($guruLain->nama_lengkap)
+            ->assertSee($guruLain->nbm)
+            ->assertSee('"nama":"'.$guru->nama_lengkap.'","identitas":"'.$guru->nbm.'","jp":6', false)
+            ->assertSee('"nama":"'.$guruLain->nama_lengkap.'","identitas":"'.$guruLain->nbm.'","jp":4', false)
+            ->assertSee('data-mapel-id="'.$mapel->id.'"', false)
+            ->assertDontSee('mapelSearchForm')
+            ->assertDontSee('Semua Status')
+            ->assertDontSee('badge-status-')
+            ->assertDontSee('Tambah Mapel')
+            ->assertDontSee('badge-code-tag');
+
+        $response->assertDontSee('Mapel Tanpa Pengampu QA');
+        $this->assertSame(
+            1,
+            substr_count($response->getContent(), 'data-mapel-id="'.$mapel->id.'"')
+        );
+    }
+
     public function test_admin_can_view_guru_and_create_guru_with_subjects(): void
     {
         $admin = $this->makeAdmin();
@@ -472,7 +525,7 @@ class AdminGuruTest extends TestCase
         $this->assertCount(0, Guru::where('nbm', $nbmWithoutSubject)->firstOrFail()->mapels);
     }
 
-    public function test_admin_can_download_excel_template_with_headers_and_sample_teacher(): void
+    public function test_admin_can_download_excel_template_with_headers_only(): void
     {
         $this->actingAs($this->makeAdmin())
             ->get(route('admin.guru.template'))
@@ -481,10 +534,7 @@ class AdminGuruTest extends TestCase
             ->assertHeader('content-disposition', 'attachment; filename=template-data-guru.xlsx');
 
         $this->assertSame(
-            [
-                ['nbm', 'nama_lengkap', 'kode_mapel', 'nama_mapel', 'jml_jam'],
-                ['1104698', 'Maryadi Saputra, S.Pd', '2', 'IPS Terpadu', '8'],
-            ],
+            [['nbm', 'nama_lengkap', 'kode_mapel', 'nama_mapel', 'jml_jam']],
             (new GuruTemplateExport)->array()
         );
     }

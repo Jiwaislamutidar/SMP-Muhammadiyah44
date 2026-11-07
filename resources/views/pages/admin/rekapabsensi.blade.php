@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('title', 'Rekap Absensi')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/rekapabsensi.css') }}?v=7">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/rekapabsensi.css') }}?v=8">@endsection
 @section('content')
 
 <div class="admin-page-header">
@@ -10,7 +10,10 @@
   </div>
   <div class="admin-header-actions rekap-actions">
     <button class="admin-action admin-action-outline admin-delete-button" id="deleteAttendance" type="button">Hapus Data</button>
-    <a class="admin-action" id="exportAttendance" href="{{ route('admin.rekapabsensi.export', ['date' => $selectedDate]) }}">↓ Export Rekap</a>
+    <button class="admin-action admin-pdf-export bg-blue-600 hover:bg-blue-700" id="exportAttendance" type="button" data-pdf-export data-export-url="{{ route('admin.rekapabsensi.export') }}" data-export-filename="rekap-absensi.pdf" aria-live="polite">
+      <svg class="admin-pdf-export-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2.5v9m0 0 3.5-3.5M10 11.5 6.5 8M3.5 12.5v3A1.5 1.5 0 0 0 5 17h10a1.5 1.5 0 0 0 1.5-1.5v-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span data-export-label>Unduh Rekap PDF</span><span class="admin-pdf-progress" aria-hidden="true"></span>
+    </button>
   </div>
 </div>
 
@@ -38,6 +41,17 @@
     Tanggal
     <input class="admin-input" id="rekapDate" type="date" value="{{ $selectedDate }}" required>
   </label>
+  <fieldset class="rekap-export-range">
+    <legend>Rentang PDF</legend>
+    <label class="rekap-filter-label" for="rekapExportDateFrom">
+      Dari
+      <input class="admin-input" id="rekapExportDateFrom" type="date" value="{{ $selectedDate }}">
+    </label>
+    <label class="rekap-filter-label" for="rekapExportDateTo">
+      Sampai
+      <input class="admin-input" id="rekapExportDateTo" type="date" value="{{ $selectedDate }}">
+    </label>
+  </fieldset>
   <form class="rekap-search-form" method="GET" action="{{ route('admin.rekapabsensi') }}" id="rekapSearchForm">
     <input class="admin-search" id="rekapSearch" name="search" type="search" placeholder="Cari nama atau NISN murid..." aria-label="Cari murid">
   </form>
@@ -118,6 +132,8 @@
 <script>
   const reportUrl = @json(route('admin.rekapabsensi.data'));
   const dateFilter = document.getElementById('rekapDate');
+  const exportDateFrom = document.getElementById('rekapExportDateFrom');
+  const exportDateTo = document.getElementById('rekapExportDateTo');
   const classFilter = document.getElementById('rekapClass');
   const statusFilter = document.getElementById('rekapStatus');
   const searchFilter = document.getElementById('rekapSearch');
@@ -142,15 +158,23 @@
 
   function updateActionUrls(filters) {
     if (!filters.date) {
-      exportLink.removeAttribute('href');
-      exportLink.setAttribute('aria-disabled', 'true');
+      exportLink.disabled = true;
       deleteButton.disabled = true;
       return;
     }
 
-    const query = new URLSearchParams(filters);
-    exportLink.href = `{{ route('admin.rekapabsensi.export') }}?${query}`;
-    exportLink.removeAttribute('aria-disabled');
+    const exportFilters = {
+      date_from: exportDateFrom.value,
+      date_to: exportDateTo.value,
+      kelas: filters.kelas,
+      status: filters.status,
+      search: filters.search,
+    };
+    const validExportRange = exportFilters.date_from
+      && exportFilters.date_to
+      && exportFilters.date_to >= exportFilters.date_from;
+    exportLink.dataset.exportParams = new URLSearchParams(exportFilters).toString();
+    exportLink.disabled = !validExportRange;
     deleteButton.disabled = false;
     Object.entries(filters).forEach(([name, value]) => {
       deleteForm.elements[name].value = value;
@@ -245,6 +269,8 @@
     }
   }
 
+  updateActionUrls(activeFilters());
+  [exportDateFrom, exportDateTo].forEach((filter) => filter.addEventListener('change', () => updateActionUrls(activeFilters())));
   [dateFilter, classFilter, statusFilter].forEach((filter) => filter.addEventListener('change', loadReport));
   document.getElementById('rekapSearchForm').addEventListener('submit', (event) => {
     event.preventDefault();
@@ -266,4 +292,5 @@
     deleteConfirmationPending = false;
   });
 </script>
+<script src="{{ asset('admin-pdf-export.js') }}?v=1" defer></script>
 @endsection

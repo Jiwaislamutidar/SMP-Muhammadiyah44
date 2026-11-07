@@ -8,7 +8,13 @@
     <h1>Data Kelas</h1>
     <p>Kelola rombongan belajar &amp; wali kelas</p>
   </div>
-  <button class="admin-action" type="button" data-add-class>+ Tambah Kelas</button>
+  <div class="admin-header-actions">
+    <button class="admin-action admin-pdf-export bg-blue-600 hover:bg-blue-700" type="button" data-pdf-export data-export-url="{{ route('admin.kelas.export-pdf') }}" data-export-filename="data-kelas.pdf" aria-live="polite">
+      <svg class="admin-pdf-export-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2.5v9m0 0 3.5-3.5M10 11.5 6.5 8M3.5 12.5v3A1.5 1.5 0 0 0 5 17h10a1.5 1.5 0 0 0 1.5-1.5v-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span data-export-label>Unduh Data Kelas</span><span class="admin-pdf-progress" aria-hidden="true"></span>
+    </button>
+    <button class="admin-action" type="button" data-add-class>+ Tambah Kelas</button>
+  </div>
 </div>
 
 @if (session('success'))
@@ -246,5 +252,5 @@
   }
 })();
 </script>
-
+<script src="{{ asset('admin-pdf-export.js') }}?v=1" defer></script>
 @endsection

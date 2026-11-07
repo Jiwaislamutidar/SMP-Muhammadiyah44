@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
 use App\Exports\GuruTemplateExport;
+use App\Http\Controllers\Controller;
 use App\Imports\GuruImport;
 use App\Models\Guru;
 use App\Models\Mapel;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -20,18 +22,9 @@ class AdminGuruController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Guru::with('mapels')
-            ->when($request->filled('search'), function ($query) use ($request) {
-                $search = $request->input('search');
-                $query->where(function ($query) use ($search) {
-                    $query->where('nama_lengkap', 'like', "%{$search}%")
-                        ->orWhere('nbm', 'like', "%{$search}%")
-                        ->orWhereHas('mapels', fn ($mapels) => $mapels->where('nama_mapel', 'like', "%{$search}%"));
-                });
-            })
-            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')));
-
-        $gurus = $query->orderBy('nama_lengkap')->get();
+        $gurus = $this->filteredGuruQuery($request)
+            ->orderBy('nama_lengkap')
+            ->get();
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -44,6 +37,37 @@ class AdminGuruController extends Controller
             'gurus' => $gurus,
             'totalGuru' => Guru::count(),
         ]);
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $gurus = $this->filteredGuruQuery($request)
+            ->orderBy('nama_lengkap')
+            ->get();
+        $generatedAt = now();
+
+        return Pdf::loadView('pages.admin.dataguru-pdf', [
+            'gurus' => $gurus,
+            'search' => $request->input('search'),
+            'status' => $request->input('status'),
+            'generatedAt' => $generatedAt,
+        ])
+            ->setPaper('a4', 'landscape')
+            ->download('data-guru-'.$generatedAt->format('Ymd').'.pdf');
+    }
+
+    private function filteredGuruQuery(Request $request): Builder
+    {
+        return Guru::with('mapels')
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->input('search');
+                $query->where(function ($query) use ($search) {
+                    $query->where('nama_lengkap', 'like', "%{$search}%")
+                        ->orWhere('nbm', 'like', "%{$search}%")
+                        ->orWhereHas('mapels', fn ($mapels) => $mapels->where('nama_mapel', 'like', "%{$search}%"));
+                });
+            })
+            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->input('status')));
     }
 
     public function store(Request $request)

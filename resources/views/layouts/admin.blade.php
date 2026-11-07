@@ -9,7 +9,7 @@
   {{-- Global admin shell styles (sidebar + topbar + base) --}}
   <link rel="stylesheet" href="{{ asset('admin css/admin-shell.css') }}?v=8">
   {{-- Shared page-level utilities --}}
-  <link rel="stylesheet" href="{{ asset('admin css/admin-page.css') }}?v=6">
+  <link rel="stylesheet" href="{{ asset('admin css/admin-page.css') }}?v=7">
   {{-- Page-specific styles --}}
   @yield('styles')
   <link rel="stylesheet" href="{{ asset('admin css/admin-interactions.css') }}?v={{ filemtime(public_path('admin css/admin-interactions.css')) }}">

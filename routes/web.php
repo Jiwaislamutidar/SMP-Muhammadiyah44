@@ -34,23 +34,27 @@ Route::domain('admin.'.$domain)->group(function () {
 
         Route::get('/data-guru', [AdminGuruController::class, 'index'])->name('admin.dataguru');
         Route::get('/admin/guru', [AdminGuruController::class, 'index'])->name('admin.guru.index');
+        Route::get('/admin/guru/export-pdf', [AdminGuruController::class, 'exportPdf'])->name('admin.guru.export-pdf');
         Route::post('/admin/guru', [AdminGuruController::class, 'store'])->name('admin.guru.store');
         Route::get('/admin/guru/template', [AdminGuruController::class, 'template'])->name('admin.guru.template');
         Route::post('/admin/guru/import', [AdminGuruController::class, 'import'])->name('admin.guru.import');
         Route::put('/admin/guru/{id}', [AdminGuruController::class, 'update'])->name('admin.guru.update');
         Route::delete('/admin/guru/{id}', [AdminGuruController::class, 'destroy'])->name('admin.guru.destroy');
         Route::get('/data-murid', [AdminSiswaController::class, 'index'])->name('admin.datamurid');
+        Route::get('/data-murid/export-pdf', [AdminSiswaController::class, 'exportPdf'])->name('admin.siswa.export-pdf');
         Route::get('/data-murid/template', [AdminSiswaController::class, 'template'])->name('admin.siswa.template');
         Route::post('/data-murid/import', [AdminSiswaController::class, 'import'])->name('admin.siswa.import');
         Route::post('/data-murid/import-manual', [AdminSiswaController::class, 'manualImport'])->name('admin.siswa.manual-import');
         Route::put('/data-murid/{siswa}', [AdminSiswaController::class, 'update'])->name('admin.siswa.update');
         Route::delete('/data-murid/{siswa}', [AdminSiswaController::class, 'destroy'])->name('admin.siswa.destroy');
         Route::get('/data-kelas', [AdminKelasController::class, 'index'])->name('admin.datakelas');
+        Route::get('/data-kelas/export-pdf', [AdminKelasController::class, 'exportPdf'])->name('admin.kelas.export-pdf');
         Route::post('/data-kelas', [AdminKelasController::class, 'store'])->name('admin.kelas.store');
         Route::put('/data-kelas/{kelas}', [AdminKelasController::class, 'update'])->name('admin.kelas.update');
         Route::delete('/data-kelas/{kelas}', [AdminKelasController::class, 'destroy'])->name('admin.kelas.destroy');
         Route::get('/mata-pelajaran', fn () => view('pages.admin.matapelajaran'))->name('admin.matapelajaran');
         Route::get('/jadwal-pelajaran', [AdminJadwalController::class, 'index'])->name('admin.jadwalpelajaran');
+        Route::get('/jadwal-pelajaran/export-pdf', [AdminJadwalController::class, 'exportPdf'])->name('admin.jadwalpelajaran.export-pdf');
         Route::post('/jadwal-pelajaran/import', [AdminJadwalController::class, 'import'])->name('admin.jadwalpelajaran.import');
         Route::get('/jadwal-pelajaran/template', [AdminJadwalController::class, 'template'])->name('admin.jadwalpelajaran.template');
         Route::delete('/jadwal-pelajaran', [AdminJadwalController::class, 'destroyAll'])->name('admin.jadwalpelajaran.destroy-all');

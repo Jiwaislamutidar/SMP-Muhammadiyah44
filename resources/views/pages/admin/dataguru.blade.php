@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('title', 'Data Guru')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/dataguru.css') }}?v=10">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/dataguru.css') }}?v=11">@endsection
 @section('content')
 <div class="admin-page-header">
 	<div>
@@ -8,6 +8,13 @@
 		<p>Kelola guru &amp; staf pendidik</p>
 	</div>
 	<div class="admin-header-actions">
+		<button class="admin-action admin-pdf-export guru-export-trigger bg-blue-600 hover:bg-blue-700" id="guruExportButton" type="button" data-pdf-export data-export-url="{{ route('admin.guru.export-pdf') }}" data-export-filename="data-guru.pdf" aria-live="polite">
+			<svg class="admin-pdf-export-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+				<path d="M10 2.5v9m0 0 3.5-3.5M10 11.5 6.5 8M3.5 12.5v3A1.5 1.5 0 0 0 5 17h10a1.5 1.5 0 0 0 1.5-1.5v-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+			</svg>
+			<span data-export-label>Unduh Data Guru</span>
+			<span class="admin-pdf-progress" aria-hidden="true"></span>
+		</button>
 		<button class="admin-action admin-action-outline guru-import-trigger admin-glass-button" type="button" data-open-modal="importGuruModal" aria-haspopup="dialog">↑ Import Excel</button>
 		<button class="admin-action guru-manual-trigger" type="button" data-open-modal="addGuruModal">+ Tambah Guru</button>
 	</div>
@@ -576,4 +583,5 @@
 		@endif
 	})();
 </script>
+<script src="{{ asset('admin-pdf-export.js') }}?v=1" defer></script>
 @endsection

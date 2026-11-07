@@ -8,6 +8,8 @@ use App\Imports\SiswaImport;
 use App\Models\Kelas;
 use App\Models\Siswa;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +22,38 @@ class SiswaController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Siswa::with(['user', 'kelas'])
+        $query = $this->filteredStudents($request);
+
+        return view('pages.admin.datamurid', [
+            'siswas' => $query->orderBy('nama_lengkap')->paginate(8)->withQueryString(),
+            'kelasList' => Kelas::orderBy('nama_kelas')->get(),
+            'totalSiswa' => Siswa::count(),
+        ]);
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $siswas = $this->filteredStudents($request)
+            ->where('status', 'aktif')
+            ->orderBy('nama_lengkap')
+            ->get();
+        $kelasName = $request->filled('kelas_id')
+            ? Kelas::query()->whereKey($request->input('kelas_id'))->value('nama_kelas')
+            : null;
+
+        return Pdf::loadView('pages.admin.datamurid-pdf', [
+            'siswas' => $siswas,
+            'search' => $request->input('search'),
+            'kelasName' => $kelasName,
+            'generatedAt' => now(),
+        ])
+            ->setPaper('a4', 'portrait')
+            ->download('data-murid-'.now()->format('Ymd').'.pdf');
+    }
+
+    private function filteredStudents(Request $request): Builder
+    {
+        return Siswa::with(['user', 'kelas'])
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->input('search');
 
@@ -31,12 +64,6 @@ class SiswaController extends Controller
                 });
             })
             ->when($request->filled('kelas_id'), fn ($query) => $query->where('kelas_id', $request->input('kelas_id')));
-
-        return view('pages.admin.datamurid', [
-            'siswas' => $query->orderBy('nama_lengkap')->paginate(8)->withQueryString(),
-            'kelasList' => Kelas::orderBy('nama_kelas')->get(),
-            'totalSiswa' => Siswa::count(),
-        ]);
     }
 
     public function import(Request $request)

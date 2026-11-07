@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Kelas;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +15,31 @@ class AdminKelasController extends Controller
 {
     public function index(Request $request): View
     {
-        $kelasList = Kelas::query()
+        $kelasList = $this->filteredClasses($request)->get();
+
+        return view('pages.admin.datakelas', [
+            'kelasList' => $kelasList,
+            'totalKelas' => $kelasList->count(),
+        ]);
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $kelasList = $this->filteredClasses($request)->get();
+
+        return Pdf::loadView('pages.admin.datakelas-pdf', [
+            'kelasList' => $kelasList,
+            'search' => $request->input('search'),
+            'tingkat' => $request->input('tingkat'),
+            'generatedAt' => now(),
+        ])
+            ->setPaper('a4', 'portrait')
+            ->download('data-kelas-'.now()->format('Ymd').'.pdf');
+    }
+
+    private function filteredClasses(Request $request): Builder
+    {
+        return Kelas::query()
             ->when($request->filled('tingkat'), fn ($query) => $query->where('tingkat', $request->input('tingkat')))
             ->when($request->filled('search'), function ($query) use ($request): void {
                 $search = $request->input('search');
@@ -23,13 +49,7 @@ class AdminKelasController extends Controller
                         ->orWhere('ruangan', 'like', '%'.$search.'%');
                 });
             })
-            ->orderBy('nama_kelas')
-            ->get();
-
-        return view('pages.admin.datakelas', [
-            'kelasList' => $kelasList,
-            'totalKelas' => $kelasList->count(),
-        ]);
+            ->orderBy('nama_kelas');
     }
 
     public function store(Request $request): RedirectResponse

@@ -1,6 +1,52 @@
 /* admin-page.css – shared page-level utilities (komplemen admin-shell.css) */
 /* Semua variabel, shell, dan table utilities ada di admin-shell.css */
 
+.admin-pdf-export {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background-color: #3B82F6;
+  color: #fff;
+  box-shadow: 0 3px 8px rgba(59, 130, 246, .18);
+  transition: background-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.admin-pdf-export:hover:not(:disabled) {
+  background-color: #2563EB;
+  box-shadow: 0 5px 12px rgba(37, 99, 235, .24);
+}
+.admin-pdf-export:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, .3);
+  outline-offset: 2px;
+}
+.admin-pdf-export:disabled { cursor: not-allowed; opacity: .6; }
+.admin-pdf-export-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  transition: transform .25s ease;
+}
+.admin-pdf-export:hover:not(:disabled) .admin-pdf-export-icon { transform: translateY(2px); }
+.admin-pdf-progress {
+  position: absolute;
+  z-index: 0;
+  inset: auto auto 0 0;
+  width: 0;
+  height: 3px;
+  background: #BFDBFE;
+  transition: width .45s ease;
+}
+.admin-pdf-export > :not(.admin-pdf-progress) { position: relative; z-index: 1; }
+.admin-pdf-export.is-loading .admin-pdf-progress {
+  width: 72%;
+  animation: adminPdfExportProgress 1.1s ease-in-out infinite alternate;
+}
+.admin-pdf-export.is-complete { background-color: #1D4ED8; }
+.admin-pdf-export.is-complete .admin-pdf-progress { width: 100%; }
+@keyframes adminPdfExportProgress {
+  from { transform: translateX(-8%); }
+  to { transform: translateX(32%); }
+}
+
 /* ====== Modal overlay (jadwalpelajaran) ====== */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 1200;

@@ -32,6 +32,7 @@ class AdminGuruTest extends TestCase
             ->get(route('admin.guru.index'))
             ->assertOk()
             ->assertSee('Data Guru')
+            ->assertSee('Unduh Data Guru')
             ->assertSee('Matematika QA')
             ->assertSee('('.$mapel->kode.')')
             ->assertSee('Tambah Guru')
@@ -70,6 +71,19 @@ class AdminGuruTest extends TestCase
         $mapelBaru = Mapel::where('nama_mapel', 'Mapel Manual QA')->firstOrFail();
         $this->assertSame(3, $guru->mapels->find($mapelBaru->id)->pivot->jumlah_jam);
         $this->assertSame($newMapelCode, $mapelBaru->kode);
+    }
+
+    public function test_admin_can_download_guru_pdf_for_the_selected_filters(): void
+    {
+        $admin = $this->makeAdmin();
+
+        $response = $this->actingAs($admin)
+            ->get(route('admin.guru.export-pdf', ['search' => 'Guru QA', 'status' => 'aktif']));
+
+        $response->assertOk()
+            ->assertHeader('content-type', 'application/pdf')
+            ->assertDownload('data-guru-'.now()->format('Ymd').'.pdf');
+        $this->assertStringStartsWith('%PDF-', $response->getContent());
     }
 
     public function test_admin_can_create_and_update_guru_with_direct_subject_fields(): void

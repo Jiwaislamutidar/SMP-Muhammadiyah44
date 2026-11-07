@@ -9,6 +9,8 @@ use App\Imports\JadwalImportException;
 use App\Models\JadwalPelajaran;
 use App\Models\Kelas;
 use App\Models\Mapel;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +21,34 @@ class AdminJadwalController extends Controller
 {
     public function index(Request $request)
     {
-        $jadwals = JadwalPelajaran::with([
+        $jadwals = $this->filteredSchedules($request)->paginate(15)->withQueryString();
+
+        return view('pages.admin.jadwalpelajaran', [
+            'jadwals' => $jadwals,
+            'hariList' => ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'],
+            'kelasList' => Kelas::query()->orderBy('nama_kelas')->get(),
+            'mapelList' => Mapel::orderBy('nama_mapel')->get(),
+            'totalJadwal' => JadwalPelajaran::count(),
+        ]);
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $jadwals = $this->filteredSchedules($request)->get();
+
+        return Pdf::loadView('pages.admin.jadwalpelajaran-pdf', [
+            'jadwals' => $jadwals,
+            'search' => $request->input('search'),
+            'hari' => $request->input('hari'),
+            'generatedAt' => now(),
+        ])
+            ->setPaper('a4', 'landscape')
+            ->download('jadwal-pelajaran-'.now()->format('Ymd').'.pdf');
+    }
+
+    private function filteredSchedules(Request $request): Builder
+    {
+        return JadwalPelajaran::with([
             'guru',
             'kelas:id,nama_kelas,ruangan',
             'mapel',
@@ -36,17 +65,7 @@ class AdminJadwalController extends Controller
             ->when($request->filled('kelas_id'), fn ($query) => $query->where('kelas_id', $request->integer('kelas_id')))
             ->when($request->filled('mapel_id'), fn ($query) => $query->where('mapel_id', $request->integer('mapel_id')))
             ->orderByRaw("CASE hari WHEN 'Senin' THEN 1 WHEN 'Selasa' THEN 2 WHEN 'Rabu' THEN 3 WHEN 'Kamis' THEN 4 WHEN 'Jumat' THEN 5 ELSE 6 END")
-            ->orderBy('jam_mulai')
-            ->paginate(15)
-            ->withQueryString();
-
-        return view('pages.admin.jadwalpelajaran', [
-            'jadwals' => $jadwals,
-            'hariList' => ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'],
-            'kelasList' => Kelas::query()->orderBy('nama_kelas')->get(),
-            'mapelList' => Mapel::orderBy('nama_mapel')->get(),
-            'totalJadwal' => JadwalPelajaran::count(),
-        ]);
+            ->orderBy('jam_mulai');
     }
 
     public function import(Request $request)

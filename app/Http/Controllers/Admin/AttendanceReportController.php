@@ -8,13 +8,14 @@ use App\Models\DashboardAttendanceSessionLog;
 use App\Models\Guru;
 use App\Models\Kelas;
 use App\Models\PresensiPelajaran;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AttendanceReportController extends Controller
 {
@@ -125,39 +126,26 @@ class AttendanceReportController extends Controller
         ));
     }
 
-    public function export(Request $request): StreamedResponse
+    public function export(Request $request)
     {
-        $filters = $this->validatedStudentFilters($request);
-        $report = $this->studentReport(
-            $filters['date'],
-            $filters['kelas'],
-            $filters['status'],
-            $filters['search']
-        );
-        $rows = $report['rows'];
+        $filters = $this->validatedExportFilters($request);
+        $dateFrom = $filters['date_from'] ?? $filters['date'];
+        $dateTo = $filters['date_to'] ?? ($filters['date_from'] ?? $filters['date']);
+        $report = $this->studentReportForFilters($filters);
+        $kelasName = $filters['kelas']
+            ? Kelas::query()->whereKey($filters['kelas'])->value('nama_kelas')
+            : null;
 
-        return response()->streamDownload(function () use ($rows): void {
-            $output = fopen('php://output', 'w');
-            fputcsv($output, ['Nama Murid', 'NISN', 'Kelas', 'Status', 'Tanggal', 'Mata Pelajaran', 'Jam Pelajaran', 'Waktu Presensi', 'Keterangan']);
-
-            foreach ($rows as $row) {
-                fputcsv($output, [
-                    $row['nama'],
-                    $row['nisn'],
-                    $row['kelas'],
-                    $row['status'],
-                    $row['tanggal'],
-                    $row['mapel'],
-                    $row['jam_pelajaran'],
-                    $row['waktu'],
-                    $row['keterangan'],
-                ]);
-            }
-
-            fclose($output);
-        }, 'rekap-absensi-'.$filters['date'].'.csv', [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-        ]);
+        return Pdf::loadView('pages.admin.rekapabsensi-pdf', [
+            'rows' => $report['rows'],
+            'filters' => $filters,
+            'kelasName' => $kelasName,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'generatedAt' => now(),
+        ])
+            ->setPaper('a4', 'landscape')
+            ->download('rekap-absensi-'.$dateFrom.($dateTo === $dateFrom ? '' : '-'.$dateTo).'.pdf');
     }
 
     public function destroy(Request $request): RedirectResponse
@@ -185,25 +173,62 @@ class AttendanceReportController extends Controller
 
     private function validatedStudentFilters(Request $request): array
     {
-        return $request->validate([
+        $filters = $request->validate([
             'date' => ['sometimes', 'date_format:Y-m-d'],
             'kelas' => ['nullable', 'integer', 'exists:kelas,id'],
             'status' => ['nullable', 'in:Hadir,Izin,Sakit,Alfa'],
             'search' => ['nullable', 'string', 'max:120'],
         ]) + ['date' => today()->toDateString(), 'kelas' => null, 'status' => null, 'search' => ''];
+
+        return $filters;
     }
 
-    private function studentReport(string $date, ?int $classId, ?string $status, ?string $search = null): array
+    private function validatedExportFilters(Request $request): array
+    {
+        $filters = $this->validatedStudentFilters($request);
+        $range = $request->validate([
+            'date_from' => ['nullable', 'required_with:date_to', 'date_format:Y-m-d'],
+            'date_to' => ['nullable', 'date_format:Y-m-d'],
+        ]);
+        $filters = array_merge($filters, $range);
+
+        if (filled($filters['date_from'] ?? null)
+            && filled($filters['date_to'] ?? null)
+            && $filters['date_to'] < $filters['date_from']) {
+            throw ValidationException::withMessages([
+                'date_to' => 'Tanggal akhir tidak boleh sebelum tanggal awal.',
+            ]);
+        }
+
+        return $filters;
+    }
+
+    private function studentReportForFilters(array $filters): array
+    {
+        $dateFrom = $filters['date_from'] ?? $filters['date'];
+        $dateTo = $filters['date_to'] ?? ($filters['date_from'] ?? $filters['date']);
+
+        return $this->studentReport(
+            $dateFrom,
+            $filters['kelas'],
+            $filters['status'],
+            $filters['search'],
+            $dateTo
+        );
+    }
+
+    private function studentReport(string $date, ?int $classId, ?string $status, ?string $search = null, ?string $dateTo = null): array
     {
         $search = $search ?? '';
-        $summaryQuery = $this->studentAttendanceQuery($date);
+        $dateTo = $dateTo ?? $date;
+        $summaryQuery = $this->studentAttendanceQuery($date, dateTo: $dateTo);
         $summary = [
             'hadir' => (clone $summaryQuery)->where('presensi_pelajarans.status', 'Hadir')->distinct()->count('presensi_pelajarans.siswa_id'),
             'izin_sakit' => (clone $summaryQuery)->whereIn('presensi_pelajarans.status', ['Izin', 'Sakit'])->distinct()->count('presensi_pelajarans.siswa_id'),
             'alfa' => (clone $summaryQuery)->where('presensi_pelajarans.status', 'Alfa')->distinct()->count('presensi_pelajarans.siswa_id'),
         ];
 
-        $rows = $this->studentAttendanceQuery($date, $classId, $status, $search)
+        $rows = $this->studentAttendanceQuery($date, $classId, $status, $search, $dateTo)
             ->with(['siswa.kelas', 'sesiPelajaran.jadwal.mapel'])
             ->orderBy('siswas.nama_lengkap')
             ->orderBy('sesi_pelajarans.tanggal')
@@ -238,7 +263,8 @@ class AttendanceReportController extends Controller
         string $date,
         ?int $classId = null,
         ?string $status = null,
-        ?string $search = null
+        ?string $search = null,
+        ?string $dateTo = null
     ): Builder {
         $search = $search ?? '';
 
@@ -246,7 +272,8 @@ class AttendanceReportController extends Controller
             ->select('presensi_pelajarans.*')
             ->join('siswas', 'siswas.id', '=', 'presensi_pelajarans.siswa_id')
             ->join('sesi_pelajarans', 'sesi_pelajarans.id', '=', 'presensi_pelajarans.sesi_pelajaran_id')
-            ->whereDate('sesi_pelajarans.tanggal', $date)
+            ->whereDate('sesi_pelajarans.tanggal', '>=', $date)
+            ->whereDate('sesi_pelajarans.tanggal', '<=', $dateTo ?? $date)
             ->where('presensi_pelajarans.status', '!=', 'Belum Absen')
             ->when($classId, fn (Builder $query) => $query->where('siswas.kelas_id', $classId))
             ->when($status, fn (Builder $query) => $query->where('presensi_pelajarans.status', $status))

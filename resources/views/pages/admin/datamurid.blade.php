@@ -8,6 +8,10 @@
 		<p>Kelola data siswa terdaftar</p>
 	</div>
 	<div class="admin-header-actions">
+		<button class="admin-action admin-pdf-export bg-blue-600 hover:bg-blue-700" type="button" data-pdf-export data-export-url="{{ route('admin.siswa.export-pdf') }}" data-export-filename="data-murid.pdf" aria-live="polite">
+			<svg class="admin-pdf-export-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2.5v9m0 0 3.5-3.5M10 11.5 6.5 8M3.5 12.5v3A1.5 1.5 0 0 0 5 17h10a1.5 1.5 0 0 0 1.5-1.5v-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+			<span data-export-label>Unduh Data Murid</span><span class="admin-pdf-progress" aria-hidden="true"></span>
+		</button>
 		<button class="admin-action admin-import-trigger admin-glass-button" type="button" id="openImportModal">↑ Import Excel</button>
 		<a class="admin-action admin-action-outline admin-template-trigger admin-glass-button" href="{{ route('admin.siswa.template') }}">↓ Unduh Template</a>
 		<button class="admin-action admin-manual-trigger" type="button" id="openManualImportModal">+ Tambah Siswa</button>
@@ -401,4 +405,5 @@
 		if (modal.dataset.reopen === 'true') modal.hidden = false;
 	})();
 </script>
+<script src="{{ asset('admin-pdf-export.js') }}?v=1" defer></script>
 @endsection

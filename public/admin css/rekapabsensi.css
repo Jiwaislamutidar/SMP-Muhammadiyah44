@@ -9,6 +9,16 @@
 .rekap-filter-label { display: grid; gap: 5px; color: #374151; font-size: 11px; font-weight: 600; }
 .rekap-filter-label .admin-select { min-width: 150px; }
 .rekap-filter-label .admin-input { min-width: 150px; }
+.rekap-export-range {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.rekap-export-range legend { padding: 0; color: #374151; font-size: 11px; font-weight: 600; }
+.rekap-export-range .rekap-filter-label { min-width: 0; }
+.rekap-export-range .admin-input { min-width: 135px; }
 .summary-item { border-radius: 12px; }
 .summary-item::before { display: none; }
 .summary-item--present span,
@@ -69,4 +79,7 @@
   .rekap-actions { width: 100%; }
   .rekap-toolbar { align-items: stretch; }
   .rekap-filter-label, .rekap-filter-label .admin-select { width: 100%; }
+  .rekap-export-range { width: 100%; }
+  .rekap-export-range .rekap-filter-label { flex: 1; }
+  .rekap-export-range .admin-input { min-width: 0; width: 100%; }
 }

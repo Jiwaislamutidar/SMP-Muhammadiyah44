@@ -5,7 +5,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
 	<title>Presensi Guru - SMP Muhammadiyah 44</title>
-	<link rel="stylesheet" href="{{ asset('guru css/presensiguru.css') }}?v=6">
+	<link rel="stylesheet" href="{{ asset('guru css/presensiguru.css') }}?v=7">
 	<link rel="stylesheet" href="{{ asset('guru css/portal-responsive.css') }}?v=1">
 	<link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=7">
 	<style>
@@ -112,9 +112,31 @@
 			@if(session('success'))<div class="panel" role="status">{{ session('success') }}</div>@endif
 			@if($errors->any())<div class="panel" role="alert">{{ $errors->first() }}</div>@endif
 
+			@php
+				$setting = $setting ?? \App\Models\Setting::first();
+				$jamMasuk = $setting?->jam_masuk ?? '07:00:00';
+				$dayMap = [
+					'Monday'    => 'jam_pulang_senin',
+					'Tuesday'   => 'jam_pulang_selasa',
+					'Wednesday' => 'jam_pulang_rabu',
+					'Thursday'  => 'jam_pulang_kamis',
+					'Friday'    => 'jam_pulang_jumat',
+					'Saturday'  => 'jam_pulang_senin',
+					'Sunday'    => 'jam_pulang_senin',
+				];
+				$todayEnglish = now()->format('l');
+				$kolomPulang = $dayMap[$todayEnglish] ?? 'jam_pulang_senin';
+				$jamPulang = $setting?->$kolomPulang ?? '14:30:00';
+
+				$currentTime = now()->toTimeString();
+				$bisaAbsenMasuk = $currentTime >= $jamMasuk;
+				$bisaAbsenPulang = $currentTime >= $jamPulang;
+
+				$statusTidakHadir = $presensi && in_array($presensi->status, ['Izin', 'Sakit', 'Alfa'], true);
+			@endphp
+
 			<section class="panel">
 				<div class="panel-head"><div class="panel-title">Kehadiran Sekolah</div></div>
-				@php($statusTidakHadir = $presensi && in_array($presensi->status, ['Izin', 'Sakit', 'Alfa'], true))
 				<div class="attendance-switcher" role="tablist" aria-label="Pilih jenis presensi">
 					<button type="button" role="tab" id="attendanceTabMasuk" aria-controls="attendancePanelMasuk" aria-selected="true" data-attendance-tab="masuk">Absen Datang</button>
 					<button type="button" role="tab" id="attendanceTabPulang" aria-controls="attendancePanelPulang" aria-selected="false" data-attendance-tab="pulang">Absen Kepulangan</button>
@@ -124,11 +146,27 @@
 						<div class="card-top">
 							<div class="attendance-card-heading">
 								<span class="muted">ABSEN DATANG</span>
-								<span class="status-pill {{ $presensi?->jam_masuk ? 'hadir' : ($statusTidakHadir ? 'neutral' : 'belum') }}">{{ $presensi?->jam_masuk ? 'Sudah Absen' : ($statusTidakHadir ? $presensi->status : 'Belum Absen') }}</span>
+								@php
+									$statusClass = 'belum';
+									$statusText = 'Belum Absen';
+									if ($presensi?->jam_masuk) {
+										if ($presensi->status === 'Terlambat') {
+											$statusClass = 'terlambat';
+											$statusText = 'Absensi Terlambat';
+										} else {
+											$statusClass = 'hadir';
+											$statusText = 'Sudah Absen';
+										}
+									} elseif ($statusTidakHadir) {
+										$statusClass = $presensi->status === 'Alfa' ? 'alfa' : 'neutral';
+										$statusText = $presensi->status;
+									}
+								@endphp
+								<span class="status-pill {{ $statusClass }}">{{ $statusText }}</span>
 							</div>
 							<div class="attendance-card-copy">
 								<h3>Absen Masuk Sekolah</h3>
-								<small>{{ $presensi?->jam_masuk ? 'Presensi tersimpan hari ini.' : ($statusTidakHadir ? 'Status presensi hari ini sudah tercatat.' : 'Ambil foto sebagai bukti kehadiran.') }}</small>
+								<small>{{ $presensi?->jam_masuk ? 'Presensi tersimpan hari ini.' : ($statusTidakHadir ? 'Status presensi hari ini sudah tercatat.' : 'Dibuka mulai pukul ' . substr($jamMasuk, 0, 5) . ' WIB') }}</small>
 							</div>
 						</div>
 						<div class="big-time">{{ $presensi?->jam_masuk ? substr($presensi->jam_masuk, 0, 5) : 'Belum tercatat' }} @if($presensi?->jam_masuk)<small>WIB</small>@endif</div>
@@ -137,6 +175,8 @@
 							<button class="attendance-action attendance-done" type="button" disabled>Sudah Absen ({{ substr($presensi->jam_masuk, 0, 5) }} WIB)</button>
 						@elseif($statusTidakHadir)
 							<button class="attendance-action attendance-done" type="button" disabled>{{ $presensi->status }} hari ini</button>
+						@elseif(!$bisaAbsenMasuk)
+							<button class="attendance-action" type="button" disabled>Dibuka pukul {{ substr($jamMasuk, 0, 5) }} WIB</button>
 						@else
 							<button class="attendance-action" type="button" data-title="Absen Masuk Sekolah" data-url="{{ route('guru.presensi.masuk') }}">Absen Masuk Sekolah</button>
 						@endif
@@ -166,13 +206,17 @@
 							</div>
 							<div class="attendance-card-copy">
 								<h3>Absen Pulang Sekolah</h3>
-								<small>{{ $presensi?->jam_pulang ? 'Presensi tersimpan hari ini.' : ($presensi?->jam_masuk ? 'Ambil foto sebagai bukti kepulangan.' : 'Absen masuk lebih dahulu.') }}</small>
+								<small>{{ $presensi?->jam_pulang ? 'Presensi tersimpan hari ini.' : ($presensi?->jam_masuk ? 'Dibuka mulai pukul ' . substr($jamPulang, 0, 5) . ' WIB' : 'Absen masuk lebih dahulu.') }}</small>
 							</div>
 						</div>
 						<div class="big-time">{{ $presensi?->jam_pulang ? substr($presensi->jam_pulang, 0, 5) : 'Belum tercatat' }} @if($presensi?->jam_pulang)<small>WIB</small>@endif</div>
 						@if($presensi?->foto_pulang)<p><a href="{{ asset('storage/'.$presensi->foto_pulang) }}" target="_blank" rel="noopener">Lihat foto bukti</a></p>@endif
 						@if($presensi?->jam_pulang)
 							<button class="attendance-action attendance-done" type="button" disabled>Sudah Absen ({{ substr($presensi->jam_pulang, 0, 5) }} WIB)</button>
+						@elseif($presensi && in_array($presensi->status, ['Izin', 'Sakit', 'Alfa'], true))
+							<button class="attendance-action" type="button" disabled>Tidak dapat absen pulang</button>
+						@elseif(!$bisaAbsenPulang)
+							<button class="attendance-action" type="button" disabled>Dibuka pukul {{ substr($jamPulang, 0, 5) }} WIB</button>
 						@else
 							<button class="attendance-action" type="button" data-title="Absen Pulang Sekolah" data-url="{{ route('guru.presensi.pulang') }}" {{ $presensi?->jam_masuk ? '' : 'disabled' }}>Absen Pulang Sekolah</button>
 						@endif
@@ -218,7 +262,11 @@
 									<td>{{ $riwayat->tanggal->locale('id')->translatedFormat('l, j F Y') }}</td>
 									<td>{{ $riwayat->jam_masuk ? substr($riwayat->jam_masuk, 0, 5) : '-' }}</td>
 									<td>{{ $riwayat->jam_pulang ? substr($riwayat->jam_pulang, 0, 5) : '-' }}</td>
-									<td><span class="status-pill {{ $riwayat->status === 'Hadir' ? 'hadir' : 'neutral' }}">{{ $riwayat->status }}</span></td>
+									<td>
+										<span class="status-pill {{ $riwayat->status === 'Hadir' ? 'hadir' : ($riwayat->status === 'Terlambat' ? 'terlambat' : ($riwayat->status === 'Alfa' ? 'alfa' : 'neutral')) }}">
+											{{ $riwayat->status === 'Terlambat' ? 'Absensi Terlambat' : $riwayat->status }}
+										</span>
+									</td>
 								</tr>
 							@empty
 								<tr><td colspan="4">Belum ada riwayat presensi pada periode ini.</td></tr>
@@ -327,6 +375,7 @@
 		}
 
 		document.querySelectorAll('.attendance-action:not(.attendance-done)').forEach(button => button.addEventListener('click', () => {
+			if (button.disabled) return;
 			attendanceForm.action = button.dataset.url;
 			document.getElementById('photoModalTitle').textContent = button.dataset.title;
 			photoModal.showModal();

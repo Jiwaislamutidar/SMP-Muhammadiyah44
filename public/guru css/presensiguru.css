@@ -1097,6 +1097,20 @@ body {
 	color: #087443;
 }
 
+.status-pill.terlambat {
+	border: 1px solid #fde047;
+	background: #fefce8;
+	color: #a16207;
+	font-weight: 700;
+}
+
+.status-pill.alfa {
+	border: 1px solid #fecaca;
+	background: #fee2e2;
+	color: #b91c1c;
+	font-weight: 700;
+}
+
 .status-pill.izin {
 	border: 1px solid #fde68a;
 	background: #fffbeb;

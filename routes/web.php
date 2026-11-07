@@ -16,6 +16,7 @@ use App\Http\Controllers\PresensiPelajaranController;
 use App\Http\Controllers\SesiPelajaranController;
 use App\Http\Controllers\Siswa\AuthController as SiswaAuth;
 use App\Http\Controllers\SiswaController;
+use App\Http\Controllers\Admin\SettingController;
 use Illuminate\Support\Facades\Route;
 
 // Kunci domain utama di sini agar subdomain tidak meleset di Laragon
@@ -68,7 +69,9 @@ Route::domain('admin.'.$domain)->group(function () {
         Route::delete('/dashboard/presensi-guru-session/{sessionLog}', [DashboardAttendanceLogController::class, 'destroySession'])->name('admin.dashboard.guru-session-log.destroy');
         Route::delete('/dashboard/presensi-guru/{log}', [DashboardAttendanceLogController::class, 'destroy'])->name('admin.dashboard.guru-log.destroy');
         Route::delete('/dashboard/presensi-guru', [DashboardAttendanceLogController::class, 'destroyPeriod'])->name('admin.dashboard.guru-log.destroy-period');
-        Route::get('/profil', fn () => view('pages.admin.profil'))->name('admin.profil');
+        Route::get('/profil', [SettingController::class, 'index'])->name('admin.profil');
+        Route::post('/profil/presensi', [SettingController::class, 'updatePresensi'])->name('admin.pengaturan.presensi');
+        Route::post('/profil/akun', [SettingController::class, 'updateAkun'])->name('admin.pengaturan.akun');
 
         Route::post('/logout', [AdminAuth::class, 'logout'])->name('admin.logout');
     });

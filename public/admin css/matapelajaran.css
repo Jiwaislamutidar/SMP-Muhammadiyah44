@@ -1,7 +1,3 @@
-/* =====================================================
-   MATA PELAJARAN – Page-Specific & Responsive Styles
-   ===================================================== */
-
 .mapel-header-actions {
   display: flex;
   align-items: center;
@@ -25,27 +21,27 @@
   display: inline-block;
 }
 
-/* Cards Grid */
 .mapel-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
 
 .subject-card {
   padding: 18px 20px;
   background: #fff;
-  border: 1px solid var(--line, #e5e7eb);
+  border: 2px solid #cbd5e1;
   border-radius: 14px;
-  box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
-  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  transition: none !important;
 }
+
 .subject-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0,0,0,.07);
-  border-color: #475569;
+  border-color: #cbd5e1;
+  transform: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .subject-top {
@@ -56,38 +52,40 @@
 }
 
 .subject-code {
-  display: inline-grid;
-  place-items: center;
-  min-width: 44px;
-  min-height: 44px;
-  max-width: 100%;
-  padding: 8px;
-  border-radius: 10px;
-  background: #1f2937;
-  color: #f8fafc;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1.5px solid #94a3b8;
+  color: #1e293b;
   font-weight: 800;
-  font-size: 13px;
+  font-size: 12px;
   letter-spacing: .5px;
-  overflow-wrap: anywhere;
+  text-transform: uppercase;
+  box-sizing: border-box;
 }
 
 .subject-card h3 {
-  margin: 0 0 4px;
-  font-size: 16px;
+  margin: 0 0 10px;
+  font-size: 15px;
   font-weight: 700;
   color: #111827;
+  line-height: 1.3;
 }
 
 .subject-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   padding: 10px 12px;
   border-radius: 8px;
   background: #f8fafc;
   margin-top: auto;
-  font-size: 12px;
+  font-size: 11.5px;
   color: #334155;
   font-weight: 600;
 }
@@ -102,19 +100,53 @@
 }
 
 .mapel-manage-btn {
-  background: transparent;
-  border: 1px solid #475569;
-  color: #334155;
-  padding: 7px 12px;
-  border-radius: 6px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
   font-size: 12px;
   font-weight: 600;
+  /* 1. Warna teks & border awal (Hijau kalem profesional) */
+  color: #15803d;
+  background: transparent;
+  border: 1.5px solid #15803d;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all .2s;
+  overflow: hidden;
+  transition: color 0.35s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.35s ease;
+  z-index: 1;
 }
+
+.mapel-manage-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* 2. Warna background saat animasi hover masuk (Hijau solid senada) */
+  background: #15803d;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: -1;
+}
+
 .mapel-manage-btn:hover {
-  background: #334155;
-  color: #fff;
+  /* 3. Warna teks berubah jadi putih bersih saat background hijau penuh */
+  color: #ffffff;
+  border-color: #15803d;
+}
+
+.mapel-manage-btn:hover::before {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.mapel-manage-btn span {
+  position: relative;
+  z-index: 2;
 }
 
 .mapel-empty-state {
@@ -123,12 +155,11 @@
   text-align: center;
   color: #6b7280;
   background: #fff;
-  border: 1px solid #e5e7eb;
+  border: 2px solid #e5e7eb;
   border-radius: 12px;
   font-size: 14px;
 }
 
-/* Modal Styling */
 .admin-modal {
   border: none;
   border-radius: 14px;
@@ -188,26 +219,22 @@
   margin-bottom: 16px;
 }
 .mapel-detail-badge {
-  width: auto;
-  min-width: 50px;
-  min-height: 50px;
-  max-width: 40%;
-  padding: 8px;
-  border-radius: 12px;
-  background: #1f2937;
-  color: #f8fafc;
-  display: grid;
-  place-items: center;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1.5px solid #94a3b8;
+  color: #1e293b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 800;
-  font-size: 16px;
-  overflow-wrap: anywhere;
+  font-size: 13px;
+  box-sizing: border-box;
 }
 .mapel-detail-header h3 {
   margin: 0;
   font-size: 18px;
-}
-.mapel-detail-header > div:last-child {
-  min-width: 0;
 }
 
 .mapel-detail-stats {
@@ -273,33 +300,50 @@
   text-align: right;
 }
 
-/* =====================================================
-   RESPONSIVE DESIGN (MOBILE & TABLET)
-   ===================================================== */
-@media (max-width: 768px) {
+@media (max-width: 1200px) {
   .mapel-grid {
-    grid-template-columns: 1fr;
-  }
-  .mapel-summary {
-    justify-content: flex-start;
-  }
-  .admin-modal-footer {
-    flex-wrap: wrap;
-  }
-  .guru-pengampu-item {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-  .guru-hours {
-    text-align: left;
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
-@media (max-width: 420px) {
-  .mapel-detail-stats {
-    grid-template-columns: 1fr;
+@media (max-width: 900px) {
+  .mapel-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
-  .admin-modal-body {
-    padding: 16px;
+}
+
+@media (max-width: 600px) {
+  .mapel-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .subject-card {
+    padding: 12px 14px;
+  }
+  .subject-card h3 {
+    font-size: 13.5px;
+  }
+  .subject-code {
+    height: 34px;
+    font-size: 11px;
+    padding: 0 8px;
+  }
+  .subject-meta {
+    padding: 8px;
+    font-size: 10.5px;
+    gap: 4px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .mapel-manage-btn {
+    width: 100%;
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 380px) {
+  .mapel-grid {
+    grid-template-columns: 1fr;
   }
 }

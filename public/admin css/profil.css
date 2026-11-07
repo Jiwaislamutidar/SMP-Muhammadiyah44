@@ -11,31 +11,48 @@
 }
 
 .settings-menu {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 4px;
   padding: 12px;
   background: #fff;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line, #e5e7eb);
   border-radius: 14px;
   box-shadow: 0 1px 3px rgba(0,0,0,.04);
 }
 
+/* 1. Smooth Sliding Indicator Background */
+.settings-indicator {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: calc(100% - 24px);
+  height: 40px;
+  background: var(--green-100, #e6f4ea);
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
+  pointer-events: none;
+}
+
 .settings-menu button {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 10px;
   width: 100%;
   padding: 10px 14px;
   border-radius: 8px;
-  color: var(--muted);
+  color: var(--muted, #64748b);
   font-size: 13px;
   font-weight: 600;
   text-align: left;
   border: 0;
   background: transparent;
   cursor: pointer;
-  transition: all .15s ease;
+  transition: color .2s ease;
 }
 
 .settings-menu button svg {
@@ -43,20 +60,18 @@
 }
 
 .settings-menu button:hover {
-  background: var(--surface);
-  color: var(--ink);
+  color: var(--ink, #111827);
 }
 
 .settings-menu button.active {
-  background: var(--green-100);
-  color: var(--green-700);
+  color: var(--green-700, #087443);
   font-weight: 700;
 }
 
 .settings-card {
   padding: 24px 28px;
   background: #fff;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line, #e5e7eb);
   border-radius: 14px;
   box-shadow: 0 1px 3px rgba(0,0,0,.04);
 }
@@ -78,13 +93,13 @@
   margin: 0 0 4px;
   font-size: 18px;
   font-weight: 700;
-  color: var(--ink);
+  color: var(--ink, #111827);
 }
 
 .settings-card > p,
 .settings-panel > p {
   margin: 0 0 20px;
-  color: var(--muted);
+  color: var(--muted, #64748b);
   font-size: 13px;
 }
 
@@ -103,18 +118,18 @@
 .form-field label {
   font-size: 12px;
   font-weight: 700;
-  color: var(--ink);
+  color: var(--ink, #111827);
   letter-spacing: .2px;
 }
 
 .form-field input,
 .form-field select {
   width: 100%;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line, #e5e7eb);
   border-radius: 9px;
-  background: var(--surface);
+  background: var(--surface, #f8fafc);
   padding: 10px 14px;
-  color: var(--ink);
+  color: var(--ink, #111827);
   font-size: 13px;
   font-family: inherit;
   transition: border-color .15s, background .15s, box-shadow .15s;
@@ -123,9 +138,70 @@
 .form-field input:focus,
 .form-field select:focus {
   outline: none;
-  border-color: var(--green-600);
+  border-color: var(--green-600, #087443);
   background: #fff;
   box-shadow: 0 0 0 3px rgba(8, 116, 67, 0.1);
+}
+
+/* 2. Toggle Password Field Wrapper */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  padding-right: 42px;
+}
+
+.toggle-password-btn {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: color 0.15s ease;
+}
+
+.toggle-password-btn:hover {
+  color: #0f172a;
+}
+
+/* 3. Grid Kepulangan Senin - Jumat */
+.form-field-group {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-field-group .group-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink, #111827);
+}
+
+.pulang-days-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+.pulang-days-grid .form-field label {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.pulang-days-grid .form-field input {
+  padding: 8px 10px;
+  font-size: 12px;
 }
 
 .form-actions {
@@ -148,4 +224,45 @@
     padding: 8px 12px;
     font-size: 12px;
   }
+  .pulang-days-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .pulang-days-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.admin-top-toast {
+  position: fixed;
+  top: 24px;
+  right: 32px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #0f172a;
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-12px);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-top-toast svg {
+  color: #22c55e; /* Centang Hijau */
+  flex-shrink: 0;
+}
+
+.admin-top-toast.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }

@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('title', 'Mata Pelajaran')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/matapelajaran.css') }}?v=5">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/matapelajaran.css') }}?v=7">@endsection
 @section('content')
 
 <div class="admin-page-header">
@@ -17,17 +17,68 @@
 </div>
 
 @php
-  $mapelDetails = $mapels->mapWithKeys(fn ($mapel) => [
-    $mapel->id => [
-      'nama' => $mapel->nama_mapel,
-      'kode' => $mapel->kode,
-      'gurus' => $mapel->gurus->map(fn ($guru) => [
-        'nama' => $guru->nama_lengkap,
-        'identitas' => $guru->nbm ?: ($guru->nip ?? null),
-        'jp' => (int) $guru->pivot->jumlah_jam,
-      ])->values(),
-    ],
-  ]);
+  // Helper Generator Singkatan Otomatis untuk Mapel Baru maupun Eksisting
+  $makeAbbreviation = function($namaMapel, $kodeDefault = '') {
+      $namaClean = trim(preg_replace('/[^\w\s]/u', '', $namaMapel));
+      $namaLower = strtolower($namaClean);
+
+      // Kamus Singkatan Standar Mapel Umum
+      $dictionary = [
+          'bahasa inggris' => 'B.ING',
+          'bahasa indonesia' => 'B.IND',
+          'bahasa arab' => 'B.ARB',
+          'bahasa sunda' => 'B.SND',
+          'matematika' => 'MTK',
+          'ilmu pengetahuan alam' => 'IPA',
+          'ipa terpadu' => 'IPA',
+          'ilmu pengetahuan sosial' => 'IPS',
+          'ips terpadu' => 'IPS',
+          'pendidikan pancasila' => 'PKN',
+          'pendidikan kewarganegaraan' => 'PKN',
+          'pendidikan agama islam' => 'PAI',
+          'seni budaya' => 'SBD',
+          'informatika' => 'INF',
+          'penjaskes' => 'PJOK',
+          'pendidikan jasmani olahraga dan kesehatan' => 'PJOK',
+          'prakarya' => 'PKR',
+      ];
+
+      if (array_key_exists($namaLower, $dictionary)) {
+          return $dictionary[$namaLower];
+      }
+
+      // Jika ada kata tunggal yang pendek (< 4 huruf), pakai langsung
+      $words = array_values(array_filter(explode(' ', $namaClean)));
+      if (count($words) === 1 && mb_strlen($words[0]) <= 4) {
+          return strtoupper($words[0]);
+      }
+
+      // Fallback Otomatis untuk Mapel Baru: Ambil huruf kapital/pertama tiap kata
+      $abbr = '';
+      foreach ($words as $word) {
+          if (!in_array(strtolower($word), ['dan', 'atau', 'dengan', 'yang', 'untuk'])) {
+              $abbr .= mb_substr($word, 0, 1);
+          }
+      }
+
+      return mb_strlen($abbr) >= 2 ? strtoupper(mb_substr($abbr, 0, 4)) : strtoupper(mb_substr($namaClean, 0, 3));
+  };
+
+  // Mapping Data Mapel untuk Modal Detail
+  $mapelDetails = $mapels->mapWithKeys(function ($mapel) use ($makeAbbreviation) {
+    $shortCode = $makeAbbreviation($mapel->nama_mapel, $mapel->kode);
+    return [
+      $mapel->id => [
+        'nama' => $mapel->nama_mapel,
+        'kode' => $shortCode,
+        'gurus' => $mapel->gurus->map(fn ($guru) => [
+          'nama' => $guru->nama_lengkap,
+          'identitas' => $guru->nbm ?: ($guru->nip ?? null),
+          'jp' => (int) $guru->pivot->jumlah_jam,
+        ])->values(),
+      ],
+    ];
+  });
 @endphp
 
 <div class="mapel-summary">
@@ -37,29 +88,33 @@
 <div class="admin-grid mapel-grid">
   @forelse ($mapels as $mapel)
     @php
+      $shortCode = $makeAbbreviation($mapel->nama_mapel, $mapel->kode);
+      $totalGuru = $mapel->gurus->count();
       $totalJam = $mapel->gurus->sum(fn ($guru) => (int) $guru->pivot->jumlah_jam);
     @endphp
     <article class="subject-card">
       <div class="subject-top">
-        <span class="subject-code">{{ $mapel->kode }}</span>
+        <span class="subject-code">{{ $shortCode }}</span>
       </div>
       <h3>{{ $mapel->nama_mapel }}</h3>
       <div class="subject-meta">
-        <span>{{ $mapel->gurus->count() }} Guru</span>
-        <span>{{ $totalJam }} JP/Minggu</span>
+        <span>👨‍🏫 {{ $totalGuru }} Guru</span>
+        <span>⏱️ {{ $totalJam }} JP/Minggu</span>
       </div>
       <div class="subject-footer">
-        <button class="link-action mapel-manage-btn" type="button" data-mapel-id="{{ $mapel->id }}">Detail &amp; Pengampu</button>
+        <button class="link-action mapel-manage-btn" type="button" data-mapel-id="{{ $mapel->id }}">
+          <span>Detail &amp; Pengampu</span>
+        </button>
       </div>
     </article>
   @empty
     <div class="mapel-empty-state">
-      Belum ada mata pelajaran. Tambahkan data mata pelajaran melalui Data Guru.
+      Belum ada mata pelajaran. Data akan muncul otomatis setelah admin memasukkan penugasan di Data Guru.
     </div>
   @endforelse
 </div>
 
-<!-- Modal Detail & Pengampu Mapel -->
+<!-- Modal Detail & Daftar Guru Pengampu -->
 <dialog class="admin-modal mapel-modal" id="detailMapelModal">
   <div class="admin-modal-content">
     <div class="admin-modal-header">
@@ -114,16 +169,22 @@
       data.gurus.forEach(g => {
         const item = document.createElement('div');
         item.className = 'guru-pengampu-item';
+        
         const info = document.createElement('div');
         info.className = 'guru-info';
+        
         const name = document.createElement('strong');
         name.textContent = g.nama;
+        
         const identity = document.createElement('span');
         identity.textContent = `NBM/NIP: ${g.identitas || 'Belum diisi'}`;
+        
+        info.append(name, identity);
+
         const hours = document.createElement('span');
         hours.className = 'guru-hours';
         hours.textContent = `${g.jp} JP/Minggu`;
-        info.append(name, identity);
+
         item.append(info, hours);
         guruListContainer.appendChild(item);
       });
@@ -140,7 +201,12 @@
   function closeDetailMapelModal() { detailModal.close(); }
 
   document.querySelectorAll('[data-mapel-id]').forEach(button => {
-    button.addEventListener('click', () => openDetailMapelModal(mapelDetails[button.dataset.mapelId]));
+    button.addEventListener('click', () => {
+      const mapelId = button.dataset.mapelId;
+      if (mapelDetails[mapelId]) {
+        openDetailMapelModal(mapelDetails[mapelId]);
+      }
+    });
   });
 </script>
 <script src="{{ asset('admin-pdf-export.js') }}?v=1" defer></script>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Guru;
 use App\Models\PresensiGuru;
+use App\Models\Setting;
 use App\Services\AttendanceStatusService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,6 +29,8 @@ class PresensiGuruController extends Controller
             'bulan' => today()->subMonth(),
         };
 
+        $setting = Setting::first();
+
         return view('pages.guru.presensiguru', [
             'guru' => $guru,
             'presensi' => $guru->presensiHarian()->whereDate('tanggal', today())->first(),
@@ -37,6 +40,7 @@ class PresensiGuruController extends Controller
                 ->orderByDesc('tanggal')
                 ->get(),
             'periode' => $periode,
+            'setting' => $setting,
         ]);
     }
 
@@ -99,11 +103,31 @@ class PresensiGuruController extends Controller
     private function catat(Request $request, string $jenis, AttendanceStatusService $attendanceStatus): RedirectResponse
     {
         $attendanceStatus->applyGuruAttendanceCutoff();
-        if ($jenis === 'masuk' && now()->lt(today()->setTime(7, 0))) {
-            return back()->withErrors(['foto' => 'Absen masuk dibuka mulai pukul 07.00.']);
+        $setting = Setting::first();
+        $now = now();
+
+        $jamMasuk = $setting?->jam_masuk ?? '07:00:00';
+        $jamToleransi = $setting?->jam_toleransi ?? '07:15:00';
+
+        $dayMap = [
+            'Monday'    => 'jam_pulang_senin',
+            'Tuesday'   => 'jam_pulang_selasa',
+            'Wednesday' => 'jam_pulang_rabu',
+            'Thursday'  => 'jam_pulang_kamis',
+            'Friday'    => 'jam_pulang_jumat',
+            'Saturday'  => 'jam_pulang_senin',
+            'Sunday'    => 'jam_pulang_senin',
+        ];
+        $todayEnglish = $now->format('l');
+        $kolomPulang = $dayMap[$todayEnglish] ?? 'jam_pulang_senin';
+        $jamPulang = $setting?->$kolomPulang ?? '14:30:00';
+
+        if ($jenis === 'masuk' && $now->toTimeString() < $jamMasuk) {
+            return back()->withErrors(['foto' => 'Absen masuk dibuka mulai pukul ' . substr($jamMasuk, 0, 5) . '.']);
         }
-        if ($jenis === 'masuk' && now()->gte(today()->setTime(15, 0))) {
-            return back()->withErrors(['foto' => 'Batas absen masuk hari ini sudah berakhir pukul 15.00.']);
+
+        if ($jenis === 'pulang' && $now->toTimeString() < $jamPulang) {
+            return back()->withErrors(['foto' => 'Absen pulang dibuka mulai pukul ' . substr($jamPulang, 0, 5) . '.']);
         }
 
         $validated = $request->validate([
@@ -118,7 +142,7 @@ class PresensiGuruController extends Controller
             return back()->withErrors(['foto' => 'Absen masuk hari ini sudah tercatat.']);
         }
 
-        if ($jenis === 'masuk' && $presensi->exists && $presensi->status !== 'Hadir') {
+        if ($jenis === 'masuk' && $presensi->exists && $presensi->status !== 'Hadir' && $presensi->status !== 'Terlambat') {
             return back()->withErrors(['foto' => 'Status presensi hari ini sudah tercatat sebagai '.$presensi->status.'.']);
         }
 
@@ -130,14 +154,21 @@ class PresensiGuruController extends Controller
             return back()->withErrors(['foto' => 'Absen pulang hari ini sudah tercatat.']);
         }
 
-        $now = now();
         $path = $validated['foto']->store(
             'presensi_guru/'.$now->format('Y').'/'.$now->format('m'),
             'public'
         );
-        $presensi->status = 'Hadir';
-        $presensi->{'jam_'.$jenis} = $now->format('H:i:s');
-        $presensi->{'foto_'.$jenis} = $path;
+
+        if ($jenis === 'masuk') {
+            $status = $now->toTimeString() > $jamToleransi ? 'Terlambat' : 'Hadir';
+            $presensi->status = $status;
+            $presensi->jam_masuk = $now->format('H:i:s');
+            $presensi->foto_masuk = $path;
+        } else {
+            $presensi->jam_pulang = $now->format('H:i:s');
+            $presensi->foto_pulang = $path;
+        }
+
         $presensi->save();
 
         return back()->with('success', 'Presensi '.($jenis === 'masuk' ? 'masuk' : 'pulang').' berhasil dicatat.');

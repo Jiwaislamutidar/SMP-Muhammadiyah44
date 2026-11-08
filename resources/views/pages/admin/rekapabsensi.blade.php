@@ -26,9 +26,9 @@
     transition: all 0.2s ease;
   }
   .photo-thumbnail-btn:hover {
-    background: #087443;
+    background: #334155;
     color: #fff;
-    border-color: #087443;
+    border-color: #334155;
   }
   .sub-guru-nav {
     display: flex;
@@ -48,9 +48,135 @@
     cursor: pointer;
   }
   .sub-guru-tab.active {
-    background: #0f172a;
-    color: #fff;
-    border-color: #0f172a;
+    background: #e8edf5;
+    color: #1e293b;
+    border-color: #cbd5e1;
+  }
+
+  .rekap-mode-switch {
+    --tab-count: 2;
+    --active-tab: 0;
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(var(--tab-count), minmax(0, 1fr));
+    gap: 4px;
+    width: min(100%, 520px);
+    margin: 0 0 18px;
+    padding: 4px;
+    border: 1px solid #dbe3ee;
+    border-radius: 12px;
+    background: #f1f5f9;
+    box-shadow: none;
+  }
+  .rekap-mode-switch::before {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    inset: 4px auto 4px 4px;
+    width: calc((100% - 8px - (var(--tab-count) - 1) * 4px) / var(--tab-count));
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(30, 41, 59, .08);
+    transform: translateX(calc(var(--active-tab) * (100% + 4px)));
+    transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+  }
+  .rekap-mode-tab {
+    position: relative;
+    z-index: 1;
+    min-height: 38px;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+  }
+  .rekap-mode-tab.active { color: #1e293b; }
+  .rekap-mode-tab:hover { color: #334155; }
+  .rekap-mode-tab:focus-visible, .sub-guru-tab:focus-visible, .dash-tab:focus-visible, .date-mode-btn:focus-visible { outline: 2px solid #94a3b8; outline-offset: 2px; }
+  .rekap-date-mode-switch > div { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px !important; }
+  .date-mode-btn { border-color: #dbe3ee !important; background: #fff !important; color: #475569 !important; box-shadow: none !important; }
+  .date-mode-btn.active { border-color: #64748b !important; background: #334155 !important; color: #fff !important; }
+  .sub-guru-nav { gap: 6px; margin-bottom: 14px; padding-bottom: 8px; }
+  .sub-guru-tab { border-radius: 8px; border-color: #dbe3ee; background: #f8fafc; color: #475569; }
+  .sub-guru-tab:hover { border-color: #94a3b8; background: #f1f5f9; }
+  .dash-tabs { gap: 6px !important; margin-bottom: 14px !important; padding-bottom: 6px !important; }
+  .dash-tab { position: relative; padding: 8px 10px; color: #64748b !important; font-size: 13px; }
+  .dash-tab.active { color: #334155 !important; }
+  .dash-tab.active::after { content: ''; position: absolute; right: 10px; bottom: -7px; left: 10px; height: 2px; border-radius: 2px; background: #64748b; }
+  .rekap-filter-label, .admin-table th, .rekap-mode-tab, .sub-guru-tab, .dash-tab, button { user-select: none; }
+  .admin-table td { line-height: 1.45; }
+  .panel-title { color: #1e293b; line-height: 1.35; }
+  .panel-head p { line-height: 1.5; }
+  .rekap-table th, .rekap-table td { padding: 11px 12px; }
+
+  /* Attendance report UI refinements */
+  .admin-page-header { margin-bottom: 2px; }
+  .admin-page-header h1 { font-size: 21px; line-height: 1.25; }
+  .admin-page-header p { font-size: 12px; line-height: 1.45; }
+  .rekap-mode-switch { margin-bottom: 16px; }
+  .rekap-mode-tab { min-height: 36px; padding: 7px 13px; font-size: 12px; }
+  .rekap-mode-tab.active { color: #fff; background: #087443; }
+  .rekap-mode-tab.active:hover { color: #fff; background: #075c36; }
+  .admin-action:not(.admin-action-outline), .admin-action-primary { color: #fff; }
+  .rekap-mode-tab:focus-visible { outline-color: #16a66a; }
+
+  .rekap-mode-panel { display: grid; gap: 16px; min-width: 0; }
+  .rekap-mode-panel[hidden] { display: none !important; }
+  .summary-strip { gap: 10px; }
+  .summary-item { padding: 13px 15px; border-radius: 10px; }
+  .summary-item span { font-size: 10px; }
+  .summary-item strong { margin-top: 4px; font-size: 22px; line-height: 1.1; }
+  .rekap-toolbar { gap: 10px; padding: 11px; }
+  .rekap-filter-label { gap: 4px; font-size: 10px; }
+  .rekap-toolbar .admin-input,
+  .rekap-toolbar .admin-select { padding: 8px 10px; font-size: 12px; }
+  .rekap-total-wrapper { align-self: stretch; }
+  .admin-total#rekapTotal { padding: 8px 10px; font-size: 11px; }
+  .admin-table-wrap, .sub-guru-content > .panel { min-width: 0; }
+  .rekap-table { min-width: 760px; }
+  .rekap-table th { padding: 10px 11px; font-size: 10px; }
+  .rekap-table td { padding: 10px 11px; font-size: 12px; }
+  .rekap-table td:nth-child(2), .rekap-table td:nth-child(4),
+  .rekap-table td:nth-child(7), .rekap-table td:nth-child(8) { white-space: nowrap; }
+  .rekap-identity { gap: 7px; }
+  .rekap-identity strong { font-size: 12px; }
+  .rekap-class-badge { display: inline-flex; align-items: center; padding: 3px 7px; font-size: 10px; white-space: nowrap; }
+  .rekap-status { display: inline-flex; align-items: center; padding: 3px 7px; border-radius: 999px; background: #f8fafc; font-size: 10px; white-space: nowrap; }
+
+  .sub-guru-nav { gap: 7px; margin: 0; padding: 0 0 9px; }
+  .sub-guru-tab { min-height: 34px; padding: 7px 12px; border-radius: 8px; font-size: 11px; transition: color .2s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+  .sub-guru-tab:hover { color: #075c36; border-color: #86efac; background: #f0fdf4; box-shadow: 0 3px 8px rgba(8,116,67,.1); transform: translateY(-1px); }
+  .sub-guru-tab.active, .sub-guru-tab.active:hover { color: #fff; border-color: #087443; background: #087443; box-shadow: 0 3px 8px rgba(8,116,67,.18); transform: none; }
+  .sub-guru-tab:focus-visible { outline: 2px solid #16a66a; outline-offset: 2px; }
+  .sub-guru-content > .panel { padding: 16px; border-radius: 12px; }
+  .sub-guru-content > .panel > .panel-head { margin-bottom: 12px !important; }
+  .panel-title { font-size: 14px; }
+  .panel-head p { font-size: 11px !important; line-height: 1.45; }
+  .sub-guru-content .admin-toolbar { gap: 8px; }
+  .sub-guru-content .dash-tabs { margin: 0 !important; }
+  .dash-tab { padding: 7px 9px; font-size: 12px; }
+  .dash-count { font-size: 10px; }
+  .dash-tab-panel { border-radius: 12px; }
+  .sub-guru-content .table-wrap { overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 9px; }
+  .sub-guru-content .table-wrap .admin-table { min-width: 760px; font-size: 11.5px; }
+  .sub-guru-content .table-wrap .admin-table th { padding: 9px 10px; font-size: 9px; }
+  .sub-guru-content .table-wrap .admin-table td { padding: 10px; line-height: 1.35; }
+  .sub-guru-content .table-wrap .admin-table td small { margin-top: 3px !important; font-size: 10px !important; }
+  .sub-guru-content .table-wrap .admin-table td strong { font-size: 11px !important; line-height: 1.35; }
+  .photo-thumbnail-btn { min-height: 28px; padding: 5px 9px; border-radius: 6px; font-size: 10px; white-space: nowrap; }
+  .photo-thumbnail-btn:focus-visible { outline: 2px solid #16a66a; outline-offset: 2px; }
+  .dash-unrecorded { margin-top: 12px !important; padding: 11px !important; }
+
+  @media (max-width: 600px) {
+    .rekap-mode-switch { width: 100%; }
+    .rekap-mode-tab { padding-inline: 8px; font-size: 11px; }
+    .sub-guru-nav { overflow-x: auto; }
+    .sub-guru-tab { flex: 0 0 auto; }
+    .sub-guru-content > .panel { padding: 12px; }
   }
 </style>
 @endsection
@@ -61,7 +187,7 @@
     <h1>Rekap Absensi</h1>
     <p>Kelola dan pantau data kehadiran murid dan guru secara terpusat</p>
   </div>
-  <div class="admin-header-actions rekap-actions" id="studentHeaderActions">
+  <div class="admin-header-actions rekap-actions" id="headerActions">
     <button class="admin-action admin-action-outline admin-delete-button" id="deleteAttendance" type="button">Hapus Data</button>
     <button class="admin-action admin-pdf-export bg-blue-600 hover:bg-blue-700" id="exportAttendance" type="button" data-pdf-export data-export-url="{{ route('admin.rekapabsensi.export') }}" data-export-filename="rekap-absensi.pdf" aria-live="polite">
       <svg class="admin-pdf-export-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2.5v9m0 0 3.5-3.5M10 11.5 6.5 8M3.5 12.5v3A1.5 1.5 0 0 0 5 17h10a1.5 1.5 0 0 0 1.5-1.5v-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -99,8 +225,8 @@
     <div class="rekap-date-mode-switch" style="grid-column: span 2; display: flex; flex-direction: column; gap: 6px;">
       <span style="font-size: 11px; font-weight: 600; color: #374151;">Pilih Mode Tampilan Data</span>
       <div style="display: flex; gap: 6px;">
-        <button type="button" class="date-mode-btn active" id="btnModeHarian" style="flex: 1; padding: 6px 10px; font-size: 11px; font-weight: 600; border: 1px solid #d1d5db; border-radius: 6px; background: #087443; color: #fff; cursor: pointer;">📅 Harian</button>
-        <button type="button" class="date-mode-btn" id="btnModeRentang" style="flex: 1; padding: 6px 10px; font-size: 11px; font-weight: 600; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; color: #4b5563; cursor: pointer;">📆 Rentang Waktu</button>
+        <button type="button" class="date-mode-btn active" id="btnModeHarian">📅 Harian</button>
+        <button type="button" class="date-mode-btn" id="btnModeRentang">📆 Rentang Waktu</button>
       </div>
     </div>
 
@@ -220,11 +346,11 @@
       </div>
     </div>
 
-    <div class="dash-tabs" role="tablist" aria-label="Filter guru" style="display: flex; gap: 16px; margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
-      <button class="dash-tab active" type="button" role="tab" aria-selected="true" data-guru-tab="hadir" style="background: none; border: none; font-weight: 700; cursor: pointer; color: #087443; font-size: 13px;">
+    <div class="dash-tabs" role="tablist" aria-label="Filter guru">
+      <button class="dash-tab active" type="button" role="tab" aria-selected="true" data-guru-tab="hadir">
         Hadir <span class="dash-count" id="guruHadirCountTab">0</span>
       </button>
-      <button class="dash-tab" type="button" role="tab" aria-selected="false" data-guru-tab="tidak-hadir" style="background: none; border: none; font-weight: 700; cursor: pointer; color: #64748b; font-size: 13px;">
+      <button class="dash-tab" type="button" role="tab" aria-selected="false" data-guru-tab="tidak-hadir">
         Tidak Hadir <span class="dash-count" id="guruTidakHadirCountTab">0</span>
       </button>
     </div>
@@ -287,6 +413,8 @@
     <input type="hidden" name="kelas">
     <input type="hidden" name="status">
     <input type="hidden" name="search">
+    <input type="hidden" name="type" value="murid">
+    <input type="hidden" name="periode">
     <div class="rekap-delete-icon" aria-hidden="true">!</div>
     <h2 id="deleteModalTitle">Apakah kamu yakin ingin menghapus data ini?</h2>
     <p>Data presensi yang sesuai dengan filter aktif akan dihapus permanen.</p>
@@ -308,7 +436,7 @@
 <script>
   const modeTabs = document.querySelectorAll('.rekap-mode-tab');
   const modePanels = document.querySelectorAll('.rekap-mode-panel');
-  const studentHeaderActions = document.getElementById('studentHeaderActions');
+  let activeAttendanceType = 'murid';
 
   modeTabs.forEach((tab) => {
     tab.addEventListener('click', () => {
@@ -318,14 +446,14 @@
       });
       tab.classList.add('active');
       tab.setAttribute('aria-selected', 'true');
+      document.querySelector('.rekap-mode-switch')?.style.setProperty('--active-tab', String([...modeTabs].indexOf(tab)));
       const target = tab.dataset.modeTarget;
       modePanels.forEach((panel) => {
         const match = panel.dataset.modePanel === target;
         panel.hidden = !match;
       });
-      if (studentHeaderActions) {
-        studentHeaderActions.style.display = target === 'murid' ? 'flex' : 'none';
-      }
+      activeAttendanceType = target;
+      updateActionUrls(activeFilters());
       if (target === 'guru') {
         loadGuruPeriod();
       }
@@ -355,13 +483,8 @@
 
   btnModeHarian.addEventListener('click', () => {
     currentMode = 'harian';
-    btnModeHarian.style.background = '#087443';
-    btnModeHarian.style.color = '#fff';
-    btnModeHarian.style.borderColor = '#087443';
-    
-    btnModeRentang.style.background = '#fff';
-    btnModeRentang.style.color = '#4b5563';
-    btnModeRentang.style.borderColor = '#d1d5db';
+    btnModeHarian.classList.add('active');
+    btnModeRentang.classList.remove('active');
 
     containerHarian.style.display = 'grid';
     containerRentang.style.display = 'none';
@@ -370,13 +493,8 @@
 
   btnModeRentang.addEventListener('click', () => {
     currentMode = 'rentang';
-    btnModeRentang.style.background = '#087443';
-    btnModeRentang.style.color = '#fff';
-    btnModeRentang.style.borderColor = '#087443';
-    
-    btnModeHarian.style.background = '#fff';
-    btnModeHarian.style.color = '#4b5563';
-    btnModeHarian.style.borderColor = '#d1d5db';
+    btnModeRentang.classList.add('active');
+    btnModeHarian.classList.remove('active');
 
     containerHarian.style.display = 'none';
     containerRentang.style.display = 'grid';
@@ -421,6 +539,19 @@
   }
 
   function updateActionUrls(filters) {
+    if (activeAttendanceType === 'guru') {
+      const teacherFilters = {
+        type: 'guru',
+        periode: guruPeriodFilter.value,
+      };
+      exportLink.dataset.exportParams = new URLSearchParams(teacherFilters).toString();
+      exportLink.disabled = false;
+      deleteButton.disabled = false;
+      deleteForm.elements['type'].value = teacherFilters.type;
+      deleteForm.elements['periode'].value = teacherFilters.periode;
+      return;
+    }
+
     if (!filters.date) {
       exportLink.disabled = true;
       deleteButton.disabled = true;
@@ -428,6 +559,7 @@
     }
 
     const exportFilters = {
+      type: 'murid',
       date_from: exportDateFrom.value,
       date_to: exportDateTo.value,
       kelas: filters.kelas,
@@ -446,6 +578,8 @@
     deleteForm.elements['kelas'].value = filters.kelas;
     deleteForm.elements['status'].value = filters.status;
     deleteForm.elements['search'].value = filters.search;
+    deleteForm.elements['type'].value = 'murid';
+    deleteForm.elements['periode'].value = '';
   }
 
   function addCell(row, value, className = '') {
@@ -654,8 +788,8 @@
       const avatar = makeTextElement('span', '', teacher.nama.slice(0, 1).toUpperCase());
       avatar.style.width = '32px';
       avatar.style.height = '32px';
-      avatar.style.background = '#e8f6ef';
-      avatar.style.color = '#087443';
+      avatar.style.background = '#e8edf5';
+      avatar.style.color = '#334155';
       avatar.style.borderRadius = '50%';
       avatar.style.display = 'grid';
       avatar.style.placeItems = 'center';
@@ -784,7 +918,7 @@
         tr.append(tdKelas);
 
         const tdJam = document.createElement('td');
-        tdJam.innerHTML = `<small style="display:block;">Jadwal: ${log.jam_mulai?.slice(0,5)} - ${log.jam_selesai?.slice(0,5)}</small><strong style="font-size:11px; color:#087443;">Mulai: ${log.jam_mulai_mengajar ? log.jam_mulai_mengajar.slice(0,5) : '-'}</strong><br><strong style="font-size:11px; color:#2563eb;">Selesai: ${log.jam_selesai_mengajar ? log.jam_selesai_mengajar.slice(0,5) : '-'}</strong>`;
+        tdJam.innerHTML = `<small style="display:block;">Jadwal: ${log.jam_mulai?.slice(0,5)} - ${log.jam_selesai?.slice(0,5)}</small><strong style="font-size:11px; color:#475569;">Mulai: ${log.jam_mulai_mengajar ? log.jam_mulai_mengajar.slice(0,5) : '-'}</strong><br><strong style="font-size:11px; color:#2563eb;">Selesai: ${log.jam_selesai_mengajar ? log.jam_selesai_mengajar.slice(0,5) : '-'}</strong>`;
         tr.append(tdJam);
 
         const tdFotoMulai = document.createElement('td');
@@ -830,7 +964,7 @@
     tab.addEventListener('click', () => {
       guruTabs.forEach((item) => {
         item.setAttribute('aria-selected', String(item === tab));
-        item.style.color = item === tab ? '#087443' : '#64748b';
+        item.classList.toggle('active', item === tab);
       });
       guruPanels.forEach((panel) => {
         panel.hidden = panel.dataset.guruPanel !== tab.dataset.guruTab;
@@ -838,6 +972,7 @@
     });
   });
   guruPeriodFilter.addEventListener('change', () => {
+    updateActionUrls(activeFilters());
     loadGuruPeriod();
     if (!document.getElementById('subGuruMapel').hidden) {
       loadGuruMapelReport();

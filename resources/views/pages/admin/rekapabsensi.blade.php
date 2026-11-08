@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 @section('title', 'Rekap Absensi')
 @section('styles')
-<link rel="stylesheet" href="{{ asset('admin css/rekapabsensi.css') }}?v=14">
+<link rel="stylesheet" href="{{ asset('admin css/rekapabsensi.css') }}?v=19">
 <style>
   .rekap-mode-tab, .dash-tab, .admin-action, .date-mode-btn {
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -98,8 +98,8 @@
   .rekap-mode-tab:hover { color: #334155; }
   .rekap-mode-tab:focus-visible, .sub-guru-tab:focus-visible, .dash-tab:focus-visible, .date-mode-btn:focus-visible { outline: 2px solid #94a3b8; outline-offset: 2px; }
   .rekap-date-mode-switch > div { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px !important; }
-  .date-mode-btn { border-color: #dbe3ee !important; background: #fff !important; color: #475569 !important; box-shadow: none !important; }
-  .date-mode-btn.active { border-color: #64748b !important; background: #334155 !important; color: #fff !important; }
+  .date-mode-btn { border-color: #dbe3ee !important; background: #fff !important; color: #475569 !important; box-shadow: none !important; border-radius: 8px !important; }
+  .date-mode-btn.active { border-color: #334155 !important; background: #334155 !important; color: #fff !important; }
   .sub-guru-nav { gap: 6px; margin-bottom: 14px; padding-bottom: 8px; }
   .sub-guru-tab { border-radius: 8px; border-color: #dbe3ee; background: #f8fafc; color: #475569; }
   .sub-guru-tab:hover { border-color: #94a3b8; background: #f1f5f9; }
@@ -113,6 +113,13 @@
   .panel-head p { line-height: 1.5; }
   .rekap-table th, .rekap-table td { padding: 11px 12px; }
 
+  /* Kotak Total Data Polos Netral (Tanpa Border Hijau) */
+  .admin-total#rekapTotal, .admin-total#rekapMapelTotal {
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+
   /* Attendance report UI refinements */
   .admin-page-header { margin-bottom: 2px; }
   .admin-page-header h1 { font-size: 21px; line-height: 1.25; }
@@ -124,7 +131,7 @@
   .admin-action:not(.admin-action-outline), .admin-action-primary { color: #fff; }
   .rekap-mode-tab:focus-visible { outline-color: #16a66a; }
 
-  .rekap-mode-panel { display: grid; gap: 16px; min-width: 0; }
+  .rekap-mode-panel { display: grid; gap: 16px; min-width: 0; transition: opacity 0.2s ease; }
   .rekap-mode-panel[hidden] { display: none !important; }
   .summary-strip { gap: 10px; }
   .summary-item { padding: 13px 15px; border-radius: 10px; }
@@ -135,7 +142,7 @@
   .rekap-toolbar .admin-input,
   .rekap-toolbar .admin-select { padding: 8px 10px; font-size: 12px; }
   .rekap-total-wrapper { align-self: stretch; }
-  .admin-total#rekapTotal { padding: 8px 10px; font-size: 11px; }
+  .admin-total#rekapTotal, .admin-total#rekapMapelTotal { padding: 8px 10px; font-size: 11px; }
   .admin-table-wrap, .sub-guru-content > .panel { min-width: 0; }
   .rekap-table { min-width: 760px; }
   .rekap-table th { padding: 10px 11px; font-size: 10px; }
@@ -201,6 +208,7 @@
   <button class="rekap-mode-tab" type="button" role="tab" aria-selected="false" data-mode-target="guru">Rekap Absensi Guru</button>
 </div>
 
+<!-- PANEL REKAP MURID -->
 <div class="rekap-mode-panel" id="panelMurid" data-mode-panel="murid">
   <div class="summary-strip">
     <div class="summary-item summary-item--present">
@@ -314,12 +322,14 @@
   </section>
 </div>
 
+<!-- PANEL REKAP GURU -->
 <div class="rekap-mode-panel" id="panelGuru" data-mode-panel="guru" hidden>
   <div class="sub-guru-nav">
     <button class="sub-guru-tab active" type="button" data-sub-guru="harian">Kehadiran Sekolah Harian</button>
     <button class="sub-guru-tab" type="button" data-sub-guru="mapel">Presensi Mengajar Mata Pelajaran</button>
   </div>
 
+  <!-- SUB TAB: KEHADIRAN SEKOLAH HARIAN -->
   <div class="sub-guru-content" id="subGuruHarian">
     <div class="panel" style="margin-bottom: 16px;">
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
@@ -372,7 +382,51 @@
     </div>
   </div>
 
+  <!-- SUB TAB: PRESENSI MENGAJAR MATA PELAJARAN -->
   <div class="sub-guru-content" id="subGuruMapel" hidden>
+    <div class="admin-toolbar rekap-toolbar" style="margin-bottom: 16px;">
+      <div class="rekap-date-mode-switch" style="grid-column: span 2; display: flex; flex-direction: column; gap: 6px;">
+        <span style="font-size: 11px; font-weight: 600; color: #374151;">Pilih Mode Tampilan Data</span>
+        <div style="display: flex; gap: 6px;">
+          <button type="button" class="date-mode-btn active" id="btnMapelModeHarian">📅 Harian</button>
+          <button type="button" class="date-mode-btn" id="btnMapelModeRentang">📆 Rentang Waktu</button>
+        </div>
+      </div>
+
+      <label class="rekap-filter-label" id="containerMapelHarian" for="mapelDate" style="grid-column: span 2;">
+        Tanggal Absensi
+        <input class="admin-input" id="mapelDate" type="date" value="{{ $selectedDate }}" required>
+      </label>
+
+      <fieldset class="rekap-export-range" id="containerMapelRentang" style="grid-column: span 2; display: none;">
+        <legend>Rentang Waktu & PDF Dari & Sampai</legend>
+        <div class="rekap-range-inputs">
+          <label class="rekap-filter-label" for="mapelExportDateFrom">
+            Dari
+            <input class="admin-input" id="mapelExportDateFrom" type="date" value="{{ $selectedDate }}">
+          </label>
+          <label class="rekap-filter-label" for="mapelExportDateTo">
+            Sampai
+            <input class="admin-input" id="mapelExportDateTo" type="date" value="{{ $selectedDate }}">
+          </label>
+        </div>
+      </fieldset>
+
+      <label class="rekap-filter-label" for="mapelSearchGuru" style="grid-column: span 2;">
+        Cari Nama Guru
+        <input class="admin-input" id="mapelSearchGuru" type="search" placeholder="Nama guru..." aria-label="Cari nama guru">
+      </label>
+
+      <label class="rekap-filter-label" for="mapelSearchMapel" style="grid-column: span 2;">
+        Cari Mata Pelajaran
+        <input class="admin-input" id="mapelSearchMapel" type="search" placeholder="Mata pelajaran..." aria-label="Cari mata pelajaran">
+      </label>
+
+      <div class="rekap-total-wrapper" style="grid-column: span 2;">
+        <span class="admin-total" id="rekapMapelTotal">Total 0 Data</span>
+      </div>
+    </div>
+
     <div class="panel">
       <div class="panel-head" style="margin-bottom: 16px;">
         <div>
@@ -415,9 +469,11 @@
     <input type="hidden" name="search">
     <input type="hidden" name="type" value="murid">
     <input type="hidden" name="periode">
+    <input type="hidden" name="nama_guru">
+    <input type="hidden" name="nama_mapel">
     <div class="rekap-delete-icon" aria-hidden="true">!</div>
     <h2 id="deleteModalTitle">Apakah kamu yakin ingin menghapus data ini?</h2>
-    <p>Data presensi yang sesuai dengan filter aktif akan dihapus permanen.</p>
+    <p>Data presensi yang sesuai dengan filter aktif pada tab yang sedang dibuka akan dihapus permanen.</p>
     <div class="rekap-delete-actions">
       <button class="admin-action admin-action-outline" type="button" id="cancelDelete">Batal</button>
       <button class="admin-action rekap-danger-button admin-delete-button admin-delete-button--solid" type="submit">Ya, Hapus Data</button>
@@ -437,6 +493,7 @@
   const modeTabs = document.querySelectorAll('.rekap-mode-tab');
   const modePanels = document.querySelectorAll('.rekap-mode-panel');
   let activeAttendanceType = 'murid';
+  let activeSubGuruTab = 'harian';
 
   modeTabs.forEach((tab) => {
     tab.addEventListener('click', () => {
@@ -455,22 +512,26 @@
       activeAttendanceType = target;
       updateActionUrls(activeFilters());
       if (target === 'guru') {
-        loadGuruPeriod();
+        if (activeSubGuruTab === 'harian') loadGuruPeriod();
+        else loadGuruMapelReport();
       }
     });
   });
 
   const subGuruTabs = document.querySelectorAll('.sub-guru-tab');
-  const subGuruContents = document.querySelectorAll('.sub-guru-content');
   subGuruTabs.forEach((tab) => {
     tab.addEventListener('click', () => {
       subGuruTabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       const target = tab.dataset.subGuru;
+      activeSubGuruTab = target;
       document.getElementById('subGuruHarian').hidden = target !== 'harian';
       document.getElementById('subGuruMapel').hidden = target !== 'mapel';
+      updateActionUrls(activeFilters());
       if (target === 'mapel') {
         loadGuruMapelReport();
+      } else {
+        loadGuruPeriod();
       }
     });
   });
@@ -485,7 +546,6 @@
     currentMode = 'harian';
     btnModeHarian.classList.add('active');
     btnModeRentang.classList.remove('active');
-
     containerHarian.style.display = 'grid';
     containerRentang.style.display = 'none';
     loadReport();
@@ -495,10 +555,33 @@
     currentMode = 'rentang';
     btnModeRentang.classList.add('active');
     btnModeHarian.classList.remove('active');
-
     containerHarian.style.display = 'none';
     containerRentang.style.display = 'grid';
     loadReport();
+  });
+
+  const btnMapelModeHarian = document.getElementById('btnMapelModeHarian');
+  const btnMapelModeRentang = document.getElementById('btnMapelModeRentang');
+  const containerMapelHarian = document.getElementById('containerMapelHarian');
+  const containerMapelRentang = document.getElementById('containerMapelRentang');
+  let currentMapelMode = 'harian';
+
+  btnMapelModeHarian.addEventListener('click', () => {
+    currentMapelMode = 'harian';
+    btnMapelModeHarian.classList.add('active');
+    btnMapelModeRentang.classList.remove('active');
+    containerMapelHarian.style.display = 'grid';
+    containerMapelRentang.style.display = 'none';
+    loadGuruMapelReport();
+  });
+
+  btnMapelModeRentang.addEventListener('click', () => {
+    currentMapelMode = 'rentang';
+    btnMapelModeRentang.classList.add('active');
+    btnMapelModeHarian.classList.remove('active');
+    containerMapelHarian.style.display = 'none';
+    containerMapelRentang.style.display = 'grid';
+    loadGuruMapelReport();
   });
 
   const reportUrl = @json(route('admin.rekapabsensi.data'));
@@ -518,7 +601,33 @@
   let reportRequestController;
   let deleteConfirmationPending = false;
 
+  const mapelDate = document.getElementById('mapelDate');
+  const mapelExportDateFrom = document.getElementById('mapelExportDateFrom');
+  const mapelExportDateTo = document.getElementById('mapelExportDateTo');
+  const mapelSearchGuru = document.getElementById('mapelSearchGuru');
+  const mapelSearchMapel = document.getElementById('mapelSearchMapel');
+
   function activeFilters() {
+    if (activeAttendanceType === 'guru' && activeSubGuruTab === 'mapel') {
+      if (currentMapelMode === 'rentang') {
+        return {
+          type: 'mapel',
+          date: mapelExportDateFrom.value,
+          date_to: mapelExportDateTo.value,
+          nama_guru: mapelSearchGuru.value.trim(),
+          nama_mapel: mapelSearchMapel.value.trim(),
+        };
+      } else {
+        return {
+          type: 'mapel',
+          date: mapelDate.value,
+          date_to: mapelDate.value,
+          nama_guru: mapelSearchGuru.value.trim(),
+          nama_mapel: mapelSearchMapel.value.trim(),
+        };
+      }
+    }
+
     if (currentMode === 'rentang') {
       return {
         date: exportDateFrom.value,
@@ -540,6 +649,29 @@
 
   function updateActionUrls(filters) {
     if (activeAttendanceType === 'guru') {
+      if (activeSubGuruTab === 'mapel') {
+        const mapelFilters = {
+          type: 'mapel',
+          date_from: currentMapelMode === 'rentang' ? mapelExportDateFrom.value : mapelDate.value,
+          date_to: currentMapelMode === 'rentang' ? mapelExportDateTo.value : mapelDate.value,
+          nama_guru: mapelSearchGuru.value.trim(),
+          nama_mapel: mapelSearchMapel.value.trim(),
+        };
+        exportLink.dataset.exportParams = new URLSearchParams(mapelFilters).toString();
+        exportLink.disabled = false;
+        deleteButton.disabled = false;
+        
+        deleteForm.elements['type'].value = 'mapel';
+        deleteForm.elements['date'].value = mapelFilters.date_from;
+        deleteForm.elements['date_to'].value = mapelFilters.date_to;
+        deleteForm.elements['search'].value = mapelFilters.nama_guru;
+        deleteForm.elements['nama_guru'].value = mapelFilters.nama_guru;
+        deleteForm.elements['nama_mapel'].value = mapelFilters.nama_mapel;
+        deleteForm.elements['periode'].value = '';
+        return;
+      }
+
+      // Tab Kehadiran Sekolah Harian Guru
       const teacherFilters = {
         type: 'guru',
         periode: guruPeriodFilter.value,
@@ -547,11 +679,18 @@
       exportLink.dataset.exportParams = new URLSearchParams(teacherFilters).toString();
       exportLink.disabled = false;
       deleteButton.disabled = false;
-      deleteForm.elements['type'].value = teacherFilters.type;
-      deleteForm.elements['periode'].value = teacherFilters.periode;
+
+      deleteForm.elements['type'].value = 'guru';
+      deleteForm.elements['periode'].value = guruPeriodFilter.value;
+      deleteForm.elements['date'].value = '';
+      deleteForm.elements['date_to'].value = '';
+      deleteForm.elements['search'].value = '';
+      deleteForm.elements['nama_guru'].value = '';
+      deleteForm.elements['nama_mapel'].value = '';
       return;
     }
 
+    // Tab Rekap Murid
     if (!filters.date) {
       exportLink.disabled = true;
       deleteButton.disabled = true;
@@ -573,13 +712,15 @@
     exportLink.disabled = !validExportRange;
     deleteButton.disabled = false;
     
+    deleteForm.elements['type'].value = 'murid';
     deleteForm.elements['date'].value = filters.date;
     deleteForm.elements['date_to'].value = filters.date_to;
     deleteForm.elements['kelas'].value = filters.kelas;
     deleteForm.elements['status'].value = filters.status;
     deleteForm.elements['search'].value = filters.search;
-    deleteForm.elements['type'].value = 'murid';
     deleteForm.elements['periode'].value = '';
+    deleteForm.elements['nama_guru'].value = '';
+    deleteForm.elements['nama_mapel'].value = '';
   }
 
   function addCell(row, value, className = '') {
@@ -688,6 +829,7 @@
     searchTimer = window.setTimeout(submitSearch, 250);
   });
   document.getElementById('deleteAttendance').addEventListener('click', () => {
+    updateActionUrls(activeFilters());
     deleteConfirmationPending = true;
     deleteButton.classList.add('is-awaiting-confirmation');
     deleteModal.showModal();
@@ -838,6 +980,7 @@
   async function loadGuruPeriod() {
     guruFetchError.hidden = true;
     guruPeriodFilter.disabled = true;
+    updateActionUrls(activeFilters());
     try {
       const response = await fetch(`${guruPeriodFilter.dataset.url}?${new URLSearchParams({ periode: guruPeriodFilter.value })}`, {
         headers: { Accept: 'application/json' },
@@ -873,16 +1016,28 @@
   }
 
   async function loadGuruMapelReport() {
+    const filters = activeFilters();
+    updateActionUrls(filters);
     const tbody = document.getElementById('guruMapelRows');
     tbody.innerHTML = '<tr><td colspan="7" class="admin-empty-row" style="text-align: center; padding: 24px; color: #64748b;">Memuat rekap mapel guru...</td></tr>';
     try {
-      const response = await fetch(`${guruPeriodFilter.dataset.url}?${new URLSearchParams({ periode: guruPeriodFilter.value, type: 'mapel' })}`, {
+      const queryParams = new URLSearchParams({
+        type: 'mapel',
+        periode: guruPeriodFilter ? guruPeriodFilter.value : 'hari',
+        date: filters.date || '',
+        date_to: filters.date_to || '',
+        nama_guru: filters.nama_guru || '',
+        nama_mapel: filters.nama_mapel || ''
+      });
+
+      const response = await fetch(`${guruPeriodFilter.dataset.url}?${queryParams}`, {
         headers: { Accept: 'application/json' },
       });
       if (!response.ok) throw new Error('Gagal memuat rekap mapel guru.');
       const data = await response.json();
       const logs = data.mapel_logs || [];
       
+      document.getElementById('rekapMapelTotal').textContent = `Total ${logs.length} Data`;
       tbody.replaceChildren();
       if (!logs.length) {
         const tr = document.createElement('tr');
@@ -971,13 +1126,23 @@
       });
     });
   });
+
   guruPeriodFilter.addEventListener('change', () => {
     updateActionUrls(activeFilters());
     loadGuruPeriod();
-    if (!document.getElementById('subGuruMapel').hidden) {
-      loadGuruMapelReport();
-    }
   });
+
+  [mapelDate, mapelExportDateFrom, mapelExportDateTo].forEach(el => {
+    el.addEventListener('change', loadGuruMapelReport);
+  });
+  [mapelSearchGuru, mapelSearchMapel].forEach(el => {
+    let timer;
+    el.addEventListener('input', () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(loadGuruMapelReport, 250);
+    });
+  });
+
   guruSessionFilter.addEventListener('change', applyGuruSessionFilter);
   attendancePhotoModal.querySelector('.dash-photo-modal-close').addEventListener('click', () => attendancePhotoModal.close());
   attendancePhotoModal.addEventListener('click', (e) => {

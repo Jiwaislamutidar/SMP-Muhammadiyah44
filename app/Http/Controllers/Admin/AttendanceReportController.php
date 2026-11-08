@@ -8,6 +8,7 @@ use App\Models\DashboardAttendanceSessionLog;
 use App\Models\Guru;
 use App\Models\Kelas;
 use App\Models\PresensiPelajaran;
+use App\Models\Attendance;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -44,20 +45,36 @@ class AttendanceReportController extends Controller
     public function guruPeriod(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'periode' => ['required', 'in:hari,minggu,bulan'],
+            'periode' => ['nullable', 'in:hari,minggu,bulan'],
             'type' => ['nullable', 'string', 'in:mapel'],
+            'date' => ['nullable', 'date_format:Y-m-d'],
+            'date_to' => ['nullable', 'date_format:Y-m-d'],
+            'nama_guru' => ['nullable', 'string', 'max:120'],
+            'nama_mapel' => ['nullable', 'string', 'max:120'],
         ]);
-        [$start, $end] = $this->dateRange($validated['periode']);
 
         if ($request->get('type') === 'mapel') {
-            $mapelLogs = DB::table('presensi_guru_mapels')
+            $dateFrom = $validated['date'] ?? today()->toDateString();
+            $dateTo = $validated['date_to'] ?? $dateFrom;
+            $namaGuru = $validated['nama_guru'] ?? null;
+            $namaMapel = $validated['nama_mapel'] ?? null;
+
+            $query = DB::table('presensi_guru_mapels')
                 ->join('gurus', 'gurus.id', '=', 'presensi_guru_mapels.guru_id')
                 ->join('jadwal_pelajarans', 'jadwal_pelajarans.id', '=', 'presensi_guru_mapels.jadwal_id')
                 ->join('mapels', 'mapels.id', '=', 'jadwal_pelajarans.mapel_id')
                 ->join('kelas', 'kelas.id', '=', 'jadwal_pelajarans.kelas_id')
-                ->whereDate('presensi_guru_mapels.tanggal', '>=', $start)
-                ->whereDate('presensi_guru_mapels.tanggal', '<=', $end)
-                ->select(
+                ->whereDate('presensi_guru_mapels.tanggal', '>=', $dateFrom)
+                ->whereDate('presensi_guru_mapels.tanggal', '<=', $dateTo);
+
+            if ($namaGuru) {
+                $query->where('gurus.nama_lengkap', 'like', "%{$namaGuru}%");
+            }
+            if ($namaMapel) {
+                $query->where('mapels.nama_mapel', 'like', "%{$namaMapel}%");
+            }
+
+            $mapelLogs = $query->select(
                     'presensi_guru_mapels.*',
                     'gurus.nama_lengkap as nama_guru',
                     'mapels.nama_mapel',
@@ -80,13 +97,15 @@ class AttendanceReportController extends Controller
                     'jam_selesai' => $log->jam_selesai,
                     'jam_mulai_mengajar' => $log->jam_mulai_mengajar,
                     'jam_selesai_mengajar' => $log->jam_selesai_mengajar,
-                    'foto_mulai' => $log->foto_mulai,
-                    'foto_selesai' => $log->foto_selesai,
+                    'foto_mulai' => $log->foto_mulai ? asset('storage/'.$log->foto_mulai) : null,
+                    'foto_selesai' => $log->foto_selesai ? asset('storage/'.$log->foto_selesai) : null,
                 ])
                 ->values();
 
             return response()->json(['mapel_logs' => $mapelLogs]);
         }
+
+        [$start, $end] = $this->dateRange($validated['periode'] ?? 'hari');
 
         $gurus = Guru::query()
             ->with([
@@ -200,27 +219,78 @@ class AttendanceReportController extends Controller
 
     public function destroy(Request $request): RedirectResponse
     {
-        $filters = $this->validatedStudentFilters($request);
-        $dateTo = $filters['date_to'] ?? $filters['date'];
-        $matchingIds = $this->studentAttendanceQuery(
-            $filters['date'],
-            $filters['kelas'],
-            $filters['status'],
-            $filters['search'],
-            $dateTo
-        )->pluck('presensi_pelajarans.id');
-        $deleted = 0;
+        $type = $request->input('type', 'murid');
 
-        DB::transaction(function () use ($matchingIds, &$deleted): void {
-            foreach ($matchingIds->chunk(500) as $chunk) {
-                $deleted += DB::table('presensi_pelajarans')
-                    ->whereIn('id', $chunk)
-                    ->delete();
+        if ($type === 'murid') {
+            $dateFrom = $request->input('date', today()->toDateString());
+            $dateTo = $request->input('date_to', $dateFrom);
+            $kelas = $request->input('kelas');
+            $status = $request->input('status');
+            $search = $request->input('search');
+
+            $query = PresensiPelajaran::query()
+                ->join('sesi_pelajarans', 'sesi_pelajarans.id', '=', 'presensi_pelajarans.sesi_pelajaran_id')
+                ->whereDate('sesi_pelajarans.tanggal', '>=', $dateFrom)
+                ->whereDate('sesi_pelajarans.tanggal', '<=', $dateTo);
+
+            if ($kelas) {
+                $query->join('siswas', 'siswas.id', '=', 'presensi_pelajarans.siswa_id')
+                      ->where('siswas.kelas_id', $kelas);
             }
-        });
+            if ($status) {
+                $query->where('presensi_pelajarans.status', $status);
+            }
+            if ($search) {
+                $query->join('siswas', 'siswas.id', '=', 'presensi_pelajarans.siswa_id')
+                      ->where(function ($q) use ($search) {
+                          $q->where('siswas.nama_lengkap', 'like', "%{$search}%")
+                            ->orWhere('siswas.nisn', 'like', "%{$search}%");
+                      });
+            }
 
-        return redirect()->route('admin.rekapabsensi')
-            ->with('success', 'Data presensi berhasil dihapus: '.$deleted.' catatan.');
+            // Hapus data presensi pelajaran siswa yang sesuai
+            PresensiPelajaran::whereIn('id', $query->pluck('presensi_pelajarans.id'))->delete();
+
+        } elseif ($type === 'mapel') {
+            $dateFrom = $request->input('date', today()->toDateString());
+            $dateTo = $request->input('date_to', $dateFrom);
+            $namaGuru = $request->input('nama_guru');
+            $namaMapel = $request->input('nama_mapel');
+
+            $query = DB::table('presensi_guru_mapels')
+                ->join('gurus', 'gurus.id', '=', 'presensi_guru_mapels.guru_id')
+                ->join('jadwal_pelajarans', 'jadwal_pelajarans.id', '=', 'presensi_guru_mapels.jadwal_id')
+                ->join('mapels', 'mapels.id', '=', 'jadwal_pelajarans.mapel_id')
+                ->whereDate('presensi_guru_mapels.tanggal', '>=', $dateFrom)
+                ->whereDate('presensi_guru_mapels.tanggal', '<=', $dateTo);
+
+            if ($namaGuru) {
+                $query->where('gurus.nama_lengkap', 'like', "%{$namaGuru}%");
+            }
+            if ($namaMapel) {
+                $query->where('mapels.nama_mapel', 'like', "%{$namaMapel}%");
+            }
+
+            $ids = $query->pluck('presensi_guru_mapels.id');
+            if ($ids->isNotEmpty()) {
+                DB::table('presensi_guru_mapels')->whereIn('id', $ids)->delete();
+            }
+
+        } elseif ($type === 'guru') {
+            $periode = $request->input('periode', 'hari');
+            [$start, $end] = $this->dateRange($periode);
+            
+            // Hapus log kehadiran harian guru pada rentang periode tersebut jika ada
+            DashboardAttendanceLog::whereDate('tanggal', '>=', $start)
+                ->whereDate('tanggal', '<=', $end)
+                ->delete();
+            
+            DashboardAttendanceSessionLog::whereDate('tanggal', '>=', $start)
+                ->whereDate('tanggal', '<=', $end)
+                ->delete();
+        }
+
+        return redirect()->back()->with('success', 'Data presensi berhasil dihapus.');
     }
 
     private function validatedStudentFilters(Request $request): array

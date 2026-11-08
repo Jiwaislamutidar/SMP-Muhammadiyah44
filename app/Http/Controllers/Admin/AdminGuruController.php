@@ -75,7 +75,6 @@ class AdminGuruController extends Controller
         $validated = $request->validate([
             'nama_lengkap' => ['required', 'string', 'max:255', 'unique:gurus,nama_lengkap'],
             'nbm' => ['nullable', 'string', 'max:100', 'unique:gurus,nbm', 'unique:users,username'],
-            'password' => ['nullable', 'string', 'min:6', 'max:255'],
             'status' => ['required', 'in:aktif,nonaktif'],
             'mapel_items' => ['nullable', 'array'],
             'mapel_items.*' => ['array'],
@@ -84,7 +83,7 @@ class AdminGuruController extends Controller
             'mapel_items.*.kode_mapel' => ['nullable', 'string', 'max:100'],
             'mapel_items.*.jml_jam' => ['nullable', 'integer', 'between:1,65535'],
             'mapel_items.*.nama_baru' => ['nullable', 'string', 'max:255'],
-            'mapel_items.*.kode_baru' => ['nullable', 'string', 'max:100', 'unique:mapels,kode'],
+            'mapel_items.*.kode_baru' => ['nullable', 'string', 'max:100'],
             'mapel_items.*.jumlah_jam' => ['nullable', 'integer', 'between:1,65535'],
         ]);
 
@@ -97,9 +96,7 @@ class AdminGuruController extends Controller
                     'username' => $validated['nbm'],
                     'email' => null,
                     'role' => 'guru',
-                    'password' => Hash::make(filled($validated['password'] ?? null)
-                        ? $validated['password']
-                        : $validated['nbm']),
+                    'password' => Hash::make($validated['nbm']),
                 ]);
             }
 
@@ -185,7 +182,7 @@ class AdminGuruController extends Controller
                 Rule::unique('users', 'username')->ignore($linkedUserId),
             ],
             'status' => ['required', 'in:aktif,nonaktif'],
-            'password' => ['nullable', 'string', 'min:6', 'max:255'],
+            'reset_password' => ['nullable', 'in:0,1'],
             'mapel_items' => ['nullable', 'array'],
             'mapel_items.*' => ['array'],
             'mapel_items.*.mapel_id' => ['nullable', 'integer', 'exists:mapels,id'],
@@ -193,13 +190,13 @@ class AdminGuruController extends Controller
             'mapel_items.*.kode_mapel' => ['nullable', 'string', 'max:100'],
             'mapel_items.*.jml_jam' => ['nullable', 'integer', 'between:1,65535'],
             'mapel_items.*.nama_baru' => ['nullable', 'string', 'max:255'],
-            'mapel_items.*.kode_baru' => ['nullable', 'string', 'max:100', Rule::unique('mapels', 'kode')],
+            'mapel_items.*.kode_baru' => ['nullable', 'string', 'max:100'],
             'mapel_items.*.jumlah_jam' => ['nullable', 'integer', 'between:1,65535'],
         ]);
 
-        if (filled($validated['password'] ?? null) && ! $linkedUserId && ! filled($validated['nbm'] ?? null)) {
+        if (($validated['reset_password'] ?? '0') === '1' && ! filled($validated['nbm'] ?? null)) {
             throw ValidationException::withMessages([
-                'password' => 'Isi NBM untuk membuat akun login sebelum mengatur password.',
+                'nbm' => 'NBM wajib diisi untuk melakukan reset password default.',
             ]);
         }
 
@@ -220,8 +217,8 @@ class AdminGuruController extends Controller
             if ($user) {
                 $user->name = $validated['nama_lengkap'];
                 $user->username = $validated['nbm'];
-                if (filled($validated['password'] ?? null)) {
-                    $user->password = Hash::make($validated['password']);
+                if (($validated['reset_password'] ?? '0') === '1') {
+                    $user->password = Hash::make($validated['nbm']);
                 }
                 $user->save();
             }
@@ -280,53 +277,64 @@ class AdminGuruController extends Controller
     }
 
     private function mapelSyncData(array $items): array
-    {
-        $syncData = [];
+        {
+            $syncData = [];
+            $seenKodes = [];
 
-        foreach ($items as $index => $item) {
-            $mapelId = $item['mapel_id'] ?? null;
-            $namaMapel = trim((string) ($item['nama_mapel'] ?? $item['nama_baru'] ?? ''));
-            $kodeMapel = trim((string) ($item['kode_mapel'] ?? $item['kode_baru'] ?? ''));
-            $jumlahJam = $item['jml_jam'] ?? $item['jumlah_jam'] ?? null;
+            foreach ($items as $index => $item) {
+                $mapelId = $item['mapel_id'] ?? null;
+                $namaMapel = trim((string) ($item['nama_mapel'] ?? $item['nama_baru'] ?? ''));
+                $kodeMapel = trim((string) ($item['kode_mapel'] ?? $item['kode_baru'] ?? ''));
+                $jumlahJam = $item['jml_jam'] ?? $item['jumlah_jam'] ?? null;
 
-            if (! $mapelId && $namaMapel === '' && $kodeMapel === '') {
-                continue;
-            }
-
-            if ($mapelId && ($namaMapel !== '' || $kodeMapel !== '')) {
-                throw ValidationException::withMessages([
-                    "mapel_items.{$index}.nama_mapel" => 'Isi kode dan nama mapel, atau gunakan referensi mapel yang sudah ada.',
-                ]);
-            }
-
-            if (! $mapelId && ($namaMapel === '' || $kodeMapel === '')) {
-                throw ValidationException::withMessages([
-                    "mapel_items.{$index}.kode_mapel" => 'Kode dan nama mata pelajaran wajib diisi.',
-                ]);
-            }
-
-            if ($jumlahJam !== null && $jumlahJam !== '' && (! is_numeric($jumlahJam) || (int) $jumlahJam < 0 || (int) $jumlahJam > 65535)) {
-                throw ValidationException::withMessages([
-                    "mapel_items.{$index}.jml_jam" => 'Jumlah jam wajib berupa angka antara 0 dan 65535.',
-                ]);
-            }
-
-            if (! $mapelId) {
-                $mapel = Mapel::firstOrCreate(
-                    ['kode' => $kodeMapel],
-                    ['nama_mapel' => $namaMapel],
-                );
-                if ($mapel->nama_mapel !== $namaMapel) {
-                    $mapel->update(['nama_mapel' => $namaMapel]);
+                if (! $mapelId && $namaMapel === '' && $kodeMapel === '') {
+                    continue;
                 }
-                $mapelId = $mapel->id;
+
+                if ($mapelId && ($namaMapel !== '' || $kodeMapel !== '')) {
+                    throw ValidationException::withMessages([
+                        "mapel_items.{$index}.nama_mapel" => 'Isi kode dan nama mapel, atau gunakan referensi mapel yang sudah ada.',
+                    ]);
+                }
+
+                if (! $mapelId && ($namaMapel === '' || $kodeMapel === '')) {
+                    throw ValidationException::withMessages([
+                        "mapel_items.{$index}.kode_mapel" => 'Kode dan nama mata pelajaran wajib diisi.',
+                    ]);
+                }
+
+                // Validasi duplikasi kode mapel yang diinput dobel dalam satu form yang sama
+                if (! $mapelId && $kodeMapel !== '') {
+                    $kodeLower = mb_strtolower($kodeMapel);
+                    if (in_array($kodeLower, $seenKodes, true)) {
+                        throw ValidationException::withMessages([
+                            "mapel_items.{$index}.kode_mapel" => "Kode mapel '{$kodeMapel}' diinput lebih dari satu kali dalam form ini.",
+                        ]);
+                    }
+                    $seenKodes[] = $kodeLower;
+                }
+
+                if ($jumlahJam !== null && $jumlahJam !== '' && (! is_numeric($jumlahJam) || (int) $jumlahJam < 0 || (int) $jumlahJam > 65535)) {
+                    throw ValidationException::withMessages([
+                        "mapel_items.{$index}.jml_jam" => 'Jumlah jam wajib berupa angka antara 0 dan 65535.',
+                    ]);
+                }
+
+                if (! $mapelId) {
+                    // Gunakan updateOrCreate: jika kode mapel sudah ada (walau bekas data lama), 
+                    // sistem otomatis memperbarui nama mapelnya dan memperbolehkannya dipakai kembali tanpa error!
+                    $mapel = Mapel::updateOrCreate(
+                        ['kode' => $kodeMapel],
+                        ['nama_mapel' => $namaMapel]
+                    );
+                    $mapelId = $mapel->id;
+                }
+
+                $syncData[$mapelId] = ['jumlah_jam' => (int) ($jumlahJam ?: 0)];
             }
 
-            $syncData[$mapelId] = ['jumlah_jam' => (int) ($jumlahJam ?: 0)];
+            return $syncData;
         }
-
-        return $syncData;
-    }
 
     private function guruResponseData(Guru $guru): array
     {

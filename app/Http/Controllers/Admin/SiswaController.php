@@ -25,7 +25,7 @@ class SiswaController extends Controller
         $query = $this->filteredStudents($request);
 
         return view('pages.admin.datamurid', [
-            'siswas' => $query->orderBy('nama_lengkap')->paginate(8)->withQueryString(),
+            'siswas' => $query->paginate(15)->withQueryString(),
             'kelasList' => Kelas::orderBy('nama_kelas')->get(),
             'totalSiswa' => Siswa::count(),
         ]);
@@ -35,7 +35,6 @@ class SiswaController extends Controller
     {
         $siswas = $this->filteredStudents($request)
             ->where('status', 'aktif')
-            ->orderBy('nama_lengkap')
             ->get();
         $kelasName = $request->filled('kelas_id')
             ? Kelas::query()->whereKey($request->input('kelas_id'))->value('nama_kelas')
@@ -63,7 +62,13 @@ class SiswaController extends Controller
                         ->orWhereHas('kelas', fn ($kelas) => $kelas->where('nama_kelas', 'like', "%{$search}%"));
                 });
             })
-            ->when($request->filled('kelas_id'), fn ($query) => $query->where('kelas_id', $request->input('kelas_id')));
+            ->when($request->filled('kelas_id'), fn ($query) => $query->where('kelas_id', $request->input('kelas_id')))
+            // Urutkan berdasarkan Kelas terlebih dahulu (7.1, 7.2 dst di atas), lalu Nama Siswa A-Z
+            ->leftJoin('kelas', 'siswas.kelas_id', '=', 'kelas.id')
+            ->select('siswas.*')
+            ->orderByRaw('CASE WHEN siswas.kelas_id IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('kelas.nama_kelas', 'asc')
+            ->orderBy('siswas.nama_lengkap', 'asc');
     }
 
     public function import(Request $request)
@@ -148,13 +153,12 @@ class SiswaController extends Controller
             'nisn' => ['required', 'string', 'max:255', Rule::unique('siswas', 'nisn')->ignore($siswa->id), Rule::unique('users', 'username')->ignore($siswa->user_id)],
             'nama_lengkap' => ['required', 'string', 'max:255'],
             'kode_kelas' => ['nullable', 'string', 'max:255', 'exists:kelas,nama_kelas'],
-            'password' => ['nullable', 'string', 'min:6', 'max:255'],
+            'reset_password' => ['nullable', 'in:0,1'],
             'edit_siswa_id' => ['required', 'integer', Rule::in([$siswa->id])],
             'form_context' => ['required', Rule::in(['edit'])],
         ], [
             'nisn.unique' => 'NIS/NISN tersebut sudah digunakan.',
             'kode_kelas.exists' => 'Kelas yang dipilih tidak tersedia.',
-            'password.min' => 'Password harus terdiri dari minimal 6 karakter.',
         ]);
 
         DB::transaction(function () use ($siswa, $validated): void {
@@ -175,9 +179,12 @@ class SiswaController extends Controller
 
             $user->name = $validated['nama_lengkap'];
             $user->username = $validated['nisn'];
-            if (filled($validated['password'] ?? null)) {
-                $user->password = Hash::make($validated['password']);
+            
+            // Jika tombol reset password diklik (nilainya 1), reset password ke NISN
+            if (($validated['reset_password'] ?? '0') === '1') {
+                $user->password = Hash::make($validated['nisn']);
             }
+            
             $user->save();
         });
 

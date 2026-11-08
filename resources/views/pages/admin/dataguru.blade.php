@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('title', 'Data Guru')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/dataguru.css') }}?v=11">@endsection
+@section('styles')<link rel="stylesheet" href="{{ asset('admin css/dataguru.css') }}?v=12">@endsection
 @section('content')
 <div class="admin-page-header">
 	<div>
@@ -188,12 +188,14 @@
 			@method('PUT')
 			<input type="hidden" name="form_context" value="edit">
 			<input type="hidden" name="edit_guru_id" id="editGuruId">
+			<input type="hidden" name="reset_password" id="editGuruResetPasswordInput" value="0">
 			<label>Nama lengkap<input class="admin-input" id="editGuruName" type="text" name="nama_lengkap" required></label>
 			<label>NBM (username, opsional)<input class="admin-input" id="editGuruNbm" type="text" name="nbm"></label>
-			<label>Password Baru
-				<input class="admin-input" id="editGuruPassword" type="password" name="password" minlength="6" autocomplete="new-password">
-				<small>Biarkan kosong jika tidak ingin mengubah password guru saat ini.</small>
-			</label>
+			<div class="guru-reset-pass-wrap">
+				<span class="guru-reset-pass-label">Reset Password Akun</span>
+				<button class="guru-reset-pass-btn" id="editGuruResetPasswordBtn" type="button">🔄 Reset Password ke Default (NBM)</button>
+				<small class="guru-reset-pass-hint">Klik jika guru lupa password. Password akan dikembalikan sama dengan NBM.</small>
+			</div>
 			<label>Status<select class="admin-select" id="editGuruStatus" name="status" required><option value="aktif">Aktif</option><option value="nonaktif">Nonaktif</option></select></label>
 			<fieldset class="guru-mapel-fieldset"><legend>Mata Pelajaran &amp; Jam Mengajar</legend>
 				<div class="guru-mapel-items" data-mapel-items data-next-index="0"></div>
@@ -224,8 +226,31 @@
 		const statusFilter = document.getElementById('guruStatusFilter');
 		const alertHost = document.querySelector('.admin-page-header');
 		const deleteModal = document.getElementById('deleteGuruModal');
+		const resetPasswordBtn = document.getElementById('editGuruResetPasswordBtn');
+		const resetPasswordInput = document.getElementById('editGuruResetPasswordInput');
 		let pendingDeleteButton = null;
 		let alertTimer;
+
+		const resetPasswordState = () => {
+			if (!resetPasswordBtn || !resetPasswordInput) return;
+			resetPasswordInput.value = '0';
+			resetPasswordBtn.classList.remove('is-active');
+			resetPasswordBtn.textContent = '🔄 Reset Password ke Default (NBM)';
+		};
+
+		if (resetPasswordBtn && resetPasswordInput) {
+			resetPasswordBtn.addEventListener('click', () => {
+				const isSet = resetPasswordInput.value === '1';
+				if (isSet) {
+					resetPasswordState();
+				} else {
+					resetPasswordInput.value = '1';
+					resetPasswordBtn.classList.add('is-active');
+					resetPasswordBtn.textContent = '✔️ Password akan di-reset saat disimpan!';
+				}
+			});
+		}
+
 		const openModal = (id) => {
 			modals.forEach(closeModal);
 			const modal = document.getElementById(id);
@@ -240,6 +265,9 @@
 			if (modal === deleteModal) {
 				pendingDeleteButton?.classList.remove('is-awaiting-confirmation');
 				pendingDeleteButton = null;
+			}
+			if (modal.id === 'editGuruModal') {
+				resetPasswordState();
 			}
 			window.setTimeout(() => {
 				if (modal.classList.contains('is-closing')) {
@@ -454,9 +482,9 @@
 		tableBody.addEventListener('click', (event) => {
 			const button = event.target.closest('[data-edit-guru]');
 			if (button) {
+				resetPasswordState();
 				document.getElementById('editGuruName').value = button.dataset.nama;
 				document.getElementById('editGuruNbm').value = button.dataset.nbm;
-				document.getElementById('editGuruPassword').value = '';
 				document.getElementById('editGuruStatus').value = button.dataset.status;
 				document.getElementById('editGuruId').value = button.dataset.id;
 				editForm.action = editForm.dataset.updateUrl.replace(':id', button.dataset.id);

@@ -146,3 +146,31 @@
   .rekap-actions { width: 100%; flex-wrap: wrap; }
   .rekap-actions > button { flex: 1 1 140px; justify-content: center; }
 }
+
+.rekap-mode-switch {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 8px;
+}
+.rekap-mode-tab {
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #4b5563;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+.rekap-mode-tab.active {
+  background: #087443;
+  color: #fff;
+  border-color: #087443;
+  box-shadow: 0 4px 12px rgba(8, 116, 67, .2);
+}
+.rekap-mode-panel[hidden] {
+  display: none !important;
+}

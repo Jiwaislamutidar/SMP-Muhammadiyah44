@@ -5,14 +5,21 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
 	<title>Presensi Guru - SMP Muhammadiyah 44</title>
-	<link rel="stylesheet" href="{{ asset('guru css/presensiguru.css') }}?v=7">
+	<link rel="stylesheet" href="{{ asset('guru css/presensiguru.css') }}?v=8">
 	<link rel="stylesheet" href="{{ asset('guru css/portal-responsive.css') }}?v=1">
-	<link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=7">
+	<link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=8">
 	<style>
 		.attendance-card h3 { font-size: 17px; }
 		.attendance-card small, .history-description { font-size: 12px; line-height: 1.5; }
-		.status-pill { font-size: 11px; padding: 5px 9px; }
-		.status-pill.belum, .status-pill.neutral { color: #4b5563; background: #f3f4f6; border-color: #d1d5db; }
+		/* Teks jam besar jadi hitam/netral sesuai permintaan */
+		.attendance-card .big-time { color: #17211c !important; }
+
+		.status-pill { font-size: 11px; padding: 5px 9px; font-weight: 700; border-radius: 6px; display: inline-block; }
+		.status-pill.belum, .status-pill.neutral { color: #4b5563; background: #f3f4f6; }
+		.status-pill.hadir { color: #087443; background: #e8f6ef; }
+		.status-pill.terlambat { color: #b45309; background: #fef3c7; }
+		.status-pill.alfa { color: #dc2626; background: #fef2f2; }
+		
 		.history-toolbar, .history-actions { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; }
 		.history-toolbar { margin: 16px 0; }
 		.history-toolbar label { display: grid; gap: 6px; color: #374151; font-size: 13px; font-weight: 600; }
@@ -109,8 +116,8 @@
 				</div>
 			</div>
 
-			@if(session('success'))<div class="panel" role="status">{{ session('success') }}</div>@endif
-			@if($errors->any())<div class="panel" role="alert">{{ $errors->first() }}</div>@endif
+			@if(session('success'))<div class="panel" role="status" style="background: #e8f6ef; color: #087443; border-color: #d1fae5; margin-bottom: 16px;">{{ session('success') }}</div>@endif
+			@if($errors->any())<div class="panel" role="alert" style="background: #fef2f2; color: #dc2626; border-color: #fee2e2; margin-bottom: 16px;">{{ $errors->first() }}</div>@endif
 
 			@php
 				$setting = $setting ?? \App\Models\Setting::first();
@@ -142,6 +149,7 @@
 					<button type="button" role="tab" id="attendanceTabPulang" aria-controls="attendancePanelPulang" aria-selected="false" data-attendance-tab="pulang">Absen Kepulangan</button>
 				</div>
 				<div class="cards-two attendance-cards">
+					<!-- CARD ABSEN DATANG -->
 					<div class="attendance-card" id="attendancePanelMasuk" role="tabpanel" aria-labelledby="attendanceTabMasuk" data-attendance-panel="masuk">
 						<div class="card-top">
 							<div class="attendance-card-heading">
@@ -158,7 +166,11 @@
 											$statusText = 'Sudah Absen';
 										}
 									} elseif ($statusTidakHadir) {
-										$statusClass = $presensi->status === 'Alfa' ? 'alfa' : 'neutral';
+										$statusClass = match($presensi->status) {
+											'Alfa' => 'alfa',
+											'Izin', 'Sakit' => 'terlambat',
+											default => 'neutral'
+										};
 										$statusText = $presensi->status;
 									}
 								@endphp
@@ -169,7 +181,9 @@
 								<small>{{ $presensi?->jam_masuk ? 'Presensi tersimpan hari ini.' : ($statusTidakHadir ? 'Status presensi hari ini sudah tercatat.' : 'Dibuka mulai pukul ' . substr($jamMasuk, 0, 5) . ' WIB') }}</small>
 							</div>
 						</div>
-						<div class="big-time">{{ $presensi?->jam_masuk ? substr($presensi->jam_masuk, 0, 5) : 'Belum tercatat' }} @if($presensi?->jam_masuk)<small>WIB</small>@endif</div>
+						<!-- Jam Masuk Dinamis dari Setting Admin (Warna Hitam) -->
+						<div class="big-time">{{ substr($jamMasuk, 0, 5) }} <small>WIB</small></div>
+
 						@if($presensi?->foto_masuk)<p><a href="{{ asset('storage/'.$presensi->foto_masuk) }}" target="_blank" rel="noopener">Lihat foto bukti</a></p>@endif
 						@if($presensi?->jam_masuk)
 							<button class="attendance-action attendance-done" type="button" disabled>Sudah Absen ({{ substr($presensi->jam_masuk, 0, 5) }} WIB)</button>
@@ -198,6 +212,8 @@
 							</form>
 						@endif
 					</div>
+
+					<!-- CARD ABSEN KEPULANGAN -->
 					<div class="attendance-card mobile-tab-hidden" id="attendancePanelPulang" role="tabpanel" aria-labelledby="attendanceTabPulang" data-attendance-panel="pulang">
 						<div class="card-top">
 							<div class="attendance-card-heading">
@@ -209,14 +225,16 @@
 								<small>{{ $presensi?->jam_pulang ? 'Presensi tersimpan hari ini.' : ($presensi?->jam_masuk ? 'Dibuka mulai pukul ' . substr($jamPulang, 0, 5) . ' WIB' : 'Absen masuk lebih dahulu.') }}</small>
 							</div>
 						</div>
-						<div class="big-time">{{ $presensi?->jam_pulang ? substr($presensi->jam_pulang, 0, 5) : 'Belum tercatat' }} @if($presensi?->jam_pulang)<small>WIB</small>@endif</div>
+						<!-- Jam Pulang Dinamis dari Setting Admin (Warna Hitam) -->
+						<div class="big-time">{{ substr($jamPulang, 0, 5) }} <small>WIB</small></div>
+
 						@if($presensi?->foto_pulang)<p><a href="{{ asset('storage/'.$presensi->foto_pulang) }}" target="_blank" rel="noopener">Lihat foto bukti</a></p>@endif
 						@if($presensi?->jam_pulang)
 							<button class="attendance-action attendance-done" type="button" disabled>Sudah Absen ({{ substr($presensi->jam_pulang, 0, 5) }} WIB)</button>
 						@elseif($presensi && in_array($presensi->status, ['Izin', 'Sakit', 'Alfa'], true))
 							<button class="attendance-action" type="button" disabled>Tidak dapat absen pulang</button>
 						@elseif(!$bisaAbsenPulang)
-							<button class="attendance-action" type="button" disabled>Dibuka pukul {{ substr($jamPulang, 0, 5) }} WIB</button>
+							<button class="attendance-action" type="button" disabled>Absensi belum dibuka</button>
 						@else
 							<button class="attendance-action" type="button" data-title="Absen Pulang Sekolah" data-url="{{ route('guru.presensi.pulang') }}" {{ $presensi?->jam_masuk ? '' : 'disabled' }}>Absen Pulang Sekolah</button>
 						@endif
@@ -263,7 +281,15 @@
 									<td>{{ $riwayat->jam_masuk ? substr($riwayat->jam_masuk, 0, 5) : '-' }}</td>
 									<td>{{ $riwayat->jam_pulang ? substr($riwayat->jam_pulang, 0, 5) : '-' }}</td>
 									<td>
-										<span class="status-pill {{ $riwayat->status === 'Hadir' ? 'hadir' : ($riwayat->status === 'Terlambat' ? 'terlambat' : ($riwayat->status === 'Alfa' ? 'alfa' : 'neutral')) }}">
+										@php
+											$riwayatStatusClass = match($riwayat->status) {
+												'Hadir' => 'hadir',
+												'Terlambat', 'Izin', 'Sakit' => 'terlambat',
+												'Alfa' => 'alfa',
+												default => 'neutral'
+											};
+										@endphp
+										<span class="status-pill {{ $riwayatStatusClass }}">
 											{{ $riwayat->status === 'Terlambat' ? 'Absensi Terlambat' : $riwayat->status }}
 										</span>
 									</td>

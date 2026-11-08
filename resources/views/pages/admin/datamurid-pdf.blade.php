@@ -31,13 +31,13 @@
         &nbsp;|&nbsp; Jumlah data: {{ $siswas->count() }} murid
     </div>
     <table>
-        <thead><tr><th style="width: 25%">NISN</th><th>Nama Murid</th><th style="width: 25%">Kode Kelas</th></tr></thead>
+        <thead><tr><th style="width: 20%">Kelas</th><th style="width: 25%">NISN</th><th>Nama Murid</th></tr></thead>
         <tbody>
             @forelse ($siswas as $siswa)
                 <tr>
+                    <td><strong>{{ $siswa->kelas?->nama_kelas ?? 'Belum ada kelas' }}</strong></td>
                     <td>{{ $siswa->nisn }}</td>
                     <td>{{ $siswa->nama_lengkap }}</td>
-                    <td>{{ $siswa->kelas?->nama_kelas ?? '-' }}</td>
                 </tr>
             @empty
                 <tr><td class="empty" colspan="3">Tidak ada data murid aktif yang sesuai dengan filter.</td></tr>

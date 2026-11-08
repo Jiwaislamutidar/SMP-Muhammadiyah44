@@ -142,7 +142,7 @@ class PresensiGuruController extends Controller
             return back()->withErrors(['foto' => 'Absen masuk hari ini sudah tercatat.']);
         }
 
-        if ($jenis === 'masuk' && $presensi->exists && $presensi->status !== 'Hadir' && $presensi->status !== 'Terlambat') {
+        if ($jenis === 'masuk' && $presensi->exists && !in_array($presensi->status, ['Hadir', 'Terlambat'], true)) {
             return back()->withErrors(['foto' => 'Status presensi hari ini sudah tercatat sebagai '.$presensi->status.'.']);
         }
 

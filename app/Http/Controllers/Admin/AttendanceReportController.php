@@ -22,10 +22,12 @@ class AttendanceReportController extends Controller
     public function index(Request $request): View
     {
         $filters = $this->validatedStudentFilters($request);
+        $dateTo = $filters['date_to'] ?? $filters['date'];
 
         return view('pages.admin.rekapabsensi', [
             'kelasList' => Kelas::query()->orderBy('nama_kelas')->get(),
             'selectedDate' => $filters['date'],
+            'selectedDateTo' => $dateTo,
             'selectedClass' => $filters['kelas'],
             'selectedStatus' => $filters['status'],
             'selectedSearch' => $filters['search'],
@@ -33,7 +35,8 @@ class AttendanceReportController extends Controller
                 $filters['date'],
                 $filters['kelas'],
                 $filters['status'],
-                $filters['search']
+                $filters['search'],
+                $dateTo
             ),
         ]);
     }
@@ -122,12 +125,14 @@ class AttendanceReportController extends Controller
     public function studentData(Request $request): JsonResponse
     {
         $filters = $this->validatedStudentFilters($request);
+        $dateTo = $filters['date_to'] ?? $filters['date'];
 
         return response()->json($this->studentReport(
             $filters['date'],
             $filters['kelas'],
             $filters['status'],
-            $filters['search']
+            $filters['search'],
+            $dateTo
         ));
     }
 
@@ -156,11 +161,13 @@ class AttendanceReportController extends Controller
     public function destroy(Request $request): RedirectResponse
     {
         $filters = $this->validatedStudentFilters($request);
+        $dateTo = $filters['date_to'] ?? $filters['date'];
         $matchingIds = $this->studentAttendanceQuery(
             $filters['date'],
             $filters['kelas'],
             $filters['status'],
-            $filters['search']
+            $filters['search'],
+            $dateTo
         )->pluck('presensi_pelajarans.id');
         $deleted = 0;
 
@@ -180,10 +187,11 @@ class AttendanceReportController extends Controller
     {
         $filters = $request->validate([
             'date' => ['sometimes', 'date_format:Y-m-d'],
+            'date_to' => ['nullable', 'date_format:Y-m-d'],
             'kelas' => ['nullable', 'integer', 'exists:kelas,id'],
             'status' => ['nullable', 'in:Hadir,Izin,Sakit,Alfa'],
             'search' => ['nullable', 'string', 'max:120'],
-        ]) + ['date' => today()->toDateString(), 'kelas' => null, 'status' => null, 'search' => ''];
+        ]) + ['date' => today()->toDateString(), 'date_to' => null, 'kelas' => null, 'status' => null, 'search' => ''];
 
         return $filters;
     }
@@ -226,7 +234,7 @@ class AttendanceReportController extends Controller
     {
         $search = $search ?? '';
         $dateTo = $dateTo ?? $date;
-        $summaryQuery = $this->studentAttendanceQuery($date, dateTo: $dateTo);
+        $summaryQuery = $this->studentAttendanceQuery($date, $classId, $status, $search, $dateTo);
         $summary = [
             'hadir' => (clone $summaryQuery)->where('presensi_pelajarans.status', 'Hadir')->distinct()->count('presensi_pelajarans.siswa_id'),
             'izin_sakit' => (clone $summaryQuery)->whereIn('presensi_pelajarans.status', ['Izin', 'Sakit'])->distinct()->count('presensi_pelajarans.siswa_id'),

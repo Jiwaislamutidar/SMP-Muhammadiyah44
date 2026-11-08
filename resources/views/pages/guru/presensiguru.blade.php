@@ -5,13 +5,12 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
 	<title>Presensi Guru - SMP Muhammadiyah 44</title>
-	<link rel="stylesheet" href="{{ asset('guru css/presensiguru.css') }}?v=8">
+	<link rel="stylesheet" href="{{ asset('guru css/presensiguru.css') }}?v=9">
 	<link rel="stylesheet" href="{{ asset('guru css/portal-responsive.css') }}?v=1">
-	<link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=8">
+	<link rel="stylesheet" href="{{ asset('guru css/guru-ui.css') }}?v=9">
 	<style>
 		.attendance-card h3 { font-size: 17px; }
 		.attendance-card small, .history-description { font-size: 12px; line-height: 1.5; }
-		/* Teks jam besar jadi hitam/netral sesuai permintaan */
 		.attendance-card .big-time { color: #17211c !important; }
 
 		.status-pill { font-size: 11px; padding: 5px 9px; font-weight: 700; border-radius: 6px; display: inline-block; }
@@ -19,6 +18,8 @@
 		.status-pill.hadir { color: #087443; background: #e8f6ef; }
 		.status-pill.terlambat { color: #b45309; background: #fef3c7; }
 		.status-pill.alfa { color: #dc2626; background: #fef2f2; }
+		.status-pill.berlangsung { color: #0284c7; background: #e0f2fe; }
+		.status-pill.selesai { color: #087443; background: #e8f6ef; }
 		
 		.history-toolbar, .history-actions { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; }
 		.history-toolbar { margin: 16px 0; }
@@ -116,8 +117,17 @@
 				</div>
 			</div>
 
-			@if(session('success'))<div class="panel" role="status" style="background: #e8f6ef; color: #087443; border-color: #d1fae5; margin-bottom: 16px;">{{ session('success') }}</div>@endif
-			@if($errors->any())<div class="panel" role="alert" style="background: #fef2f2; color: #dc2626; border-color: #fee2e2; margin-bottom: 16px;">{{ $errors->first() }}</div>@endif
+			<!-- Notifikasi otomatis hilang dalam 1,5 detik -->
+			@if(session('success'))
+				<div class="panel auto-dismiss-alert" role="status" style="background: #e8f6ef; color: #087443; border-color: #d1fae5; margin-bottom: 16px; transition: opacity 0.3s ease;">
+					{{ session('success') }}
+				</div>
+			@endif
+			@if($errors->any())
+				<div class="panel auto-dismiss-alert" role="alert" style="background: #fef2f2; color: #dc2626; border-color: #fee2e2; margin-bottom: 16px; transition: opacity 0.3s ease;">
+					{{ $errors->first() }}
+				</div>
+			@endif
 
 			@php
 				$setting = $setting ?? \App\Models\Setting::first();
@@ -142,6 +152,7 @@
 				$statusTidakHadir = $presensi && in_array($presensi->status, ['Izin', 'Sakit', 'Alfa'], true);
 			@endphp
 
+			<!-- CARD KEHADIRAN SEKOLAH -->
 			<section class="panel">
 				<div class="panel-head"><div class="panel-title">Kehadiran Sekolah</div></div>
 				<div class="attendance-switcher" role="tablist" aria-label="Pilih jenis presensi">
@@ -181,7 +192,6 @@
 								<small>{{ $presensi?->jam_masuk ? 'Presensi tersimpan hari ini.' : ($statusTidakHadir ? 'Status presensi hari ini sudah tercatat.' : 'Dibuka mulai pukul ' . substr($jamMasuk, 0, 5) . ' WIB') }}</small>
 							</div>
 						</div>
-						<!-- Jam Masuk Dinamis dari Setting Admin (Warna Hitam) -->
 						<div class="big-time">{{ substr($jamMasuk, 0, 5) }} <small>WIB</small></div>
 
 						@if($presensi?->foto_masuk)<p><a href="{{ asset('storage/'.$presensi->foto_masuk) }}" target="_blank" rel="noopener">Lihat foto bukti</a></p>@endif
@@ -225,7 +235,6 @@
 								<small>{{ $presensi?->jam_pulang ? 'Presensi tersimpan hari ini.' : ($presensi?->jam_masuk ? 'Dibuka mulai pukul ' . substr($jamPulang, 0, 5) . ' WIB' : 'Absen masuk lebih dahulu.') }}</small>
 							</div>
 						</div>
-						<!-- Jam Pulang Dinamis dari Setting Admin (Warna Hitam) -->
 						<div class="big-time">{{ substr($jamPulang, 0, 5) }} <small>WIB</small></div>
 
 						@if($presensi?->foto_pulang)<p><a href="{{ asset('storage/'.$presensi->foto_pulang) }}" target="_blank" rel="noopener">Lihat foto bukti</a></p>@endif
@@ -242,6 +251,103 @@
 				</div>
 			</section>
 
+<!-- TABEL PRESENSI MENGAJAR MATA PELAJARAN HARI INI -->
+			<section class="panel">
+				<div class="panel-head">
+					<div>
+						<div class="panel-title">Presensi Mengajar Mata Pelajaran Hari Ini</div>
+						<p class="history-description">Daftar kelas dan mata pelajaran yang Anda ampu hari ini beserta tombol Absen Mulai dan Absen Selesai berdasarkan durasi waktu.</p>
+					</div>
+					<span class="muted">{{ count($jadwalList ?? []) }} Jadwal</span>
+				</div>
+				<div class="table-wrap">
+					<table class="data-table">
+						<thead>
+							<tr>
+								<th>Jam Pelajaran</th>
+								<th>Mata Pelajaran</th>
+								<th>Kelas</th>
+								<th>Ruangan</th>
+								<th>Status Mengajar</th>
+								<th style="text-align: right;">Aksi Presensi</th>
+							</tr>
+						</thead>
+						<tbody>
+							@forelse($jadwalList as $jadwal)
+								@php
+									$currentTimeStr = now()->format('H:i:s');
+									
+									// Murni independen berdasarkan jam pelajaran
+									$bisaAbsenMulai = $currentTimeStr >= $jadwal->jam_mulai;
+									$bisaAbsenSelesai = $currentTimeStr >= $jadwal->jam_selesai;
+
+									// Cek log mandiri guru untuk jadwal ini hari ini
+									$logGuru = DB::table('presensi_guru_mapels')
+										->where('jadwal_id', $jadwal->id)
+										->where('tanggal', today())
+										->first();
+
+									$sudahMulai = !empty($logGuru?->jam_mulai_mengajar);
+									$sudahSelesai = !empty($logGuru?->jam_selesai_mengajar);
+								@endphp
+								<tr>
+									<td>
+										<strong>{{ substr($jadwal->jam_mulai, 0, 5) }} - {{ substr($jadwal->jam_selesai, 0, 5) }}</strong>
+										<small>WIB</small>
+									</td>
+									<td>
+										<strong>{{ $jadwal->nama_mapel }}</strong>
+									</td>
+									<td>
+										<span class="class-chip">{{ $jadwal->nama_kelas }}</span>
+									</td>
+									<td>{{ $jadwal->ruangan ?? '-' }}</td>
+									<td>
+										<!-- Teks biasa polos tanpa border mencolok -->
+										@if($sudahSelesai)
+											<span style="color: #087443; font-weight: 600; font-size: 13px;">Selesai Mengajar</span>
+										@elseif($sudahMulai)
+											<span style="color: #0284c7; font-weight: 600; font-size: 13px;">Sedang Berlangsung / Masuk</span>
+										@else
+											<span style="color: #6b756f; font-weight: 500; font-size: 13px;">Belum Absen</span>
+										@endif
+									</td>
+									<td style="text-align: right; display: flex; gap: 6px; justify-content: flex-end;">
+										<!-- TOMBOL ABSEN MULAI -->
+										@if($sudahMulai)
+											<button class="btn" type="button" disabled style="background: #f3f4f6; color: #9ca3af; border-color: #e5e7eb;">Absen Mulai</button>
+										@else
+											<button class="btn btn-primary attendance-action-btn" type="button" 
+												data-title="Absen Mulai - {{ $jadwal->nama_mapel }} ({{ $jadwal->nama_kelas }})" 
+												data-url="{{ route('guru.presensi-pelajaran.mulai', $jadwal->id) }}">
+												Absen Mulai
+											</button>
+										@endif
+
+										<!-- TOMBOL ABSEN SELESAI -->
+										@if($sudahSelesai)
+											<button class="btn" type="button" disabled style="background: #f3f4f6; color: #9ca3af; border-color: #e5e7eb;">Absen Selesai</button>
+										@else
+											<button class="btn btn-primary attendance-action-btn" type="button" 
+												data-title="Absen Selesai - {{ $jadwal->nama_mapel }} ({{ $jadwal->nama_kelas }})" 
+												data-url="{{ route('guru.presensi-pelajaran.selesai', $jadwal->id) }}"
+												{{ $bisaAbsenSelesai ? '' : 'disabled' }}>
+												Absen Selesai
+											</button>
+										@endif
+									</td>
+								</tr>
+							@empty
+								<tr>
+									<td colspan="6" style="text-align: center; color: #6b756f; padding: 20px;">Tidak ada jadwal mengajar untuk hari ini.</td>
+								</tr>
+							@endforelse
+						</tbody>
+					</table>
+				</div>
+			</section>
+
+			<!-- TABEL RIWAYAT PRESENSI -->
 			<section class="panel history-panel">
 				<div class="panel-head">
 					<div>
@@ -309,11 +415,12 @@
 		</main>
 	</div>
 
+	<!-- MODAL KAMERA & WATERMARK TANGGAL/WAKTU -->
 	<dialog class="photo-modal" id="photoModal" aria-labelledby="photoModalTitle">
 		<form id="attendanceForm" method="POST" enctype="multipart/form-data">
 			@csrf
 			<div class="photo-modal-head">
-				<div><h2 id="photoModalTitle">Absen</h2><p>Buka kamera untuk mengambil foto bukti kehadiran.</p></div>
+				<div><h2 id="photoModalTitle">Absen</h2><p>Buka kamera untuk mengambil foto bukti kehadiran beserta stempel waktu.</p></div>
 				<button class="modal-close" type="button" id="closePhotoModal" aria-label="Tutup">×</button>
 			</div>
 			<div class="camera-preview">
@@ -334,7 +441,20 @@
 		</form>
 	</dialog>
 
-	<script>
+<script>
+		// Auto-dismiss notifikasi dalam 1.5 detik
+		window.addEventListener('DOMContentLoaded', () => {
+			const alerts = document.querySelectorAll('.auto-dismiss-alert');
+			if (alerts.length > 0) {
+				setTimeout(() => {
+					alerts.forEach(alert => {
+						alert.style.opacity = '0';
+						setTimeout(() => alert.remove(), 300);
+					});
+				}, 1500);
+			}
+		});
+
 		window.addEventListener('load', () => setTimeout(() => {
 			document.getElementById('pageLoader').classList.add('hide');
 			document.getElementById('guruPage').classList.add('loaded');
@@ -400,12 +520,17 @@
 			return 'Kamera tidak dapat dibuka. Pastikan halaman menggunakan HTTPS dan izin kamera tersedia.';
 		}
 
-		document.querySelectorAll('.attendance-action:not(.attendance-done)').forEach(button => button.addEventListener('click', () => {
-			if (button.disabled) return;
-			attendanceForm.action = button.dataset.url;
-			document.getElementById('photoModalTitle').textContent = button.dataset.title;
-			photoModal.showModal();
-		}));
+		// FIXED: Menangkap klik pada tombol aksi harian & mapel secara langsung tanpa terhalang
+		document.addEventListener('click', function(event) {
+			const btn = event.target.closest('.attendance-action, .attendance-action-btn');
+			if (btn) {
+				if (btn.hasAttribute('disabled')) return;
+				event.preventDefault();
+				attendanceForm.action = btn.dataset.url;
+				document.getElementById('photoModalTitle').textContent = btn.dataset.title;
+				photoModal.showModal();
+			}
+		});
 
 		document.getElementById('startCamera').addEventListener('click', async () => {
 			stopPreviewCamera();
@@ -429,6 +554,7 @@
 			}
 		});
 
+		// Ambil Foto + Stempel Watermark Tanggal & Waktu Real-Time pada Canvas
 		document.getElementById('takePhoto').addEventListener('click', () => {
 			if (!cameraPreview.videoWidth || !cameraPreview.videoHeight) {
 				photoError.textContent = 'Kamera belum siap. Tunggu sebentar lalu coba ambil foto kembali.';
@@ -442,18 +568,38 @@
 				photoError.textContent = 'Foto tidak dapat diproses. Silakan buka kamera kembali.';
 				return;
 			}
+			
 			context.drawImage(cameraPreview, 0, 0);
+
+			const now = new Date();
+			const dateStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
+			const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+			const watermarkText = `SMP Muh 44 | ${dateStr} ${timeStr}`;
+
+			context.font = 'bold 16px sans-serif';
+			const textMetrics = context.measureText(watermarkText);
+			const boxWidth = textMetrics.width + 24;
+			const boxHeight = 36;
+			const boxX = 20;
+			const boxY = canvas.height - boxHeight - 20;
+
+			context.fillStyle = 'rgba(0, 0, 0, 0.65)';
+			context.fillRect(boxX, boxY, boxWidth, boxHeight);
+
+			context.fillStyle = '#ffffff';
+			context.fillText(watermarkText, boxX + 12, boxY + 24);
+
 			canvas.toBlob(blob => {
 				if (!blob) {
 					photoError.textContent = 'Foto tidak dapat diproses. Silakan coba kembali.';
 					return;
 				}
 				const transfer = new DataTransfer();
-				transfer.items.add(new File([blob], 'presensi-guru.jpg', { type: 'image/jpeg' }));
+				transfer.items.add(new File([blob], 'presensi-guru-watermark.jpg', { type: 'image/jpeg' }));
 				photoInput.files = transfer.files;
 				showPhoto(photoInput.files[0]);
 				stopPreviewCamera();
-			}, 'image/jpeg', .9);
+			}, 'image/jpeg', 0.92);
 		});
 
 		function closePhotoModal() {

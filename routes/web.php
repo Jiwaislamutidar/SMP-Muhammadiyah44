@@ -94,6 +94,8 @@ Route::domain('guru.'.$domain)->group(function () {
         Route::post('/presensi/masuk', [PresensiGuruController::class, 'masuk'])->middleware('throttle:5,1')->name('guru.presensi.masuk');
         Route::post('/presensi/izin', [PresensiGuruController::class, 'izin'])->middleware('throttle:5,1')->name('guru.presensi.izin');
         Route::post('/presensi/pulang', [PresensiGuruController::class, 'pulang'])->middleware('throttle:5,1')->name('guru.presensi.pulang');
+        Route::post('/presensi-pelajaran/{sesiId}/mulai', [PresensiGuruController::class, 'mulaiMengajar'])->middleware('throttle:5,1')->name('guru.presensi-pelajaran.mulai');
+        Route::post('/presensi-pelajaran/{sesiId}/selesai', [PresensiGuruController::class, 'selesaiMengajar'])->middleware('throttle:5,1')->name('guru.presensi-pelajaran.selesai');
         Route::get('/presensi-murid', [SesiPelajaranController::class, 'index'])->name('guru.presensi-murid');
         Route::post('/sesi/{jadwal}/buka', [SesiPelajaranController::class, 'open'])->name('guru.sesi.open');
         Route::post('/sesi/{sesi}/qr', [SesiPelajaranController::class, 'regenerate'])->name('guru.sesi.qr');

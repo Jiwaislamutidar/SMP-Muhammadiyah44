@@ -45,8 +45,48 @@ class AttendanceReportController extends Controller
     {
         $validated = $request->validate([
             'periode' => ['required', 'in:hari,minggu,bulan'],
+            'type' => ['nullable', 'string', 'in:mapel'],
         ]);
         [$start, $end] = $this->dateRange($validated['periode']);
+
+        if ($request->get('type') === 'mapel') {
+            $mapelLogs = DB::table('presensi_guru_mapels')
+                ->join('gurus', 'gurus.id', '=', 'presensi_guru_mapels.guru_id')
+                ->join('jadwal_pelajarans', 'jadwal_pelajarans.id', '=', 'presensi_guru_mapels.jadwal_id')
+                ->join('mapels', 'mapels.id', '=', 'jadwal_pelajarans.mapel_id')
+                ->join('kelas', 'kelas.id', '=', 'jadwal_pelajarans.kelas_id')
+                ->whereDate('presensi_guru_mapels.tanggal', '>=', $start)
+                ->whereDate('presensi_guru_mapels.tanggal', '<=', $end)
+                ->select(
+                    'presensi_guru_mapels.*',
+                    'gurus.nama_lengkap as nama_guru',
+                    'mapels.nama_mapel',
+                    'kelas.nama_kelas',
+                    'jadwal_pelajarans.ruangan',
+                    'jadwal_pelajarans.jam_mulai',
+                    'jadwal_pelajarans.jam_selesai'
+                )
+                ->orderByDesc('presensi_guru_mapels.tanggal')
+                ->orderBy('jadwal_pelajarans.jam_mulai')
+                ->get()
+                ->map(fn ($log) => [
+                    'id' => $log->id,
+                    'tanggal' => $log->tanggal,
+                    'nama_guru' => $log->nama_guru,
+                    'nama_mapel' => $log->nama_mapel,
+                    'nama_kelas' => $log->nama_kelas,
+                    'ruangan' => $log->ruangan,
+                    'jam_mulai' => $log->jam_mulai,
+                    'jam_selesai' => $log->jam_selesai,
+                    'jam_mulai_mengajar' => $log->jam_mulai_mengajar,
+                    'jam_selesai_mengajar' => $log->jam_selesai_mengajar,
+                    'foto_mulai' => $log->foto_mulai,
+                    'foto_selesai' => $log->foto_selesai,
+                ])
+                ->values();
+
+            return response()->json(['mapel_logs' => $mapelLogs]);
+        }
 
         $gurus = Guru::query()
             ->with([

@@ -1,12 +1,65 @@
 @extends('layouts.admin')
 @section('title', 'Rekap Absensi')
-@section('styles')<link rel="stylesheet" href="{{ asset('admin css/rekapabsensi.css') }}?v=13">@endsection
+@section('styles')
+<link rel="stylesheet" href="{{ asset('admin css/rekapabsensi.css') }}?v=14">
+<style>
+  .rekap-mode-tab, .dash-tab, .admin-action, .date-mode-btn {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .rekap-mode-tab:hover, .dash-tab:hover, .admin-action:hover:not(:disabled), .date-mode-btn:hover {
+    transform: translateY(-1px);
+  }
+  .rekap-mode-tab:active, .admin-action:active {
+    transform: translateY(0);
+  }
+  .admin-table th { background: #f8fafc; color: #334155; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; }
+  .admin-table td { vertical-align: middle; }
+  .photo-thumbnail-btn {
+    padding: 4px 10px;
+    background: #f1f5f9;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .photo-thumbnail-btn:hover {
+    background: #087443;
+    color: #fff;
+    border-color: #087443;
+  }
+  .sub-guru-nav {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 10px;
+  }
+  .sub-guru-tab {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .sub-guru-tab.active {
+    background: #0f172a;
+    color: #fff;
+    border-color: #0f172a;
+  }
+</style>
+@endsection
 @section('content')
 
 <div class="admin-page-header">
   <div>
     <h1>Rekap Absensi</h1>
-    <p>Kelola dan pantau data kehadiran murid dan guru</p>
+    <p>Kelola dan pantau data kehadiran murid dan guru secara terpusat</p>
   </div>
   <div class="admin-header-actions rekap-actions" id="studentHeaderActions">
     <button class="admin-action admin-action-outline admin-delete-button" id="deleteAttendance" type="button">Hapus Data</button>
@@ -136,55 +189,92 @@
 </div>
 
 <div class="rekap-mode-panel" id="panelGuru" data-mode-panel="guru" hidden>
-  <div class="panel" style="margin-bottom: 16px;">
-    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-      <div class="admin-toolbar" style="margin: 0; border: 0; padding: 0; box-shadow: none;">
-        <label class="rekap-filter-label" for="guruPeriodFilter">
-          Periode Rekap Guru
-          <select class="admin-select" id="guruPeriodFilter" data-url="{{ route('admin.dashboard.guru-period') }}">
-            <option value="hari">Hari Ini</option>
-            <option value="minggu">7 Hari Terakhir</option>
-            <option value="bulan">1 Bulan Terakhir</option>
-          </select>
-        </label>
+  <div class="sub-guru-nav">
+    <button class="sub-guru-tab active" type="button" data-sub-guru="harian">Kehadiran Sekolah Harian</button>
+    <button class="sub-guru-tab" type="button" data-sub-guru="mapel">Presensi Mengajar Mata Pelajaran</button>
+  </div>
+
+  <div class="sub-guru-content" id="subGuruHarian">
+    <div class="panel" style="margin-bottom: 16px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div class="admin-toolbar" style="margin: 0; border: 0; padding: 0; box-shadow: none;">
+          <label class="rekap-filter-label" for="guruPeriodFilter">
+            Periode Rekap Guru
+            <select class="admin-select" id="guruPeriodFilter" data-url="{{ route('admin.dashboard.guru-period') }}">
+              <option value="hari">Hari Ini</option>
+              <option value="minggu">7 Hari Terakhir</option>
+              <option value="bulan">1 Bulan Terakhir</option>
+            </select>
+          </label>
+        </div>
+        <div class="admin-toolbar" style="margin: 0; border: 0; padding: 0; box-shadow: none;">
+          <label class="rekap-filter-label" for="guruSessionFilter">
+            Sesi Absen
+            <select class="admin-select" id="guruSessionFilter">
+              <option value="semua">Semua Sesi</option>
+              <option value="masuk">Absen Masuk</option>
+              <option value="pulang">Absen Pulang</option>
+            </select>
+          </label>
+        </div>
       </div>
-      <div class="admin-toolbar" style="margin: 0; border: 0; padding: 0; box-shadow: none;">
-        <label class="rekap-filter-label" for="guruSessionFilter">
-          Sesi Absen
-          <select class="admin-select" id="guruSessionFilter">
-            <option value="semua">Semua Sesi</option>
-            <option value="masuk">Absen Masuk</option>
-            <option value="pulang">Absen Pulang</option>
-          </select>
-        </label>
+    </div>
+
+    <div class="dash-tabs" role="tablist" aria-label="Filter guru" style="display: flex; gap: 16px; margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+      <button class="dash-tab active" type="button" role="tab" aria-selected="true" data-guru-tab="hadir" style="background: none; border: none; font-weight: 700; cursor: pointer; color: #087443; font-size: 13px;">
+        Hadir <span class="dash-count" id="guruHadirCountTab">0</span>
+      </button>
+      <button class="dash-tab" type="button" role="tab" aria-selected="false" data-guru-tab="tidak-hadir" style="background: none; border: none; font-weight: 700; cursor: pointer; color: #64748b; font-size: 13px;">
+        Tidak Hadir <span class="dash-count" id="guruTidakHadirCountTab">0</span>
+      </button>
+    </div>
+
+    <div class="panel dash-tab-panel" id="guruHadirPanel" data-guru-panel="hadir">
+      <div class="dash-absence-list" id="guruHadirList">
+        <p class="dash-empty">Memuat data presensi guru...</p>
+      </div>
+    </div>
+
+    <div class="panel dash-tab-panel" id="guruTidakHadirPanel" data-guru-panel="tidak-hadir" hidden>
+      <div class="dash-absence-list" id="guruTidakHadirList">
+        <p class="dash-empty">Memuat data guru tidak hadir...</p>
+      </div>
+      <div class="dash-unrecorded" id="guruUnrecordedSection" style="margin-top: 16px; padding: 12px; background: #f8fafc; border-radius: 8px;">
+        <h3 style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 8px;">Belum Presensi (<span id="guruUnrecordedCount">0</span>)</h3>
+        <div id="guruUnrecordedList"></div>
       </div>
     </div>
   </div>
 
-  <div class="dash-tabs" role="tablist" aria-label="Filter guru" style="display: flex; gap: 16px; margin-bottom: 16px; border-bottom: 1px solid #d1d5db; padding-bottom: 8px;">
-    <button class="dash-tab active" type="button" role="tab" aria-selected="true" data-guru-tab="hadir" style="background: none; border: none; font-weight: 700; cursor: pointer; color: #087443; font-size: 13px;">
-      Hadir <span class="dash-count" id="guruHadirCountTab">0</span>
-    </button>
-    <button class="dash-tab" type="button" role="tab" aria-selected="false" data-guru-tab="tidak-hadir" style="background: none; border: none; font-weight: 700; cursor: pointer; color: #6b756f; font-size: 13px;">
-      Tidak Hadir <span class="dash-count" id="guruTidakHadirCountTab">0</span>
-    </button>
-  </div>
-
-  <div class="panel dash-tab-panel" id="guruHadirPanel" data-guru-panel="hadir">
-    <div class="dash-absence-list" id="guruHadirList">
-      <p class="dash-empty">Memuat data presensi guru...</p>
+  <div class="sub-guru-content" id="subGuruMapel" hidden>
+    <div class="panel">
+      <div class="panel-head" style="margin-bottom: 16px;">
+        <div>
+          <div class="panel-title">Rekap Mengajar Mata Pelajaran Guru</div>
+          <p style="color: #64748b; font-size: 12px; margin-top: 4px;">Daftar aktivitas mengajar, jam mulai/selesai, serta bukti foto presensi guru per mata pelajaran.</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Tanggal</th>
+              <th>Nama Guru</th>
+              <th>Mata Pelajaran</th>
+              <th>Kelas / Ruangan</th>
+              <th>Jam Mengajar</th>
+              <th>Foto Mulai</th>
+              <th>Foto Selesai</th>
+            </tr>
+          </thead>
+          <tbody id="guruMapelRows">
+            <tr><td colspan="7" class="admin-empty-row" style="text-align: center; padding: 24px; color: #64748b;">Memuat rekap mapel guru...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <div class="panel dash-tab-panel" id="guruTidakHadirPanel" data-guru-panel="tidak-hadir" hidden>
-    <div class="dash-absence-list" id="guruTidakHadirList">
-      <p class="dash-empty">Memuat data guru tidak hadir...</p>
-    </div>
-    <div class="dash-unrecorded" id="guruUnrecordedSection" style="margin-top: 16px; padding: 12px; background: #f9fafb; border-radius: 8px;">
-      <h3 style="font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 8px;">Belum Presensi (<span id="guruUnrecordedCount">0</span>)</h3>
-      <div id="guruUnrecordedList"></div>
-    </div>
-  </div>
   <p class="rekap-error" id="guruFetchError" role="alert" hidden></p>
 </div>
 
@@ -207,9 +297,12 @@
   </form>
 </dialog>
 
-<dialog class="dash-photo-modal" id="attendancePhotoModal" aria-label="Pratinjau foto bukti presensi" style="padding: 20px; border-radius: 12px; background: #111827; color: #fff;">
-  <button class="dash-photo-modal-close" type="button" aria-label="Tutup pratinjau" style="background: #374151; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; float: right; margin-bottom: 10px;">Tutup</button>
-  <img id="attendancePhotoFull" alt="Foto bukti presensi guru" style="display: block; max-width: 100%; max-height: 75vh; margin: 0 auto; object-fit: contain;">
+<dialog class="dash-photo-modal" id="attendancePhotoModal" aria-label="Pratinjau foto bukti presensi" style="padding: 20px; border-radius: 12px; background: #0f172a; color: #fff; border: none; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+    <h3 style="font-size: 14px; font-weight: 600; margin: 0;">Bukti Foto Presensi</h3>
+    <button class="dash-photo-modal-close" type="button" aria-label="Tutup pratinjau" style="background: #334155; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">Tutup</button>
+  </div>
+  <img id="attendancePhotoFull" alt="Foto bukti presensi" style="display: block; max-width: 100%; max-height: 75vh; margin: 0 auto; object-fit: contain; border-radius: 8px;">
 </dialog>
 
 <script>
@@ -239,7 +332,21 @@
     });
   });
 
-  // Switch Mode Harian vs Rentang Waktu
+  const subGuruTabs = document.querySelectorAll('.sub-guru-tab');
+  const subGuruContents = document.querySelectorAll('.sub-guru-content');
+  subGuruTabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      subGuruTabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const target = tab.dataset.subGuru;
+      document.getElementById('subGuruHarian').hidden = target !== 'harian';
+      document.getElementById('subGuruMapel').hidden = target !== 'mapel';
+      if (target === 'mapel') {
+        loadGuruMapelReport();
+      }
+    });
+  });
+
   const btnModeHarian = document.getElementById('btnModeHarian');
   const btnModeRentang = document.getElementById('btnModeRentang');
   const containerHarian = document.getElementById('containerHarian');
@@ -510,8 +617,7 @@
     if (photoUrl) {
       const preview = document.createElement('button');
       preview.type = 'button';
-      preview.style.padding = '2px 6px';
-      preview.style.fontSize = '10px';
+      preview.className = 'photo-thumbnail-btn';
       preview.textContent = 'Lihat Foto';
       preview.addEventListener('click', () => {
         attendancePhotoFull.src = photoUrl;
@@ -538,7 +644,7 @@
       row.style.alignItems = 'center';
       row.style.justifyContent = 'space-between';
       row.style.padding = '10px 0';
-      row.style.borderBottom = '1px solid #f0f1f3';
+      row.style.borderBottom = '1px solid #f1f5f9';
 
       const person = document.createElement('div');
       person.style.display = 'flex';
@@ -559,7 +665,7 @@
       const name = makeTextElement('strong', '', teacher.nama);
       const role = makeTextElement('small', '', teacher.mapel);
       role.style.display = 'block';
-      role.style.color = '#6b756f';
+      role.style.color = '#64748b';
       copy.append(name, role);
       person.append(avatar, copy);
       row.append(person);
@@ -632,20 +738,116 @@
     }
   }
 
+  async function loadGuruMapelReport() {
+    const tbody = document.getElementById('guruMapelRows');
+    tbody.innerHTML = '<tr><td colspan="7" class="admin-empty-row" style="text-align: center; padding: 24px; color: #64748b;">Memuat rekap mapel guru...</td></tr>';
+    try {
+      const response = await fetch(`${guruPeriodFilter.dataset.url}?${new URLSearchParams({ periode: guruPeriodFilter.value, type: 'mapel' })}`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!response.ok) throw new Error('Gagal memuat rekap mapel guru.');
+      const data = await response.json();
+      const logs = data.mapel_logs || [];
+      
+      tbody.replaceChildren();
+      if (!logs.length) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 7;
+        td.className = 'admin-empty-row';
+        td.style.textAlign = 'center';
+        td.style.padding = '24px';
+        td.style.color = '#64748b';
+        td.textContent = 'Belum ada data presensi mengajar mata pelajaran.';
+        tr.append(td);
+        tbody.append(tr);
+        return;
+      }
+
+      logs.forEach(log => {
+        const tr = document.createElement('tr');
+        
+        const tdTgl = document.createElement('td');
+        tdTgl.textContent = log.tanggal;
+        tr.append(tdTgl);
+
+        const tdNama = document.createElement('td');
+        tdNama.innerHTML = `<strong>${log.nama_guru}</strong>`;
+        tr.append(tdNama);
+
+        const tdMapel = document.createElement('td');
+        tdMapel.textContent = log.nama_mapel;
+        tr.append(tdMapel);
+
+        const tdKelas = document.createElement('td');
+        tdKelas.innerHTML = `<span class="rekap-class-badge">${log.nama_kelas}</span> <small style="display:block; color:#64748b; margin-top:2px;">R: ${log.ruangan || '-'}</small>`;
+        tr.append(tdKelas);
+
+        const tdJam = document.createElement('td');
+        tdJam.innerHTML = `<small style="display:block;">Jadwal: ${log.jam_mulai?.slice(0,5)} - ${log.jam_selesai?.slice(0,5)}</small><strong style="font-size:11px; color:#087443;">Mulai: ${log.jam_mulai_mengajar ? log.jam_mulai_mengajar.slice(0,5) : '-'}</strong><br><strong style="font-size:11px; color:#2563eb;">Selesai: ${log.jam_selesai_mengajar ? log.jam_selesai_mengajar.slice(0,5) : '-'}</strong>`;
+        tr.append(tdJam);
+
+        const tdFotoMulai = document.createElement('td');
+        if (log.foto_mulai) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'photo-thumbnail-btn';
+          btn.textContent = 'Lihat Foto';
+          btn.addEventListener('click', () => {
+            attendancePhotoFull.src = `/storage/${log.foto_mulai}`;
+            attendancePhotoModal.showModal();
+          });
+          tdFotoMulai.append(btn);
+        } else {
+          tdFotoMulai.textContent = '-';
+        }
+        tr.append(tdFotoMulai);
+
+        const tdFotoSelesai = document.createElement('td');
+        if (log.foto_selesai) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'photo-thumbnail-btn';
+          btn.textContent = 'Lihat Foto';
+          btn.addEventListener('click', () => {
+            attendancePhotoFull.src = `/storage/${log.foto_selesai}`;
+            attendancePhotoModal.showModal();
+          });
+          tdFotoSelesai.append(btn);
+        } else {
+          tdFotoSelesai.textContent = '-';
+        }
+        tr.append(tdFotoSelesai);
+
+        tbody.append(tr);
+      });
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="7" class="admin-empty-row" style="text-align: center; color: #dc2626; padding: 24px;">${err.message}</td></tr>`;
+    }
+  }
+
   guruTabs.forEach((tab) => {
     tab.addEventListener('click', () => {
       guruTabs.forEach((item) => {
         item.setAttribute('aria-selected', String(item === tab));
-        item.style.color = item === tab ? '#087443' : '#6b756f';
+        item.style.color = item === tab ? '#087443' : '#64748b';
       });
       guruPanels.forEach((panel) => {
         panel.hidden = panel.dataset.guruPanel !== tab.dataset.guruTab;
       });
     });
   });
-  guruPeriodFilter.addEventListener('change', loadGuruPeriod);
+  guruPeriodFilter.addEventListener('change', () => {
+    loadGuruPeriod();
+    if (!document.getElementById('subGuruMapel').hidden) {
+      loadGuruMapelReport();
+    }
+  });
   guruSessionFilter.addEventListener('change', applyGuruSessionFilter);
   attendancePhotoModal.querySelector('.dash-photo-modal-close').addEventListener('click', () => attendancePhotoModal.close());
+  attendancePhotoModal.addEventListener('click', (e) => {
+    if (e.target === attendancePhotoModal) attendancePhotoModal.close();
+  });
 </script>
 <script src="{{ asset('admin-pdf-export.js') }}?v=1" defer></script>
 @endsection

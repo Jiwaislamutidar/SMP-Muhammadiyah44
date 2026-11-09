@@ -1,4 +1,5 @@
 
+text/x-generic datakelas.blade.php ( HTML document, ASCII text, with CRLF line terminators )
 @extends('layouts.admin')
 
 @section('title', 'Data Kelas')

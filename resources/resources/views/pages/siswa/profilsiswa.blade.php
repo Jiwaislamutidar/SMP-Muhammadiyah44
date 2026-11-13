@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ asset('logo.jpg') }}" type="image/jpeg">
+    <script>
+        document.documentElement.classList.add('js');
+        (function () {
+            var flagPrefix = 'student-motion-seen:';
+            var resetFlags = function () {
+                try {
+                    var storage = window.sessionStorage;
+                    var keys = [];
+                    for (var index = 0; index < storage.length; index += 1) {
+                        var key = storage.key(index);
+                        if (key && key.indexOf(flagPrefix) === 0) keys.push(key);
+                    }
+                    keys.forEach(function (key) { storage.removeItem(key); });
+                } catch (error) {}
+            };
+            try {
+                var storage = window.sessionStorage;
+                var entries = window.performance && window.performance.getEntriesByType
+                    ? window.performance.getEntriesByType('navigation')
+                    : [];
+                var navigationType = entries.length ? entries[0].type : '';
+                var isReload = navigationType === 'reload';
+                var shouldSkip = !isReload && (navigationType === 'back_forward' ||
+                    storage.getItem(flagPrefix + window.location.pathname) === '1');
+                if (shouldSkip) document.documentElement.classList.add('motion-off');
+                storage.setItem(flagPrefix + window.location.pathname, '1');
+            } catch (error) {}
+            window.addEventListener('pageshow', function (event) {
+                if (event.persisted) document.documentElement.classList.add('motion-off');
+            });
+            document.addEventListener('submit', function (event) {
+                if (event.target instanceof HTMLFormElement && event.target.querySelector('.logout-item')) resetFlags();
+            }, true);
+        })();
+        document.addEventListener('DOMContentLoaded', function () {
+            if (!window.studentMotionScriptLoaded) document.documentElement.classList.remove('js');
+        }, { once: true });
+    </script>
+    <title>SMP Muhammadiyah 44</title>
+    <link rel="stylesheet" href="{{ asset('siswa-css/profilsiswa.css') }}?v=9">
+    <link rel="stylesheet" href="{{ asset('siswa-css/siswa-ui.css') }}?v=11">
+</head>
+<body>
+    <div class="profil-murid" id="profilMurid">
+        <aside class="sidebar" id="sidebar">
+            <nav class="sidebar-nav" aria-label="Menu utama">
+                <a href="{{ route('siswa.dashboard') }}" class="nav-item" style="--delay: 1">
+                    <span class="nav-icon-box">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 10.5 12 3l9 7.5"/>
+                            <path d="M5 9.5V21h14V9.5"/>
+                            <path d="M9 21v-6h6v6"/>
+                        </svg>
+                    </span>
+                    Dashboard
+                </a>
+                <a href="{{ route('siswa.scan-qr') }}" class="nav-item" style="--delay: 2">
+                    <span class="nav-icon-box">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="7" rx="1"/>
+                            <rect x="14" y="3" width="7" height="7" rx="1"/>
+                            <rect x="3" y="14" width="7" height="7" rx="1"/>
+                            <path d="M14 14h3v3h-3z"/>
+                            <path d="M18 18h3v3h-3z"/>
+                        </svg>
+                    </span>
+                    Scan QR
+                </a>
+                <a href="{{ route('siswa.riwayat') }}" class="nav-item" style="--delay: 3">
+                    <span class="nav-icon-box">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="9"/>
+                            <path d="M12 7v5l3 2"/>
+                        </svg>
+                    </span>
+                    Riwayat Absensi
+                </a>
+                <a href="{{ route('siswa.profil') }}" class="nav-item active" aria-current="page" style="--delay: 4">
+                    <span class="nav-icon-box">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="8" r="4"/>
+                            <path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>
+                        </svg>
+                    </span>
+                    Profil
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-footer-user">
+                    <div class="avatar">{{ $siswa->inisial ?? 'AF' }}</div>
+                    <div>
+                        <div class="name">{{ $siswa->nama ?? 'Ahmad Fauzan' }}</div>
+                        <div class="role">{{ $siswa->kelas ?? '-' }} • Murid</div>
+                    </div>
+                </div>
+                <form action="{{ route('siswa.logout') }}" method="POST" style="margin:0;">
+                    @csrf
+                    <button type="submit" class="nav-item logout-item" style="width:100%; border:none; background:transparent; text-align:left; cursor:pointer;">
+                        <span class="nav-icon-box">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                 stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                                <path d="m10 17-5-5 5-5"/>
+                                <path d="M15 12H5"/>
+                            </svg>
+                        </span>
+                        Keluar
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <div class="notification-overlay" id="notificationOverlay" aria-hidden="true"></div>
+
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="burger-btn" id="burgerBtn" onclick="toggleSidebar()" aria-label="Buka menu" aria-expanded="false" aria-controls="sidebar">
+                    <span></span><span></span><span></span>
+                </button>
+                <img class="topbar-logo" src="{{ asset('logo.jpg') }}" alt="Logo SMP Muhammadiyah 44">
+                <div class="portal-tag"><span class="portal-tag-school">SMP Muhammadiyah 44</span></div>
+            </div>
+
+            <div class="topbar-right">
+                <div class="ta-badge" id="liveDatetime">Memuat waktu...</div>
+                <div class="notification-menu">
+                    <button class="icon-btn notification-toggle" id="notificationToggle" aria-label="Notifikasi" title="Notifikasi"
+                            type="button" aria-expanded="false" aria-haspopup="dialog" aria-controls="notificationPanel"
+                            data-seen-key="siswa-notifikasi-{{ auth()->id() }}">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/>
+                            <path d="M10.3 21a2 2 0 0 0 3.4 0"/>
+                        </svg>
+                        <span class="badge-dot" hidden></span>
+                    </button>
+                    <div class="notification-panel" id="notificationPanel" role="dialog" aria-label="Notifikasi" hidden>
+                        <div class="notification-panel-header">Notifikasi</div>
+                        <div class="notification-list">
+                        @forelse($notifikasiPresensi ?? [] as $notifikasi)
+                            <div class="notification-item" data-notification-signature="{{ hash('sha256', json_encode($notifikasi)) }}">
+                                <div class="notification-copy">
+                                    <div>Presensi {{ $notifikasi['status'] }}</div>
+                                    <div class="notification-subject">{{ $notifikasi['mapel'] }}</div>
+                                    <div class="notification-datetime">{{ $notifikasi['tanggal'] }} • {{ $notifikasi['waktu'] }}</div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="notification-empty">Belum ada notifikasi presensi.</div>
+                        @endforelse
+                        </div>
+                    </div>
+                </div>
+                <div class="user-mini">
+                    <div class="avatar">{{ $siswa->inisial ?? 'AF' }}</div>
+                    <div>
+                        <div class="name">{{ $siswa->nama ?? 'Ahmad Fauzan' }}</div>
+                        <div class="role">{{ $siswa->kelas ?? '-' }} • Murid</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="content">
+            <div class="section-header">
+                <div class="header-copy">
+                    <h1>Profil Murid</h1>
+                    <p>Informasi profil dan akun kamu</p>
+                </div>
+                <div class="status-badge">
+                    Data Terverifikasi Sistem
+                </div>
+            </div>
+
+            @if(session('success'))
+                <div class="profile-alert success" role="status">{{ session('success') }}</div>
+            @endif
+            @if($errors->any())
+                <div class="profile-alert error" role="alert">{{ $errors->first() }}</div>
+            @endif
+
+            <section class="profile-card">
+                <div class="profile-top">
+                    <div class="profile-top-left">
+                        <div class="profile-avatar-lg">{{ $siswa->inisial ?? 'AF' }}</div>
+                        <div class="profile-top-info">
+                            <div class="profile-name-row">
+                                <h2>{{ $siswa->nama ?? 'Ahmad Fauzan' }}</h2>
+                                <span class="active-pill">{{ $siswa->status ?? 'Aktif' }}</span>
+                            </div>
+                            <div class="profile-meta-row">
+                                <span><span class="meta-label">NISN:</span> {{ $siswa->nisn ?? '00654321' }}</span>
+                                <span class="meta-dot">•</span>
+                                <span><span class="meta-label">Kelas:</span> {{ $siswa->kelas ?? '-' }}</span>
+                                <span class="meta-dot">•</span>
+                                <span class="meta-school">{{ $siswa->sekolah ?? 'SMP Muhammadiyah 44 Tangerang Selatan' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-outline" id="openPasswordModal">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                             style="vertical-align:-2px;margin-right:2px;">
+                            <rect x="4" y="11" width="16" height="10" rx="2"/>
+                            <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+                        </svg>
+                        Ubah Kata Sandi
+                    </button>
+                </div>
+
+                <div class="account-info-section">
+                    <div class="section-label">Informasi Akun</div>
+                    <div class="info-grid">
+                        <div class="info-box">
+                            <div class="info-label">Username</div>
+                            <div class="info-value">👤 {{ $siswa->username ?? 'ahmadfauzan' }}</div>
+                        </div>
+                        <div class="info-box">
+                            <div class="info-label">Role / Peran</div>
+                            <div class="info-value">🎓 Murid Aktif</div>
+                        </div>
+                        <div class="info-box">
+                            <div class="info-label">Status Akun</div>
+                            <div class="info-value">✅ Terverifikasi Sistem</div>
+                        </div>
+                        <div class="info-box">
+                            <div class="info-label">Tahun Ajaran</div>
+                            <div class="info-value">📅 {{ $tahunAjaran ?? '2026/2027 Ganjil' }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-footer-note">
+                    <div class="footer-note-left">
+                        ℹ️ <span>Data profil dan akun terdaftar resmi pada pangkalan data SMP Muhammadiyah 44 Tangerang Selatan.</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <div class="password-modal-backdrop" id="passwordModal" @if(!$errors->any()) hidden @endif>
+            <section class="password-modal" role="dialog" aria-modal="true" aria-labelledby="passwordModalTitle">
+                <div class="password-modal-heading">
+                    <div>
+                        <h2 id="passwordModalTitle">Ubah Kata Sandi</h2>
+                        <p>Masukkan kata sandi saat ini dan kata sandi baru.</p>
+                    </div>
+                    <button type="button" class="password-modal-close" id="closePasswordModal" aria-label="Tutup">&times;</button>
+                </div>
+                <form action="{{ route('siswa.profil.update-password') }}" method="POST" class="password-form">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="password-form-field">
+                        <label for="current_password">Kata sandi saat ini</label>
+                        <div class="password-input-wrap">
+                            <input id="current_password" name="current_password" type="password" autocomplete="current-password" required>
+                            <button type="button" class="password-visibility-toggle" aria-label="Tampilkan kata sandi" aria-pressed="false">
+                                <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8"/>
+                                    <path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a14.8 14.8 0 0 1-3.1 3.8M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7c1.1 0 2.1-.2 3-.5"/>
+                                </svg>
+                            </button>
+                        </div>
+                        @error('current_password')<span class="password-field-error">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="password-form-field">
+                        <label for="password">Kata sandi baru</label>
+                        <div class="password-input-wrap">
+                            <input id="password" name="password" type="password" autocomplete="new-password" minlength="6" required>
+                            <button type="button" class="password-visibility-toggle" aria-label="Tampilkan kata sandi" aria-pressed="false">
+                                <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8"/>
+                                    <path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a14.8 14.8 0 0 1-3.1 3.8M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7c1.1 0 2.1-.2 3-.5"/>
+                                </svg>
+                            </button>
+                        </div>
+                        @error('password')<span class="password-field-error">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="password-form-field">
+                        <label for="password_confirmation">Konfirmasi kata sandi baru</label>
+                        <div class="password-input-wrap">
+                            <input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" minlength="6" required>
+                            <button type="button" class="password-visibility-toggle" aria-label="Tampilkan kata sandi" aria-pressed="false">
+                                <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="m3 3 18 18M10.6 10.6a2 2 0 0 0 2.8 2.8"/>
+                                    <path d="M9.9 5.2A10.8 10.8 0 0 1 12 5c6.4 0 10 7 10 7a14.8 14.8 0 0 1-3.1 3.8M6.2 6.2C3.5 8 2 12 2 12s3.6 7 10 7c1.1 0 2.1-.2 3-.5"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="password-modal-actions">
+                        <button type="button" class="password-modal-cancel" id="cancelPasswordModal">Batal</button>
+                        <button type="submit" class="password-modal-submit">Simpan Kata Sandi</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+
+        <footer class="footer">
+            <div class="footer-left">
+                <span>Sistem Presensi &amp; Manajemen Akademik SMP Muhammadiyah 44 Tangerang Selatan</span>
+            </div>
+            <span>© {{ date('Y') }} SMP Muhammadiyah 44 Tangerang Selatan. Seluruh hak cipta dilindungi.</span>
+        </footer>
+    </div>
+
+    <script>
+        function toggleSidebar(force) {
+            var sidebar = document.getElementById('sidebar');
+            var overlay = document.getElementById('sidebarOverlay');
+            var burger  = document.getElementById('burgerBtn');
+            var open = typeof force === 'boolean' ? force : !sidebar.classList.contains('open');
+
+            sidebar.classList.toggle('open', open);
+            overlay.classList.toggle('show', open);
+            burger.classList.toggle('active', open);
+            burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+            burger.setAttribute('aria-label', open ? 'Tutup menu' : 'Buka menu');
+        }
+        document.querySelectorAll('.sidebar .nav-item.active').forEach(function (item) {
+            item.addEventListener('click', function (event) {
+                event.preventDefault();
+            });
+        });
+
+        const passwordModal = document.getElementById('passwordModal');
+        const openPasswordModal = document.getElementById('openPasswordModal');
+        const closePasswordModal = document.getElementById('closePasswordModal');
+        const cancelPasswordModal = document.getElementById('cancelPasswordModal');
+        const passwordForm = document.querySelector('.password-form');
+        const passwordFields = passwordForm.querySelectorAll('input[type="password"], input[type="text"]');
+
+        function closePasswordDialog() {
+            resetPasswordVisibility();
+            passwordModal.hidden = true;
+            openPasswordModal.focus();
+        }
+
+        function resetPasswordVisibility() {
+            passwordFields.forEach(function (field) {
+                field.type = 'password';
+                const toggle = field.parentElement.querySelector('.password-visibility-toggle');
+                toggle.setAttribute('aria-label', 'Tampilkan kata sandi');
+                toggle.setAttribute('aria-pressed', 'false');
+            });
+        }
+
+        passwordModal.querySelectorAll('.password-visibility-toggle').forEach(function (toggle) {
+            toggle.addEventListener('pointerdown', function (event) {
+                event.preventDefault();
+            });
+            toggle.addEventListener('mousedown', function (event) {
+                event.preventDefault();
+            });
+            toggle.addEventListener('click', function () {
+                const field = toggle.parentElement.querySelector('input');
+                const isVisible = field.type === 'password';
+                field.type = isVisible ? 'text' : 'password';
+                toggle.setAttribute('aria-label', isVisible ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi');
+                toggle.setAttribute('aria-pressed', isVisible ? 'true' : 'false');
+            });
+        });
+        passwordForm.addEventListener('submit', resetPasswordVisibility);
+
+        openPasswordModal.addEventListener('click', function () {
+            passwordModal.hidden = false;
+            document.getElementById('current_password').focus();
+        });
+        closePasswordModal.addEventListener('click', closePasswordDialog);
+        cancelPasswordModal.addEventListener('click', closePasswordDialog);
+        passwordModal.addEventListener('click', function (event) {
+            if (event.target === passwordModal) closePasswordDialog();
+        });
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && !passwordModal.hidden) closePasswordDialog();
+        });
+    </script>
+
+    <script src="{{ asset('siswa.js/siswa-ui.js') }}?v=7" defer></script>
+</body>
+</html>

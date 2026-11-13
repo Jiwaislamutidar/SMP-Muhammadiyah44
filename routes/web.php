@@ -19,11 +19,14 @@ use App\Http\Controllers\SiswaController;
 use App\Http\Controllers\Admin\SettingController;
 use Illuminate\Support\Facades\Route;
 
-// Kunci domain utama di sini agar subdomain tidak meleset di Laragon
-$domain = 'smpmuh44.test';
+// Deteksi host yang sedang diakses (bisa siabsen.click atau smpmuh44.test)
+$currentHost = request()->getHost();
 
-// 1. SUBDOMAIN ADMIN (admin.smpmuh44.test)
-Route::domain('admin.'.$domain)->group(function () {
+// Bersihkan awalan 'admin.' atau 'guru.' dari host utama untuk mendapatkan root domain
+$rootDomain = preg_replace('/^(admin|guru)\./', '', $currentHost);
+
+// 1. SUBDOMAIN ADMIN (admin.siabsen.click atau admin.smpmuh44.test)
+Route::domain('admin.' . $rootDomain)->group(function () {
     Route::get('/', function () {
         return redirect()->route('admin.login');
     });
@@ -77,8 +80,8 @@ Route::domain('admin.'.$domain)->group(function () {
     });
 });
 
-// 2. SUBDOMAIN GURU (guru.smpmuh44.test)
-Route::domain('guru.'.$domain)->group(function () {
+// 2. SUBDOMAIN GURU (guru.siabsen.click atau guru.smpmuh44.test)
+Route::domain('guru.' . $rootDomain)->group(function () {
     Route::get('/', function () {
         return redirect()->route('guru.login');
     });
@@ -113,8 +116,8 @@ Route::domain('guru.'.$domain)->group(function () {
     });
 });
 
-// 3. DOMAIN UTAMA / SISWA (smpmuh44.test)
-Route::domain($domain)->group(function () {
+// 3. DOMAIN UTAMA / SISWA (siabsen.click atau smpmuh44.test)
+Route::domain($rootDomain)->group(function () {
     Route::get('/', function () {
         return redirect()->route('login');
     });

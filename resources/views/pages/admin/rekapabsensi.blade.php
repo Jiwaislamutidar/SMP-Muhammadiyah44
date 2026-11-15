@@ -233,8 +233,8 @@
     <div class="rekap-date-mode-switch" style="grid-column: span 2; display: flex; flex-direction: column; gap: 6px;">
       <span style="font-size: 11px; font-weight: 600; color: #374151;">Pilih Mode Tampilan Data</span>
       <div style="display: flex; gap: 6px;">
-        <button type="button" class="date-mode-btn active" id="btnModeHarian">📅 Harian</button>
-        <button type="button" class="date-mode-btn" id="btnModeRentang">📆 Rentang Waktu</button>
+        <button type="button" class="date-mode-btn active" id="btnModeHarian">Harian</button>
+        <button type="button" class="date-mode-btn" id="btnModeRentang">Rentang Waktu</button>
       </div>
     </div>
 
@@ -384,58 +384,61 @@
 
   <!-- SUB TAB: PRESENSI MENGAJAR MATA PELAJARAN -->
   <div class="sub-guru-content" id="subGuruMapel" hidden>
-    <div class="admin-toolbar rekap-toolbar" style="margin-bottom: 16px;">
-      <div class="rekap-date-mode-switch" style="grid-column: span 2; display: flex; flex-direction: column; gap: 6px;">
-        <span style="font-size: 11px; font-weight: 600; color: #374151;">Pilih Mode Tampilan Data</span>
-        <div style="display: flex; gap: 6px;">
-          <button type="button" class="date-mode-btn active" id="btnMapelModeHarian">📅 Harian</button>
-          <button type="button" class="date-mode-btn" id="btnMapelModeRentang">📆 Rentang Waktu</button>
+    <div class="panel mapel-filter-panel">
+      <div class="panel-head mapel-filter-head">
+        <div>
+          <div class="panel-title">Rekap Mengajar Mata Pelajaran Guru</div>
+          <p class="mapel-filter-description">Daftar aktivitas mengajar, jam mulai/selesai, serta bukti foto presensi guru per mata pelajaran.</p>
         </div>
       </div>
 
-      <label class="rekap-filter-label" id="containerMapelHarian" for="mapelDate" style="grid-column: span 2;">
-        Tanggal Absensi
-        <input class="admin-input" id="mapelDate" type="date" value="{{ $selectedDate }}" required>
-      </label>
-
-      <fieldset class="rekap-export-range" id="containerMapelRentang" style="grid-column: span 2; display: none;">
-        <legend>Rentang Waktu & PDF Dari & Sampai</legend>
-        <div class="rekap-range-inputs">
-          <label class="rekap-filter-label" for="mapelExportDateFrom">
-            Dari
-            <input class="admin-input" id="mapelExportDateFrom" type="date" value="{{ $selectedDate }}">
-          </label>
-          <label class="rekap-filter-label" for="mapelExportDateTo">
-            Sampai
-            <input class="admin-input" id="mapelExportDateTo" type="date" value="{{ $selectedDate }}">
-          </label>
+      <div class="rekap-toolbar mapel-filter-toolbar">
+        <div class="rekap-date-mode-switch mapel-date-mode-switch">
+          <span class="mapel-filter-caption">Pilih Mode Tampilan Data</span>
+          <div class="mapel-date-mode-buttons">
+            <button type="button" class="date-mode-btn active" id="btnMapelModeHarian">Harian</button>
+            <button type="button" class="date-mode-btn" id="btnMapelModeRentang">Rentang Waktu</button>
+          </div>
         </div>
-      </fieldset>
 
-      <label class="rekap-filter-label" for="mapelSearchGuru" style="grid-column: span 2;">
-        Cari Nama Guru
-        <input class="admin-input" id="mapelSearchGuru" type="search" placeholder="Nama guru..." aria-label="Cari nama guru">
-      </label>
+        <label class="rekap-filter-label" id="containerMapelHarian" for="mapelDate">
+          Tanggal Absensi
+          <input class="admin-input" id="mapelDate" type="date" value="{{ $selectedDate }}" required>
+        </label>
 
-      <label class="rekap-filter-label" for="mapelSearchMapel" style="grid-column: span 2;">
-        Cari Mata Pelajaran
-        <input class="admin-input" id="mapelSearchMapel" type="search" placeholder="Mata pelajaran..." aria-label="Cari mata pelajaran">
-      </label>
+        <fieldset class="rekap-export-range mapel-export-range" id="containerMapelRentang" hidden>
+          <legend>Rentang Waktu & PDF Dari & Sampai</legend>
+          <div class="rekap-range-inputs">
+            <label class="rekap-filter-label" for="mapelExportDateFrom">
+              Dari
+              <input class="admin-input" id="mapelExportDateFrom" type="date" value="{{ $selectedDate }}">
+            </label>
+            <label class="rekap-filter-label" for="mapelExportDateTo">
+              Sampai
+              <input class="admin-input" id="mapelExportDateTo" type="date" value="{{ $selectedDate }}">
+            </label>
+          </div>
+        </fieldset>
 
-      <div class="rekap-total-wrapper" style="grid-column: span 2;">
-        <span class="admin-total" id="rekapMapelTotal">Total 0 Data</span>
+        <label class="rekap-filter-label" for="mapelSearchGuru">
+          Cari Nama Guru
+          <input class="admin-input" id="mapelSearchGuru" type="search" placeholder="Nama guru..." aria-label="Cari nama guru">
+        </label>
+
+        <label class="rekap-filter-label" for="mapelSearchMapel">
+          Cari Mata Pelajaran
+          <input class="admin-input" id="mapelSearchMapel" type="search" placeholder="Mata pelajaran..." aria-label="Cari mata pelajaran">
+        </label>
+
+        <div class="rekap-total-wrapper mapel-total-wrapper">
+          <span class="admin-total" id="rekapMapelTotal">Total 0 Data</span>
+        </div>
       </div>
     </div>
 
-    <div class="panel">
-      <div class="panel-head" style="margin-bottom: 16px;">
-        <div>
-          <div class="panel-title">Rekap Mengajar Mata Pelajaran Guru</div>
-          <p style="color: #64748b; font-size: 12px; margin-top: 4px;">Daftar aktivitas mengajar, jam mulai/selesai, serta bukti foto presensi guru per mata pelajaran.</p>
-        </div>
-      </div>
-      <div class="table-wrap">
-        <table class="admin-table">
+    <div class="panel mapel-table-panel">
+      <div class="table-wrap mapel-table-scroll" tabindex="0" aria-label="Geser tabel rekap mengajar secara horizontal">
+        <table class="admin-table mapel-table">
           <thead>
             <tr>
               <th>Tanggal</th>
@@ -570,8 +573,8 @@
     currentMapelMode = 'harian';
     btnMapelModeHarian.classList.add('active');
     btnMapelModeRentang.classList.remove('active');
-    containerMapelHarian.style.display = 'grid';
-    containerMapelRentang.style.display = 'none';
+    containerMapelHarian.hidden = false;
+    containerMapelRentang.hidden = true;
     loadGuruMapelReport();
   });
 
@@ -579,8 +582,8 @@
     currentMapelMode = 'rentang';
     btnMapelModeRentang.classList.add('active');
     btnMapelModeHarian.classList.remove('active');
-    containerMapelHarian.style.display = 'none';
-    containerMapelRentang.style.display = 'grid';
+    containerMapelHarian.hidden = true;
+    containerMapelRentang.hidden = false;
     loadGuruMapelReport();
   });
 

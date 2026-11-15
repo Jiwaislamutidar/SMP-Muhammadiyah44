@@ -174,3 +174,85 @@
 .rekap-mode-panel[hidden] {
   display: none !important;
 }
+
+/* Presensi mengajar mapel: batasi lebar pada panel, bukan pada halaman. */
+.sub-guru-content,
+.mapel-filter-panel,
+.mapel-table-panel,
+.mapel-filter-toolbar,
+.mapel-filter-toolbar > *,
+.mapel-table-scroll {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.sub-guru-content { overflow: hidden; }
+.mapel-filter-panel { margin-bottom: 16px; }
+.mapel-filter-head { margin-bottom: 16px !important; }
+.mapel-filter-description {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.mapel-filter-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin-bottom: 0;
+  align-items: end;
+}
+.mapel-date-mode-switch {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.mapel-filter-caption {
+  color: #374151;
+  font-size: 11px;
+  font-weight: 600;
+}
+.mapel-date-mode-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.mapel-export-range { display: grid; }
+.mapel-export-range[hidden] { display: none; }
+.mapel-total-wrapper { align-items: stretch; }
+.mapel-total-wrapper .admin-total {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+.mapel-table-panel { overflow: hidden; }
+.mapel-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+.mapel-table-scroll:focus-visible {
+  outline: 2px solid #16a66a;
+  outline-offset: -2px;
+}
+.mapel-table {
+  width: max-content;
+  min-width: 760px;
+  table-layout: auto;
+}
+.mapel-table th,
+.mapel-table td { white-space: nowrap; }
+
+@media (max-width: 600px) {
+  .sub-guru-content { width: 100%; }
+  .mapel-filter-panel,
+  .mapel-table-panel { padding: 12px; }
+  .mapel-filter-toolbar { grid-template-columns: minmax(0, 1fr); }
+  .mapel-range-inputs { grid-template-columns: minmax(0, 1fr); }
+  .mapel-table-scroll { margin-inline: 0; }
+}

@@ -12,6 +12,14 @@
 .guru-import-trigger:hover {
   background: var(--green-100);
 }
+.guru-template-trigger {
+  background: #fff;
+  color: var(--green-700);
+  border: 1px solid #b8d7c7;
+}
+.guru-template-trigger:hover {
+  background: var(--green-100);
+}
 .guru-manual-trigger {
   background: var(--green-700);
   color: #fff;
@@ -430,21 +438,26 @@
   color: var(--ink);
 }
 
-.guru-template-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--green-700);
-  text-decoration: none;
-}
-.guru-template-link:hover {
-  text-decoration: underline;
-}
-
-/* ── Responsive Guru ── */
+/* ── 2x2 Uniform Grid for Header Actions on Mobile & Desktop ── */
 @media (max-width: 768px) {
+  .admin-header-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    width: 100%;
+  }
+
+  .admin-header-actions .admin-action,
+  .admin-header-actions a.admin-action {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+    box-sizing: border-box;
+    font-size: 11px;
+    padding: 9px 8px;
+    white-space: nowrap;
+  }
+
   .guru-mapel-row {
     grid-template-columns: 1fr;
   }

@@ -107,7 +107,6 @@
   padding: 8px 14px;
   font-size: 12px;
   font-weight: 600;
-  /* 1. Warna teks & border awal (Hijau kalem profesional) */
   color: #15803d;
   background: transparent;
   border: 1.5px solid #15803d;
@@ -125,7 +124,6 @@
   left: 0;
   width: 100%;
   height: 100%;
-  /* 2. Warna background saat animasi hover masuk (Hijau solid senada) */
   background: #15803d;
   transform: scaleX(0);
   transform-origin: right;
@@ -134,7 +132,6 @@
 }
 
 .mapel-manage-btn:hover {
-  /* 3. Warna teks berubah jadi putih bersih saat background hijau penuh */
   color: #ffffff;
   border-color: #15803d;
 }
@@ -312,38 +309,44 @@
   }
 }
 
+/* Memastikan card tetap 2 kolom berdampingan di semua ukuran mobile/layar kecil */
 @media (max-width: 600px) {
   .mapel-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    gap: 8px;
   }
   .subject-card {
-    padding: 12px 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
   }
-  .subject-card h3 {
-    font-size: 13.5px;
+  .subject-top {
+    margin-bottom: 8px;
   }
   .subject-code {
-    height: 34px;
-    font-size: 11px;
-    padding: 0 8px;
+    height: 28px;
+    font-size: 10px;
+    padding: 0 6px;
+    border-radius: 6px;
+  }
+  .subject-card h3 {
+    font-size: 12px;
+    margin-bottom: 6px;
+    line-height: 1.25;
   }
   .subject-meta {
-    padding: 8px;
-    font-size: 10.5px;
+    padding: 6px 8px;
+    font-size: 9.5px;
     gap: 4px;
     flex-direction: column;
     align-items: flex-start;
   }
+  .subject-footer {
+    margin-top: 8px;
+    padding-top: 8px;
+  }
   .mapel-manage-btn {
     width: 100%;
-    padding: 6px 8px;
-    font-size: 11px;
-  }
-}
-
-@media (max-width: 380px) {
-  .mapel-grid {
-    grid-template-columns: 1fr;
+    padding: 5px 6px;
+    font-size: 10px;
   }
 }

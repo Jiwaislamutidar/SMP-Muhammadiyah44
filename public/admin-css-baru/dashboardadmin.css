@@ -228,8 +228,18 @@
   .dash-two-col { grid-template-columns: 1fr; }
 }
 @media (max-width: 700px) {
-  .dash-kpi-strip { grid-template-columns: 1fr; }
-  .dash-kpi { padding: 14px 16px; }
+  .dash-kpi-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .dash-kpi {
+    padding: 14px 16px;
+    align-items: center;
+    text-align: center;
+  }
+  .dash-kpi:nth-child(1) {
+    grid-column: span 2;
+  }
   .dash-card { padding: 14px; }
   .dash-name { max-width: 160px; }
 }

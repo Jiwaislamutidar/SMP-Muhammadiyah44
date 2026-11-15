@@ -1,13 +1,8 @@
-/* =====================================================
-   JADWAL PELAJARAN – Page-Specific Styles
-   Shared utilities: admin-shell.css + admin-page.css
-   ===================================================== */
-
-/* ── Day Badges ── */
 .schedule-day {
   color: #111827;
   font-size: 12.5px;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .schedule-time {
@@ -37,11 +32,13 @@
   font-size: 13px;
   font-weight: 700;
   color: var(--ink);
+  white-space: nowrap;
 }
 .schedule-teacher {
   font-size: 12.5px;
   color: #334155;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .schedule-class {
@@ -87,7 +84,40 @@
   color: #fff;
 }
 
-/* ── Table Card Enhancements ── */
+/* ── Header Actions Uniform Size & Side-by-Side Grid ── */
+.schedule-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.schedule-header-actions .admin-action,
+.schedule-header-actions a.admin-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .schedule-header-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    width: 100%;
+  }
+  .schedule-header-actions .admin-action,
+  .schedule-header-actions a.admin-action {
+    width: 100%;
+    font-size: 11px;
+    padding: 9px 8px;
+  }
+}
+
+/* ── Table Card Enhancements & Mobile Horizontal Scroll ── */
 .schedule-total {
   color: #475569;
   font-size: 12px;
@@ -97,10 +127,20 @@
 
 .schedule-card {
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
 }
+
+.schedule-card .admin-table {
+  width: 100%;
+  min-width: 700px;
+}
+
 .schedule-card .admin-table th {
   white-space: nowrap;
 }
 .schedule-card .admin-table td {
   padding: 12px 14px;
+  white-space: nowrap;
 }

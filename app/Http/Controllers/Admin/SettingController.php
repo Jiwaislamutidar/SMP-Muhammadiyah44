@@ -22,6 +22,9 @@ class SettingController extends Controller
             'jam_pulang_rabu' => '14:30',
             'jam_pulang_kamis' => '13:00',
             'jam_pulang_jumat' => '12:30',
+            'school_latitude' => config('attendance.school_latitude'),
+            'school_longitude' => config('attendance.school_longitude'),
+            'max_distance_meters' => config('attendance.max_distance_meters'),
         ]);
 
         return view('pages.admin.profil', compact('setting'));
@@ -38,13 +41,17 @@ class SettingController extends Controller
             'jam_pulang_rabu' => 'required',
             'jam_pulang_kamis' => 'required',
             'jam_pulang_jumat' => 'required',
+            'school_latitude' => ['required', 'numeric', 'between:-90,90'],
+            'school_longitude' => ['required', 'numeric', 'between:-180,180'],
+            'max_distance_meters' => ['required', 'integer', 'min:1', 'max:10000'],
         ]);
 
         $setting = Setting::first() ?? new Setting();
         $setting->fill($request->only([
             'jam_masuk', 'jam_toleransi',
             'jam_pulang_senin', 'jam_pulang_selasa', 
-            'jam_pulang_rabu', 'jam_pulang_kamis', 'jam_pulang_jumat'
+            'jam_pulang_rabu', 'jam_pulang_kamis', 'jam_pulang_jumat',
+            'school_latitude', 'school_longitude', 'max_distance_meters'
         ]));
         $setting->save();
 

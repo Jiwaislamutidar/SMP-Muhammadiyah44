@@ -16,10 +16,14 @@ class PresensiGuru extends Model
         'foto_pulang',
         'status',
         'bukti_izin',
+        'latitude', 'longitude', 'jarak_meter',
     ];
 
     protected $casts = [
         'tanggal' => 'date',
+        'latitude' => 'float',
+        'longitude' => 'float',
+        'jarak_meter' => 'float',
     ];
 
     protected static function booted(): void

@@ -20,6 +20,7 @@ class DashboardAttendanceLog extends Model
         'foto_pulang',
         'status',
         'bukti_izin',
+        'latitude', 'longitude', 'jarak_meter',
     ];
 
     protected $casts = [
@@ -53,6 +54,9 @@ class DashboardAttendanceLog extends Model
             'foto_pulang' => $attendance->foto_pulang,
             'status' => $attendance->status,
             'bukti_izin' => $attendance->bukti_izin,
+            'latitude' => $attendance->latitude,
+            'longitude' => $attendance->longitude,
+            'jarak_meter' => $attendance->jarak_meter,
         ];
     }
 

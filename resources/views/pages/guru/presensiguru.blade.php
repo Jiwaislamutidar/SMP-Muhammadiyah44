@@ -123,6 +123,11 @@
 					{{ session('success') }}
 				</div>
 			@endif
+			@if(session('error'))
+				<div class="panel auto-dismiss-alert" role="alert" style="background: #fef2f2; color: #dc2626; border-color: #fee2e2; margin-bottom: 16px; transition: opacity 0.3s ease;">
+					{{ session('error') }}
+				</div>
+			@endif
 			@if($errors->any())
 				<div class="panel auto-dismiss-alert" role="alert" style="background: #fef2f2; color: #dc2626; border-color: #fee2e2; margin-bottom: 16px; transition: opacity 0.3s ease;">
 					{{ $errors->first() }}
@@ -419,6 +424,9 @@
 	<dialog class="photo-modal" id="photoModal" aria-labelledby="photoModalTitle">
 		<form id="attendanceForm" method="POST" enctype="multipart/form-data">
 			@csrf
+			<input type="hidden" name="latitude" id="attendanceLatitude">
+			<input type="hidden" name="longitude" id="attendanceLongitude">
+			<input type="hidden" name="accuracy" id="attendanceAccuracy">
 			<div class="photo-modal-head">
 				<div><h2 id="photoModalTitle">Absen</h2><p>Buka kamera untuk mengambil foto bukti kehadiran beserta stempel waktu.</p></div>
 				<button class="modal-close" type="button" id="closePhotoModal" aria-label="Tutup">×</button>
@@ -484,6 +492,9 @@
 		const cameraPlaceholder = document.getElementById('cameraPlaceholder');
 		const photoError = document.getElementById('photoError');
 		const submitAttendance = document.getElementById('submitAttendance');
+		const attendanceLatitude = document.getElementById('attendanceLatitude');
+		const attendanceLongitude = document.getElementById('attendanceLongitude');
+		const attendanceAccuracy = document.getElementById('attendanceAccuracy');
 		let cameraStream = null;
 		let previewUrl = null;
 
@@ -606,6 +617,9 @@
 			stopPreviewCamera();
 			photoModal.close();
 			attendanceForm.reset();
+			attendanceLatitude.value = '';
+			attendanceLongitude.value = '';
+			attendanceAccuracy.value = '';
 			photoPreview.hidden = true;
 			cameraPlaceholder.hidden = false;
 			submitAttendance.disabled = true;
@@ -621,14 +635,48 @@
 			if (event.target === photoModal) closePhotoModal();
 		});
 		photoModal.addEventListener('close', stopPreviewCamera);
-		attendanceForm.addEventListener('submit', event => {
+		function captureAttendanceLocation() {
+			return new Promise((resolve, reject) => {
+				if (!navigator.geolocation) {
+					reject(new Error('Perangkat atau browser tidak mendukung GPS.'));
+					return;
+				}
+
+				navigator.geolocation.getCurrentPosition(position => {
+					if (position.coords.accuracy > 150) {
+						alert(`Sinyal GPS kurang akurat (${Math.round(position.coords.accuracy)} meter). Silakan pindah ke tempat terbuka lalu coba lagi.`);
+						reject(new Error('Akurasi GPS kurang'));
+						return;
+					}
+					attendanceLatitude.value = position.coords.latitude;
+					attendanceLongitude.value = position.coords.longitude;
+					attendanceAccuracy.value = position.coords.accuracy;
+					resolve();
+				}, error => {
+					const message = error.code === error.PERMISSION_DENIED
+						? 'Izin lokasi ditolak. Aktifkan izin lokasi pada browser, lalu coba lagi.'
+						: 'Lokasi tidak dapat diperoleh. Pastikan GPS aktif lalu coba lagi.';
+					alert(message);
+					reject(error);
+				}, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+			});
+		}
+
+		attendanceForm.addEventListener('submit', async event => {
+			event.preventDefault();
 			if (!photoInput.files.length) {
-				event.preventDefault();
 				photoError.textContent = 'Buka kamera dan ambil foto sebelum mengirim.';
 				return;
 			}
 			submitAttendance.disabled = true;
 			submitAttendance.textContent = 'Mengirim...';
+			try {
+				await captureAttendanceLocation();
+				HTMLFormElement.prototype.submit.call(attendanceForm);
+			} catch (error) {
+				submitAttendance.disabled = false;
+				submitAttendance.textContent = 'Kirim Presensi';
+			}
 		});
 
 		document.getElementById('resetHistoryForm')?.addEventListener('submit', event => {

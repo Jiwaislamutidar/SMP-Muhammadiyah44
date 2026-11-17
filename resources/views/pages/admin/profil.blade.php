@@ -107,6 +107,24 @@
           </div>
         </div>
 
+        <div class="form-field-group">
+          <label class="group-label">Validasi Lokasi (Geofencing)</label>
+          <div class="pulang-days-grid">
+            <div class="form-field">
+              <label>Latitude Sekolah</label>
+              <input type="number" step="0.0000001" name="school_latitude" value="{{ old('school_latitude', $setting->school_latitude ?? config('attendance.school_latitude')) }}" required>
+            </div>
+            <div class="form-field">
+              <label>Longitude Sekolah</label>
+              <input type="number" step="0.0000001" name="school_longitude" value="{{ old('school_longitude', $setting->school_longitude ?? config('attendance.school_longitude')) }}" required>
+            </div>
+            <div class="form-field">
+              <label>Radius Maksimal (meter)</label>
+              <input type="number" min="1" name="max_distance_meters" value="{{ old('max_distance_meters', $setting->max_distance_meters ?? config('attendance.max_distance_meters')) }}" required>
+            </div>
+          </div>
+        </div>
+
         <div class="form-actions">
           <button class="admin-action" type="submit">Simpan Jadwal</button>
         </div>

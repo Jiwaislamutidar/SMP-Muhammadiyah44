@@ -10,6 +10,7 @@ class Setting extends Model
     protected $fillable = [
         'jam_masuk', 'jam_toleransi',
         'jam_pulang_senin', 'jam_pulang_selasa', 
-        'jam_pulang_rabu', 'jam_pulang_kamis', 'jam_pulang_jumat'
+        'jam_pulang_rabu', 'jam_pulang_kamis', 'jam_pulang_jumat',
+        'school_latitude', 'school_longitude', 'max_distance_meters'
     ];
 }

@@ -107,6 +107,9 @@ class PresensiGuruController extends Controller
 
         $validated = $request->validate([
             'foto' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
+            'accuracy' => ['required', 'numeric', 'min:0', 'max:150'],
         ]);
 
         $jadwal = DB::table('jadwal_pelajarans')
@@ -116,6 +119,8 @@ class PresensiGuruController extends Controller
             
         abort_unless($jadwal, 404, 'Jadwal pelajaran tidak ditemukan.');
 
+        $location = $this->validateLocation($request);
+
         $path = $validated['foto']->store('presensi_mapel/' . now()->format('Y') . '/' . now()->format('m'), 'public');
 
         DB::table('presensi_guru_mapels')->updateOrInsert(
@@ -124,6 +129,9 @@ class PresensiGuruController extends Controller
                 'guru_id' => $guru->id,
                 'jam_mulai_mengajar' => now()->format('H:i:s'),
                 'foto_mulai' => $path,
+                'latitude' => $location['latitude'],
+                'longitude' => $location['longitude'],
+                'jarak_meter' => $location['jarak_meter'],
                 'updated_at' => now(),
                 'created_at' => now(),
             ]
@@ -139,6 +147,9 @@ class PresensiGuruController extends Controller
 
         $validated = $request->validate([
             'foto' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
+            'accuracy' => ['required', 'numeric', 'min:0', 'max:150'],
         ]);
 
         $jadwal = DB::table('jadwal_pelajarans')
@@ -148,6 +159,8 @@ class PresensiGuruController extends Controller
             
         abort_unless($jadwal, 404, 'Jadwal pelajaran tidak ditemukan.');
 
+        $location = $this->validateLocation($request);
+
         $path = $validated['foto']->store('presensi_mapel/' . now()->format('Y') . '/' . now()->format('m'), 'public');
 
         DB::table('presensi_guru_mapels')->updateOrInsert(
@@ -156,6 +169,9 @@ class PresensiGuruController extends Controller
                 'guru_id' => $guru->id,
                 'jam_selesai_mengajar' => now()->format('H:i:s'),
                 'foto_selesai' => $path,
+                'latitude' => $location['latitude'],
+                'longitude' => $location['longitude'],
+                'jarak_meter' => $location['jarak_meter'],
                 'updated_at' => now(),
                 'created_at' => now(),
             ]
@@ -231,9 +247,14 @@ class PresensiGuruController extends Controller
 
         $validated = $request->validate([
             'foto' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
+            'accuracy' => ['required', 'numeric', 'min:0', 'max:150'],
         ]);
         $guru = Guru::forUser(Auth::user());
         abort_unless($guru, 403, 'Profil guru belum terhubung ke akun ini.');
+
+        $location = $this->validateLocation($request);
 
         $presensi = $guru->presensiHarian()->firstOrNew(['tanggal' => today()]);
 
@@ -268,8 +289,48 @@ class PresensiGuruController extends Controller
             $presensi->foto_pulang = $path;
         }
 
+        $presensi->latitude = $location['latitude'];
+        $presensi->longitude = $location['longitude'];
+        $presensi->jarak_meter = $location['jarak_meter'];
+
         $presensi->save();
 
         return back()->with('success', 'Presensi '.($jenis === 'masuk' ? 'masuk' : 'pulang').' berhasil dicatat.');
+    }
+
+    /** @return array{latitude: float, longitude: float, jarak_meter: float} */
+    private function validateLocation(Request $request): array
+    {
+        $accuracy = (float) $request->input('accuracy');
+        abort_unless(is_finite($accuracy) && $accuracy >= 0 && $accuracy <= 150, 422, 'Akurasi GPS harus maksimal 150 meter.');
+
+        $setting = Setting::first();
+        $latitude = (float) $request->input('latitude');
+        $longitude = (float) $request->input('longitude');
+        $schoolLatitude = (float) ($setting?->school_latitude ?? config('attendance.school_latitude'));
+        $schoolLongitude = (float) ($setting?->school_longitude ?? config('attendance.school_longitude'));
+        $maxDistance = (float) ($setting?->max_distance_meters ?? config('attendance.max_distance_meters'));
+        $distance = $this->haversineDistance($schoolLatitude, $schoolLongitude, $latitude, $longitude);
+
+        if ($distance > $maxDistance) {
+            abort(redirect()->back()->with('error', sprintf(
+                'Presensi ditolak. Jarak Anda dari sekolah %.2f meter, sedangkan batas maksimal adalah %.0f meter.',
+                $distance,
+                $maxDistance
+            )));
+        }
+
+        return ['latitude' => $latitude, 'longitude' => $longitude, 'jarak_meter' => round($distance, 2)];
+    }
+
+    private function haversineDistance(float $latitude1, float $longitude1, float $latitude2, float $longitude2): float
+    {
+        $earthRadius = 6371000;
+        $deltaLatitude = deg2rad($latitude2 - $latitude1);
+        $deltaLongitude = deg2rad($longitude2 - $longitude1);
+        $a = sin($deltaLatitude / 2) ** 2
+            + cos(deg2rad($latitude1)) * cos(deg2rad($latitude2)) * sin($deltaLongitude / 2) ** 2;
+
+        return $earthRadius * 2 * atan2(sqrt($a), sqrt(1 - $a));
     }
 }
